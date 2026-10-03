@@ -49,7 +49,9 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
   const bench = squad.filter((player) => !player.isStarter).sort((left, right) => left.slot - right.slot);
   const totalActive = live.finished + live.playing + live.remaining + live.noFixture;
   const progress = totalActive ? (live.finished + live.playing * 0.5) / totalActive : 0;
-  const delta = live.points != null && live.projectedXI != null ? live.points - live.projectedXI : null;
+  const totalActiveCount = live.finished + live.playing + live.remaining + live.noFixture;
+  // Comparing a part-played Gameweek with a full-Gameweek projection would mislead, so the delta waits for the final whistle.
+  const delta = live.playing === 0 && live.remaining === 0 && totalActiveCount > 0 && live.points != null && live.projectedXI != null ? live.points - live.projectedXI : null;
   const allDone = live.playing === 0 && live.remaining === 0;
 
   return (
@@ -64,7 +66,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
             <strong className="num" aria-label={live.points == null ? "Live points unavailable" : `${live.points} live points`}>{live.points ?? "—"}</strong>
             <span className="live-score-context">
               {live.projectedXI != null ? <>Model expected <b className="tone-accent">{fixed(live.projectedXI)} xP</b> for this XI <SourceBadge kind="model" /></> : "Model expectation unavailable"}
-              {delta != null ? <span className={delta >= 0 ? "tone-pos" : "tone-neg"}> · {delta >= 0 ? "+" : "−"}{Math.abs(delta).toFixed(1)} vs expected so far</span> : null}
+              {delta != null ? <span className={delta >= 0 ? "tone-pos" : "tone-neg"}> · {delta >= 0 ? "+" : "−"}{Math.abs(delta).toFixed(1)} vs expected</span> : null}
             </span>
           </div>
           <div className="live-progress" aria-label={`${live.finished} finished, ${live.playing} playing, ${live.remaining} still to play`}>

@@ -4,20 +4,21 @@ FPL AI is a public-Team-ID decision product. It reads public Fantasy Premier Lea
 
 ## Product surfaces
 
-- **Overview:** live/official/model/derived KPIs, current XI, fixtures and a single primary decision.
-- **My Team:** all 15 players on an interactive pitch, live/projected toggle, current-versus-model XI and formation-safe local swaps.
-- **Plan:** transfer or HOLD, hit-aware net gain, captain/vice-captain, chip state, five-GW what-if paths and meaningful local plan-change history.
-- **Explore:** public live player market, actual GW points, model projections, four-player comparison, shareable URL state and all-team fixture matrix.
-- **Team History:** evidence-based projected-versus-actual review after a finished Gameweek.
-- **Settings:** locally stored Team ID, runtime provenance, privacy boundary and commercial-release disclaimer.
+- **Overview:** a Gameweek cockpit. Before the deadline (decision mode) it leads with one plan card: transfer or HOLD, captain, vice-captain, projected score, chip, bench order and the main risk, with Why and Compare one tap away. While a Gameweek is live it switches to live points, captain contribution, played/playing/to-play progress, your matches, returns and an auto-sub watch. After a deadline the old plan is marked read-only.
+- **My Team:** all 15 players on a pitch with projected or live values, C/VC, availability flags and a player sheet (xP, xMins, start chance, price, form, ownership, five-GW outlook, model read, official news). Lineup simulation by drag and drop on desktop or tap-to-swap on touch; only legal formations are offered and nothing is sent to FPL.
+- **Plan & Transfers:** transfer decision with OUT→IN, next-GW gain, five-GW gain, hit cost and five-GW net; scenario comparison including hit checks; captaincy from owned players only; conservative chip advice; squad heatmap; minutes risk and local plan history.
+- **Players:** market table with search, position and price filters, sortable columns, next three fixtures, a shareable four-player shortlist and a comparison sheet. `/explore` redirects here.
+- **Fixtures:** every club's run with explicit home/away, blanks, doubles and a derived run score; owned clubs highlighted.
+- **History & Review:** official rank and points history plus the per-Gameweek review against the model file saved before that deadline.
+- **Settings:** locally stored Team ID, season goal, runtime provenance and the data-label guide.
 
-Overview and Plan suppress actionable transfer advice when the current Gameweek is `LIVE` or `FINISHED`. In those states the application shifts to live monitoring.
+Club identity uses an original kit system (club-inspired colours, generic patterns, initials). It deliberately avoids official crests, shirts, sponsors and league branding.
 
 ## Data contract
 
 The frontend uses `/api/v1/dashboard/{team_id}` as its resilient aggregate. A required team failure stops the request; optional live, history, fixtures, players or decision failures return a degraded response with area-specific errors.
 
-Every surface labels its data class:
+Every surface labels its data class (Cached is shown when the official service did not respond and the last good copy is used):
 
 - `Live`: current event/player output.
 - `Official`: official FPL manager, squad and fixture state.

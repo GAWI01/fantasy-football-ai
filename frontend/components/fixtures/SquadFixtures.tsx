@@ -32,13 +32,13 @@ export function SquadFixtures({ squad, horizon = 5 }: { squad: SquadPlayer[]; ho
       {matrix.loading && !matrix.data ? <Skeleton lines={5} /> : matrix.error && !matrix.data ? (
         <DataState compact tone="unavailable" title="Fixtures unavailable">{matrix.error}</DataState>
       ) : (
-        <div className="fx-table" role="table" aria-label="Fixture runs for clubs in your squad">
-          <div className="fx-tr fx-thead" role="row" style={{ gridTemplateColumns: `minmax(116px, 1.2fr) repeat(${gameweeks.length}, minmax(52px, 1fr))` }}>
+        <div className="table-scroll"><div className="fx-table" role="table" aria-label="Fixture runs for clubs in your squad">
+          <div className="fx-tr fx-thead" role="row" style={{ gridTemplateColumns: `minmax(104px, 1.2fr) repeat(${gameweeks.length}, minmax(54px, 1fr))` }}>
             <span role="columnheader">Club</span>
             {gameweeks.map((gameweek) => <span role="columnheader" key={gameweek}>GW{gameweek}</span>)}
           </div>
           {rows.map(({ team, players }) => (
-            <div className="fx-tr" role="row" key={team.team_id} style={{ gridTemplateColumns: `minmax(116px, 1.2fr) repeat(${gameweeks.length}, minmax(52px, 1fr))` }}>
+            <div className="fx-tr" role="row" key={team.team_id} style={{ gridTemplateColumns: `minmax(104px, 1.2fr) repeat(${gameweeks.length}, minmax(54px, 1fr))` }}>
               <span role="rowheader" className="fx-club">
                 <Kit team={team.team} teamShort={team.team_short} size={24} bare />
                 <span><b>{team.team_short}</b><small>{players.map((player) => player.name).join(", ")}</small></span>
@@ -49,7 +49,7 @@ export function SquadFixtures({ squad, horizon = 5 }: { squad: SquadPlayer[]; ho
             </div>
           ))}
           {!rows.length ? <p className="faint">No fixtures found for your clubs.</p> : null}
-        </div>
+        </div></div>
       )}
     </Card>
   );

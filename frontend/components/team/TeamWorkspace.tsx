@@ -230,7 +230,7 @@ export function TeamWorkspace() {
             <small>{targets.size ? "Tap a highlighted player to swap" : "No legal swap from here"}</small>
           </div>
           <div className="action-bar-buttons">
-            <button type="button" className="btn btn-sm" onClick={() => { setDetailId(selectedPlayer.id); }}>Details</button>
+            <button type="button" className="btn btn-sm" onClick={() => { setDetailId(selectedPlayer.id); setSelected(null); }}>Details</button>
             {current.starters.includes(selectedPlayer.id) ? (
               <>
                 <button type="button" className="btn btn-sm" disabled={current.captain === selectedPlayer.id} onClick={() => { apply(setArmband(current, selectedPlayer.id, "captain", squad)); setSelected(null); }}>Captain</button>

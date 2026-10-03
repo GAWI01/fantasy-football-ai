@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { Kit } from "@/components/kit/Kit";
+import { clubCode } from "@/lib/fpl/kits";
 import { MoveRow, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
@@ -162,7 +163,7 @@ function HorizonGrid({ squad }: { squad: SquadPlayer[] }) {
                   return (
                     <td key={gameweek} className={`heat-cell${blank ? " heat-blank" : ""}`} style={{ ["--heat" as string]: intensity.toFixed(3) }} title={`${player.name} GW${gameweek}: ${blank ? "blank" : `${cell.opponent ?? "TBC"}${cell.home == null ? "" : cell.home ? " (H)" : " (A)"}`} · ${fixed(cell.predicted_points)} xP`}>
                       <b>{blank ? "—" : fixed(cell.predicted_points)}</b>
-                      <small>{blank ? "Blank" : `${(cell.opponent ?? "").slice(0, 3).toUpperCase()}${cell.home == null ? "" : cell.home ? " H" : " A"}`}</small>
+                      <small>{blank ? "Blank" : `${cell.opponent ? clubCode(cell.opponent) : "TBC"}${cell.home == null ? "" : cell.home ? " H" : " A"}`}</small>
                     </td>
                   );
                 })}
@@ -246,9 +247,11 @@ export function PlanWorkspace() {
           </div>
         </Card>
 
-        <CaptainCompare plan={plan} squad={squad} />
+        <div className="stack">
+          <CaptainCompare plan={plan} squad={squad} />
+          <ChipCard plan={plan} locked={locked} />
+        </div>
         <ScenarioCompare plan={plan} />
-        <ChipCard plan={plan} locked={locked} />
         <div className="plan-wide"><HorizonGrid squad={squad} /></div>
         <Card id="why" title="Why this plan" icon={<Lightbulb size={16} />} className="plan-why">
           <ExplainPlan plan={plan} modelVersion={state.modelVersion} />

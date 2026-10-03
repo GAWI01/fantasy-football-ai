@@ -109,7 +109,7 @@ button.pp:active { transform: scale(0.97); }
   .pitch { padding: 14px 2px 10px; border-radius: var(--r-md); }
   .pitch-rows { row-gap: 10px; }
   .pp { width: 70px; padding: 3px 1px 4px; }
-  .pp-kit svg { width: 40px; height: 40px; }
+  .pp-kit > svg { width: 40px; height: 40px; }
   .pp-name { font-size: 10.5px; padding: 2px 3px 1px; }
   .pp-value { font-size: 11px; }
   .pp-fixture { font-size: 9.5px; }
@@ -118,5 +118,5 @@ button.pp:active { transform: scale(0.97); }
 }
 @media (max-width: 360px) {
   .pp { width: 62px; }
-  .pp-kit svg { width: 36px; height: 36px; }
+  .pp-kit > svg { width: 36px; height: 36px; }
 }

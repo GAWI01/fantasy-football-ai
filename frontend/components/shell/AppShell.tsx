@@ -73,8 +73,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const state = deriveGameState(dashboard);
   const team = dashboard?.data.team;
   const connected = Boolean(dashboard);
-  const deadlineEvent = state.targetEvent ?? dashboard?.data.live?.next_event ?? null;
-  const showDeadline = connected && state.deadline && state.phase !== "settled" ? state.deadline : null;
+  // While a Gameweek is live the useful countdown is the next deadline, not the one that just passed.
+  const liveNext = state.liveActive ? dashboard?.data.live : null;
+  const deadlineEvent = liveNext?.next_deadline_time ? liveNext.next_event ?? null : state.targetEvent ?? dashboard?.data.live?.next_event ?? null;
+  const deadlineTime = liveNext?.next_deadline_time ?? state.deadline;
+  const showDeadline = connected && deadlineTime && state.phase !== "settled" ? deadlineTime : null;
   const mobileItems = NAV_ITEMS.filter((item) => MOBILE_PRIMARY.includes(item.key));
   const moreItems = NAV_ITEMS.filter((item) => !MOBILE_PRIMARY.includes(item.key));
   const moreActive = moreItems.some((item) => isActive(item, pathname));

@@ -424,7 +424,7 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 .review-hero .review-scoreline { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
 .review-outcome { display: grid; gap: 2px; padding: 10px 16px; border-radius: var(--r-md); background: var(--surface-1); border: 1px solid var(--line-2); }
 .review-outcome strong { font-size: 2rem; letter-spacing: -0.04em; }
-.review-outcome span:last-child { font-size: var(--fs-sm); font-weight: 650; }
+.review-outcome > span:last-child { font-size: var(--fs-sm); font-weight: 650; }
 .tone-neutral { color: var(--text-2); }
 .review-call { display: grid; gap: 4px; }
 .review-call strong { font-size: var(--fs-lg); letter-spacing: -0.02em; }
@@ -508,4 +508,25 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
   .legend-note { margin-left: 0; width: 100%; }
   .risk-meter { width: 80px; }
   .players-page, .team-page { padding-bottom: 24px; }
+}
+
+/* Difficulty colours win over the neutral fixture-cell base. */
+.fx.fdr-1 { background: var(--fdr-1); color: #d1fae5; }
+.fx.fdr-2 { background: var(--fdr-2); color: #ecfdf5; }
+.fx.fdr-3 { background: var(--fdr-3); color: #e2e8f0; }
+.fx.fdr-4 { background: var(--fdr-4); color: #ffe4e6; }
+.fx.fdr-5 { background: var(--fdr-5); color: #ffe4e6; }
+.list-row > .list-row-end { margin-left: auto; }
+.list-row > .pchip { flex: 1; }
+.bench-hint { font-size: var(--fs-xs); }
+.seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Phone market table: keep the player column readable and pinned while the stats scroll. */
+@media (max-width: 767px) {
+  .market-table .table th:first-child, .market-table .table td:first-child {
+    position: sticky; left: 0; z-index: 2; min-width: 148px; max-width: 160px; background: var(--surface-1);
+    box-shadow: 1px 0 0 var(--line);
+  }
+  .market-table .table th:first-child { z-index: 3; }
+  .market-table .table td:nth-child(2) { min-width: 176px; }
 }
