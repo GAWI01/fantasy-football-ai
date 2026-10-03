@@ -32,3 +32,35 @@ This is the authoritative gap register for `FPL-AI_MVP_PRD.docx`. A green automa
 1. Run desktop, common-phone, touch, keyboard and browser-history QA when an interactive browser backend or physical devices are available. Browser discovery was revalidated on 2026-09-02 and returned no connected backends.
 2. Build and health-check both containers on a Docker-enabled CI/deployment host, then run the documented HTTPS smoke against real service URLs.
 3. Clear `docs/DATA_USE_RELEASE_GATE.md` before any public or paid launch.
+
+## Hosted staging preparation — 2026-10-01
+
+Branch: `deploy/staging-readiness`; local implementation only, no push/deploy.
+The September verification table above is historical evidence, not hosted QA.
+
+- Backend Docker context now permits only serving code and the explicit eight-file
+  data bundle; secrets, training artifacts and developer state are excluded.
+- The five previously ignored serving CSVs have explicit Git exceptions. The
+  existing GW3 timestamp/manifest is preserved; no current-GW refresh is claimed.
+- Status validates artifact structure, exposes generation/target GW fields and
+  degrades on target mismatch or stale upstream; liveness remains separate.
+- Backend runtime dependencies are pinned separately from research/test tooling;
+  frontend uses pnpm 11.25.0 and its unchanged lockfile exclusively.
+- Local checks: 361 Python tests passed (one existing pandas FutureWarning),
+  87 frontend tests passed, frozen install, lint, TypeScript and configured
+  production build passed. Standalone output served six core routes plus a JS
+  asset with HTTP 200. Serving-only temporary-copy validation/import passed.
+- Docker is not installed: Compose config/build and Linux container verification
+  remain unrun. Hosted HTTPS/device/access-control QA remains outstanding.
+- Data-use gate remains unchanged. See DEPLOYMENT.md and PROJECT_HANDOFF.md.
+
+### Pre-commit corrections — 2026-10-03
+
+The final review identified over-broad Docker parent-directory exceptions and
+invalid UTF-8 dash bytes in the handoff/status documents. The directory
+exceptions were removed and file exceptions retained. Encoding was corrected.
+New regressions cover directory reinclusion, the exact eight-file data bundle,
+and strict UTF-8 decoding. The targeted deployment/status/runtime-artifact suite
+passed 26 tests after these fixes; git diff --check passed. No new full-suite or
+frontend build run was needed. Docker image verification, hosted private access,
+current-GW artifact publication and the public data-use gate remain outstanding.

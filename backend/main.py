@@ -25,6 +25,7 @@ from .data_loader import (
     load_teams as load_current_teams,
 )
 from .data_manifest import load_current_manifest
+from .runtime_artifacts import validate_runtime_artifacts
 from .dashboard_service import DashboardDependencies, build_dashboard
 from .fpl_gateway import (
     FplGatewayError,
@@ -107,8 +108,10 @@ def get_status_v1():
         "official": None,
         "model": None,
         "service_state": "unavailable",
+        "artifacts": {"loaded": False, "files": []},
     }
     meta: dict = {}
+    target_event = None
 
     try:
         official_result = default_gateway.get_json(
@@ -119,6 +122,8 @@ def get_status_v1():
         events = bootstrap.get("events") or []
         current = next((event for event in events if event.get("is_current")), None)
         upcoming = next((event for event in events if event.get("is_next")), None)
+        target = upcoming or current
+        target_event = target.get("id") if target else None
         data["official"] = {
             "current_event": current.get("id") if current else None,
             "next_event": upcoming.get("id") if upcoming else None,
@@ -130,6 +135,8 @@ def get_status_v1():
             official_result.fetched_at,
             stale=official_result.stale,
         )
+        if official_result.stale:
+            errors.append({"area": "official", "message": "Official data is cached/stale"})
     except (FplGatewayError, AttributeError, TypeError) as exc:
         errors.append({"area": "official", "message": str(exc)})
 
@@ -141,14 +148,31 @@ def get_status_v1():
             "prediction_file": manifest.prediction_file,
             "player_count": manifest.player_count,
             "schema_version": manifest.schema_version,
+            "generated_at": manifest.generated_at.isoformat(),
+            "target_event": target_event,
+            "matches_target_event": (
+                manifest.prediction_event == target_event if target_event is not None else None
+            ),
         }
         meta["model"] = source_meta(
             "model",
             manifest.generated_at,
             version=manifest.prediction_file,
         )
+        if target_event is None:
+            errors.append({"area": "model", "message": "Official target Gameweek is unknown"})
+        elif manifest.prediction_event != target_event:
+            errors.append({
+                "area": "model",
+                "message": f"Prediction GW{manifest.prediction_event} does not match official target GW{target_event}",
+            })
     except ValueError as exc:
         errors.append({"area": "model", "message": str(exc)})
+
+    try:
+        data["artifacts"] = validate_runtime_artifacts(PREDICTIONS_DIR)
+    except ValueError as exc:
+        errors.append({"area": "artifacts", "message": str(exc)})
 
     if data["official"] is not None and data["model"] is not None:
         data["service_state"] = "ready" if not errors else "degraded"

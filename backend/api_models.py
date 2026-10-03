@@ -53,6 +53,7 @@ class StatusDataModel(BaseModel):
     official: dict[str, Any] | None
     model: dict[str, Any] | None
     service_state: Literal["ready", "degraded", "unavailable"]
+    artifacts: dict[str, Any]
 
 
 class StatusEnvelopeModel(BaseModel):
