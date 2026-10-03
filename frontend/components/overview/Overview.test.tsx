@@ -77,3 +77,11 @@ test("connects from a pasted team URL", async () => {
   expect(await screen.findByRole("heading", { name: "Midnight Pressers" })).toBeInTheDocument();
   expect(fetch.mock.calls.some(([input]) => String(input).includes("/api/v1/dashboard/4242"))).toBe(true);
 });
+
+test("the example team opens gawi's cockpit in one click", async () => {
+  localStorage.clear();
+  const fetch = mockApi();
+  renderOverview();
+  await userEvent.click(await screen.findByRole("button", { name: /Try gawi’s team 6658075/ }));
+  expect(fetch.mock.calls.some(([input]) => String(input).includes("/api/v1/dashboard/6658075"))).toBe(true);
+});

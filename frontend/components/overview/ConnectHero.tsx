@@ -7,6 +7,9 @@ import { useState, type FormEvent } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 import { BrandMark } from "@/components/shell/BrandMark";
 
+/** A real public team people can open to see the cockpit before entering their own. */
+const EXAMPLE_TEAM = { id: "6658075", owner: "gawi" };
+
 const PROMISES = [
   { icon: Repeat2, title: "Transfer or hold", text: "One clear call with the expected gain, hit cost and the alternative." },
   { icon: Crown, title: "Captain and lineup", text: "Armband, vice, best XI and bench order from the players you own." },
@@ -18,6 +21,11 @@ export function ConnectHero() {
   const [value, setValue] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
+  async function open(id: string) {
+    setLocalError(null);
+    try { await connect(id); } catch { /* The provider exposes the API error. */ }
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     const trimmed = value.trim();
@@ -27,8 +35,7 @@ export function ConnectHero() {
       setLocalError("Enter the number from your FPL team URL, e.g. 1234567.");
       return;
     }
-    setLocalError(null);
-    try { await connect(id); } catch { /* The provider exposes the API error. */ }
+    await open(id);
   }
 
   const message = localError ?? error;
@@ -59,6 +66,13 @@ export function ConnectHero() {
               </button>
             </div>
             <p id="team-id-help" className="connect-help">Find it in your team’s web address: …/entry/<b>1234567</b>/event/…</p>
+            <p className="connect-example">
+              <span className="faint">Just looking?</span>
+              <button type="button" className="example-chip" onClick={() => open(EXAMPLE_TEAM.id)} disabled={loading}>
+                Try {EXAMPLE_TEAM.owner}’s team <span className="num">{EXAMPLE_TEAM.id}</span>
+                <ArrowRight size={13} aria-hidden="true" />
+              </button>
+            </p>
             {message ? <p id="team-id-error" className="connect-error" role="alert">{message}</p> : null}
           </form>
           <p className="connect-trust"><Lock size={13} aria-hidden="true" /> Public data only. No password, and Fantasy Football AI never changes your official team.</p>
