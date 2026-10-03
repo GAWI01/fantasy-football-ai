@@ -1,8 +1,8 @@
 {
   "season": "2026-27",
-  "prediction_event": 3,
-  "prediction_file": "gw3_predictions_v11.csv",
-  "generated_at": "2026-08-31T18:12:10+02:00",
-  "player_count": 623,
+  "prediction_event": 6,
+  "prediction_file": "gw6_predictions_v11.csv",
+  "generated_at": "2026-10-03T16:49:49.526098+00:00",
+  "player_count": 667,
   "schema_version": 1
 }
