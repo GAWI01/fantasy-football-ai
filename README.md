@@ -1,17 +1,17 @@
-# FPL-AI
+# Fantasy Football AI
 
-Premium Fantasy Premier League (FPL) decision-support system combining live official data, prediction models, optimization and an explainable decision layer.
+Fantasy Football AI (formerly FPL-AI) is a free, independent decision-support tool for Fantasy Premier League managers, combining live official data, prediction models, optimization and an explainable decision layer.
 
 The repository now also contains a responsive premium web cockpit in `frontend/` and a resilient versioned API in `backend/`. See [docs/PREMIUM_DASHBOARD.md](docs/PREMIUM_DASHBOARD.md) for product surfaces, setup, deployment configuration and verification.
 
-> **Status:** Private/local premium MVP. The engineering PRD is implemented and locally verified; public/paid release remains gated by data-use permissions and hosted/device QA.
+> **Status:** Free, non-commercial beta. Fantasy Football AI is not affiliated with or endorsed by the Premier League or Fantasy Premier League. Public operation follows the conditions in [the data-use release gate](docs/DATA_USE_RELEASE_GATE.md); paid or commercial use remains blocked.
 > **Current product:** Responsive Next.js cockpit plus FastAPI decision API, public Team ID connection, live mode, interactive squad, five-GW Plan/What-if, player/fixture Explore and post-GW review.
 
-Start with [the premium dashboard guide](docs/PREMIUM_DASHBOARD.md), inspect [the PRD status](docs/PRD_IMPLEMENTATION_STATUS.md), and do not publish commercially before clearing [the data-use release gate](docs/DATA_USE_RELEASE_GATE.md).
+Start with [the premium dashboard guide](docs/PREMIUM_DASHBOARD.md), inspect [the PRD status](docs/PRD_IMPLEMENTATION_STATUS.md), and follow the free-release conditions in [the data-use release gate](docs/DATA_USE_RELEASE_GATE.md).
 
-## Run FPL AI locally
+## Run Fantasy Football AI locally
 
-FPL AI consists of two processes:
+Fantasy Football AI consists of two processes:
 
 - a FastAPI backend on `http://localhost:8000`
 - a Next.js frontend on `http://localhost:3000`

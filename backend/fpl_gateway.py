@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+from collections import OrderedDict, deque
 from dataclasses import dataclass
 from contextvars import ContextVar, Token
 from datetime import datetime, timezone
@@ -12,6 +14,14 @@ import requests
 
 FPL_API = "https://fantasy.premierleague.com/api"
 REQUEST_TIMEOUT_SECONDS = 10
+# A public deployment must stay a polite, low-volume reader of the official API.
+# These bounds cap memory use and the upstream request rate regardless of traffic.
+MAX_CACHE_ENTRIES = int(os.getenv("FPL_AI_UPSTREAM_CACHE_ENTRIES", "2000"))
+MAX_UPSTREAM_REQUESTS_PER_MINUTE = int(os.getenv("FPL_AI_UPSTREAM_MAX_PER_MINUTE", "60"))
+USER_AGENT = os.getenv(
+    "FPL_AI_UPSTREAM_USER_AGENT",
+    "FantasyFootballAI/1.0 (independent non-commercial tool; +https://github.com/GAWI01/FPL-AI)",
+)
 
 
 class FplGatewayError(RuntimeError):
@@ -61,11 +71,29 @@ class FplGateway:
         *,
         http_get: Callable[..., Any] = requests.get,
         clock: Callable[[], float] = monotonic,
+        max_entries: int = MAX_CACHE_ENTRIES,
+        max_requests_per_minute: int = MAX_UPSTREAM_REQUESTS_PER_MINUTE,
     ) -> None:
+        if max_entries < 1 or max_requests_per_minute < 1:
+            raise ValueError("gateway limits must be positive")
         self._http_get = http_get
         self._clock = clock
-        self._cache: dict[str, _CacheEntry] = {}
+        self._max_entries = max_entries
+        self._max_requests_per_minute = max_requests_per_minute
+        self._cache: OrderedDict[str, _CacheEntry] = OrderedDict()
+        self._request_times: deque[float] = deque()
         self._lock = RLock()
+
+    def _take_request_slot(self) -> bool:
+        """Reserve one upstream request within the rolling one-minute budget."""
+        with self._lock:
+            now = self._clock()
+            while self._request_times and now - self._request_times[0] >= 60:
+                self._request_times.popleft()
+            if len(self._request_times) >= self._max_requests_per_minute:
+                return False
+            self._request_times.append(now)
+            return True
 
     @staticmethod
     def _url(path: str) -> str:
@@ -81,6 +109,8 @@ class FplGateway:
         with self._lock:
             now = self._clock()
             cached = self._cache.get(url)
+            if cached is not None:
+                self._cache.move_to_end(url)
             if cached is not None and now - cached.stored_at <= ttl_seconds:
                 return _record(GatewayResult(
                     data=cached.data,
@@ -91,12 +121,15 @@ class FplGateway:
         last_error: Exception | None = None
         data: Any | None = None
         for _attempt in range(2):
+            if not self._take_request_slot():
+                last_error = FplGatewayError("upstream request budget exhausted")
+                break
             try:
                 response = self._http_get(
                     url,
                     timeout=REQUEST_TIMEOUT_SECONDS,
                     headers={
-                        "User-Agent": "FPL-AI/1.0",
+                        "User-Agent": USER_AGENT,
                         "Accept": "application/json",
                     },
                 )
@@ -126,6 +159,9 @@ class FplGateway:
                 fetched_at=fetched_at,
                 stored_at=self._clock(),
             )
+            self._cache.move_to_end(url)
+            while len(self._cache) > self._max_entries:
+                self._cache.popitem(last=False)
         return _record(GatewayResult(
             data=data,
             fetched_at=fetched_at,
