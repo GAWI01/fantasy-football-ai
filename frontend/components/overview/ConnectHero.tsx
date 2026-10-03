@@ -8,7 +8,7 @@ import { useTeam } from "@/app/providers/TeamProvider";
 import { BrandMark } from "@/components/shell/BrandMark";
 
 /** A real public team people can open to see the cockpit before entering their own. */
-const EXAMPLE_TEAM = { id: "665875", owner: "gawi" };
+const EXAMPLE_TEAM = { id: "6658075", owner: "gawi" };
 
 const PROMISES = [
   { icon: Repeat2, title: "Transfer or hold", text: "One clear call with the expected gain, hit cost and the alternative." },

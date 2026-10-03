@@ -82,6 +82,6 @@ test("the example team opens gawi's cockpit in one click", async () => {
   localStorage.clear();
   const fetch = mockApi();
   renderOverview();
-  await userEvent.click(await screen.findByRole("button", { name: /Try gawi’s team 665875/ }));
-  expect(fetch.mock.calls.some(([input]) => String(input).includes("/api/v1/dashboard/665875"))).toBe(true);
+  await userEvent.click(await screen.findByRole("button", { name: /Try gawi’s team 6658075/ }));
+  expect(fetch.mock.calls.some(([input]) => String(input).includes("/api/v1/dashboard/6658075"))).toBe(true);
 });
