@@ -48,6 +48,15 @@ test("builds a transfer plan with honest next-GW, horizon and hit numbers", () =
   expect(plan.mainRisk.title).toContain("Varga");
 });
 
+test("id-only plan rows still show the incoming player's name and price from the official list", () => {
+  const data = makeDashboard({ verdict: "TRANSFER" }).data;
+  const strategy = data.decision!.intelligence!.transfer_strategy!;
+  strategy.selected_transfers = strategy.selected_transfers!.map(({ player_out_id, player_in_id }) => ({ player_out_id, player_in_id }) as never);
+  const plan = buildPlan(data, buildSquad(data), market)!;
+  const incoming = market.get(plan.recommended.moves[0].inId)!;
+  expect(plan.recommended.moves[0]).toMatchObject({ outName: "Ekström", inName: incoming.name, inPrice: incoming.price });
+});
+
 test("a HOLD verdict keeps the best evaluated move as context, not as the recommendation", () => {
   const data = makeDashboard({ verdict: "HOLD" }).data;
   const plan = buildPlan(data, buildSquad(data), market)!;

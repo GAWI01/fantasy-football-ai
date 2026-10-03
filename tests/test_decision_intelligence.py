@@ -38,6 +38,24 @@ def test_three_gameweek_transfer_horizon():
     assert out["transfer_strategy"]["horizon_gain"]==9
 
 
+def test_horizon_selection_keeps_transfer_names_and_prices():
+    p1=pd.DataFrame([{"player_id":1,"predicted_points":4},{"player_id":2,"predicted_points":5}])
+    p2=pd.DataFrame([{"player_id":1,"predicted_points":4},{"player_id":2,"predicted_points":8}])
+    team={"players":[{"player_id":1,"name":"A","predicted_points":4,"xmins":90,"availability":"AVAILABLE"}]+[
+        {"player_id":i,"name":str(i),"predicted_points":1,"xmins":90,"availability":"AVAILABLE"} for i in range(3,17)
+    ]}
+    xi=pd.DataFrame([{"player_id":1,"name":"A","predicted_points":4,"xmins":90,"start_probability":1,"availability":"AVAILABLE","difficulty":2},{"player_id":3,"name":"3","predicted_points":1,"xmins":90,"start_probability":1,"availability":"AVAILABLE","difficulty":2}])
+    named={"player_out_id":1,"player_out":"A","player_in_id":2,"player_in":"Gakpo","price":7.0,"position":"MID"}
+    tr={"net_gain":1,"gross_gain":1,"transfers_used":1,"hit_cost":0,"recommended_transfers":[named],"alternatives":[{"transfers":[named],"net_gain":0.5}]}
+    out=build_intelligence(current_team=team,predictions=p1,starting_xi=xi,transfer_result=tr,horizon_predictions={2:p2},horizon=2)
+    selected=out["transfer_strategy"]["selected_transfers"][0]
+    assert selected["player_in"]=="Gakpo"
+    assert selected["price"]==7.0
+    assert selected["player_out"]=="A"
+    assert "in_projection" in selected
+    assert out["transfer_strategy"]["alternatives"][0]["transfers"][0]["player_in"]=="Gakpo"
+
+
 def test_unknown_chip_state_never_invents_availability():
     p = pd.DataFrame([
         {"player_id": 1, "name": "A", "position": "MID", "team": "A", "price": 5, "predicted_points": 5, "xmins": 90, "start_probability": 1, "availability": "AVAILABLE", "difficulty": 2},

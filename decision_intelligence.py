@@ -77,6 +77,23 @@ def _transfer_plan_from_item(item: Mapping[str, Any]) -> list[dict[str, Any]]:
         and x.get("player_in_id") is not None
     ]
 
+def _horizon_candidate(
+    transfers: list[dict[str, Any]],
+    current_net: float,
+    predictions_by_gw: Mapping[int, pd.DataFrame],
+    horizon: int,
+) -> dict[str, Any]:
+    future = evaluate_transfer_horizon(transfers, predictions_by_gw, horizon)
+    # Keep the named transfer rows (name, price, position) and add the
+    # per-transfer horizon detail to them, rather than replacing them.
+    detailed = [{**transfer, **detail} for transfer, detail in zip(transfers, future["transfers"])]
+    return {
+        **future,
+        "transfers": detailed,
+        "current_net_gain": current_net,
+        "combined_score": current_net + future["horizon_gain"],
+    }
+
 def _select_horizon_transfer(
     transfer_result: Mapping[str, Any],
     predictions_by_gw: Mapping[int, pd.DataFrame],
@@ -88,26 +105,14 @@ def _select_horizon_transfer(
     })
     if best_transfers:
         current_net = float(transfer_result.get("net_gain", 0.0))
-        future = evaluate_transfer_horizon(best_transfers, predictions_by_gw, horizon)
-        candidates.append({
-            "transfers": best_transfers,
-            "current_net_gain": current_net,
-            **future,
-            "combined_score": current_net + future["horizon_gain"],
-        })
+        candidates.append(_horizon_candidate(best_transfers, current_net, predictions_by_gw, horizon))
 
     for alt in transfer_result.get("alternatives", []) or []:
         transfers = _transfer_plan_from_item(alt)
         if not transfers:
             continue
-        future = evaluate_transfer_horizon(transfers, predictions_by_gw, horizon)
         current_net = float(alt.get("net_gain", alt.get("gross_gain", 0.0)) or 0.0)
-        candidates.append({
-            "transfers": transfers,
-            "current_net_gain": current_net,
-            **future,
-            "combined_score": current_net + future["horizon_gain"],
-        })
+        candidates.append(_horizon_candidate(transfers, current_net, predictions_by_gw, horizon))
 
     if not candidates:
         return {
