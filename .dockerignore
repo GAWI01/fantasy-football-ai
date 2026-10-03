@@ -1,9 +1,38 @@
-.git
-.venv
-**/__pycache__
-**/.pytest_cache
-**/.next
-**/node_modules
+# Backend-only context: deny by default, then allow serving code and artifacts.
+# The frontend Docker build uses frontend/.dockerignore in its own context.
+**
+!backend/*.py
+!backend/runtime-requirements.txt
+!optimizer/*.py
+!decision_contract.py
+!decision_engine.py
+!decision_horizon.py
+!decision_intelligence.py
+!decision_risk.py
+!decision_strategy.py
+!transfer_analysis.py
+!fpl_rules.py
+!historical_data/current_data/players_current.csv
+!historical_data/current_data/players_raw.csv
+!historical_data/current_data/teams_current.csv
+!historical_data/current_data/fixtures_current.csv
+!historical_data/current_data/gameweeks_current.csv
+!historical_data/current_data/manifest.json
+!historical_data/current_data/gw3_predictions_v11.csv
+!historical_data/current_data/gw3_predictions_v11.csv.manifest.json
+
+# Defense in depth: never send local secrets or caches, even after allowlist edits.
+**/.env
+**/.env.*
+**/secrets/**
+**/credentials*
+**/*.pem
+**/*.key
+**/.git/**
+**/.venv/**
+**/venv/**
+**/__pycache__/**
+**/.pytest_cache/**
+**/node_modules/**
+**/.next/**
 **/*.pyc
-.tmp
-fpl.db

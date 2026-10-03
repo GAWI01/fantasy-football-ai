@@ -65,3 +65,10 @@ historical_data/current_data/*_current.csv
 
 # Generated GW history
 historical_data/current_data/gw*_history.csv
+
+# Explicit serving bundle for private staging. No broad generated-data exception.
+!historical_data/current_data/players_current.csv
+!historical_data/current_data/teams_current.csv
+!historical_data/current_data/fixtures_current.csv
+!historical_data/current_data/gameweeks_current.csv
+!historical_data/current_data/gw3_predictions_v11.csv

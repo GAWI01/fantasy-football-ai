@@ -55,3 +55,50 @@ def test_status_v1_reports_official_and_model_freshness(monkeypatch):
     assert body["data"]["service_state"] == "ready"
     assert body["meta"]["official"]["source"] == "official"
     assert body["meta"]["model"]["source"] == "model"
+    assert body["data"]["model"]["generated_at"] == "2026-08-31T17:00:00+00:00"
+    assert body["data"]["model"]["target_event"] == 3
+    assert body["data"]["model"]["matches_target_event"] is True
+    assert body["data"]["artifacts"]["loaded"] is True
+
+
+def _official(monkeypatch, *, target=4, stale=False):
+    monkeypatch.setattr(main, "default_gateway", SimpleNamespace(get_json=lambda *a, **k: SimpleNamespace(
+        data={"events": [{"id": target, "is_next": True}], "elements": [], "teams": []},
+        fetched_at=datetime.now(timezone.utc), stale=stale,
+    )))
+
+
+def test_status_rejects_old_target_even_with_valid_artifacts(monkeypatch):
+    _official(monkeypatch)
+    body = TestClient(app).get("/api/v1/status").json()
+    assert body["data"]["artifacts"]["loaded"] is True
+    assert body["data"]["model"]["matches_target_event"] is False
+    assert body["data"]["service_state"] == "degraded"
+    assert any("GW4" in error["message"] for error in body["errors"])
+
+
+def test_status_reports_missing_artifacts_without_breaking_liveness(monkeypatch):
+    _official(monkeypatch, target=3)
+    def missing(_directory):
+        raise ValueError("Missing current-data file: teams_current.csv")
+    monkeypatch.setattr(main, "validate_runtime_artifacts", missing)
+    client = TestClient(app)
+    body = client.get("/api/v1/status").json()
+    assert body["data"]["artifacts"]["loaded"] is False
+    assert body["data"]["service_state"] == "degraded"
+    assert any(error["area"] == "artifacts" for error in body["errors"])
+    assert client.get("/health").json() == {"status": "ok"}
+
+
+def test_cached_official_data_cannot_report_ready(monkeypatch):
+    _official(monkeypatch, target=3, stale=True)
+    body = TestClient(app).get("/api/v1/status").json()
+    assert body["data"]["service_state"] == "degraded"
+    assert body["meta"]["official"]["stale"] is True
+
+
+def test_unknown_target_cannot_report_ready(monkeypatch):
+    _official(monkeypatch, target=None)
+    body = TestClient(app).get("/api/v1/status").json()
+    assert body["data"]["service_state"] == "degraded"
+    assert body["data"]["model"]["matches_target_event"] is None

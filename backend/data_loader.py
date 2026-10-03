@@ -55,8 +55,8 @@ GAMEWEEK_REQUIRED_COLUMNS = {
 }
 
 
-def _read_csv(filename: str) -> pd.DataFrame:
-    path = CURRENT_DATA_DIR / filename
+def _read_csv(filename: str, data_dir: Path | None = None) -> pd.DataFrame:
+    path = (data_dir if data_dir is not None else CURRENT_DATA_DIR) / filename
 
     if not path.exists():
         raise DataLoaderError(f"Missing current-data file: {path}")
@@ -83,9 +83,9 @@ def _require_columns(
         )
 
 
-def load_players() -> pd.DataFrame:
+def load_players(data_dir: Path | None = None) -> pd.DataFrame:
     """Load the canonical current player table."""
-    df = _read_csv("players_current.csv")
+    df = _read_csv("players_current.csv", data_dir)
 
     _require_columns(
         df,
@@ -106,9 +106,9 @@ def load_players() -> pd.DataFrame:
     return df
 
 
-def load_players_raw() -> pd.DataFrame:
+def load_players_raw(data_dir: Path | None = None) -> pd.DataFrame:
     """Load the richer raw FPL player snapshot."""
-    df = _read_csv("players_raw.csv")
+    df = _read_csv("players_raw.csv", data_dir)
 
     _require_columns(
         df,
@@ -129,9 +129,9 @@ def load_players_raw() -> pd.DataFrame:
     return df
 
 
-def load_teams() -> pd.DataFrame:
+def load_teams(data_dir: Path | None = None) -> pd.DataFrame:
     """Load current FPL teams."""
-    df = _read_csv("teams_current.csv")
+    df = _read_csv("teams_current.csv", data_dir)
 
     _require_columns(
         df,
@@ -152,9 +152,9 @@ def load_teams() -> pd.DataFrame:
     return df
 
 
-def load_fixtures() -> pd.DataFrame:
+def load_fixtures(data_dir: Path | None = None) -> pd.DataFrame:
     """Load current FPL fixtures."""
-    df = _read_csv("fixtures_current.csv")
+    df = _read_csv("fixtures_current.csv", data_dir)
 
     _require_columns(
         df,
@@ -175,9 +175,9 @@ def load_fixtures() -> pd.DataFrame:
     return df
 
 
-def load_gameweeks() -> pd.DataFrame:
+def load_gameweeks(data_dir: Path | None = None) -> pd.DataFrame:
     """Load current FPL gameweeks."""
-    df = _read_csv("gameweeks_current.csv")
+    df = _read_csv("gameweeks_current.csv", data_dir)
 
     _require_columns(
         df,
@@ -198,17 +198,17 @@ def load_gameweeks() -> pd.DataFrame:
     return df
 
 
-def validate_current_data() -> None:
+def validate_current_data(data_dir: Path | None = None) -> None:
     """
     Validate the structural relationships between current-data tables.
 
     This function is read-only and does not modify source files.
     """
-    players = load_players()
-    raw_players = load_players_raw()
-    teams = load_teams()
-    fixtures = load_fixtures()
-    gameweeks = load_gameweeks()
+    players = load_players(data_dir)
+    raw_players = load_players_raw(data_dir)
+    teams = load_teams(data_dir)
+    fixtures = load_fixtures(data_dir)
+    gameweeks = load_gameweeks(data_dir)
 
     player_ids = set(players["player_id"])
     raw_player_ids = set(raw_players["id"])
