@@ -12,7 +12,7 @@ import { seasonGoalOptions, useSeasonGoal, writeSeasonGoal, type SeasonGoal } fr
 const SOURCE_GUIDE: Array<{ kind: Parameters<typeof SourceBadge>[0]["kind"]; text: string }> = [
   { kind: "live", text: "Scores updating during a Gameweek. They can still change until bonus is confirmed." },
   { kind: "official", text: "Facts returned by the public FPL service: picks, prices, fixtures, points." },
-  { kind: "model", text: "Projections from the FPL-AI model. A forecast, never a result." },
+  { kind: "model", text: "Projections from the Fantasy Football AI model. A forecast, never a result." },
   { kind: "derived", text: "Arithmetic on the above, such as transfer gain after a hit." },
   { kind: "cached", text: "The last good copy, shown when the official service did not respond." },
 ];
@@ -28,7 +28,7 @@ export function SettingsWorkspace() {
         <div>
           <span className="eyebrow">Account &amp; data</span>
           <h1>Settings</h1>
-          <p className="page-lede">Your public Team ID is stored only in this browser. FPL-AI never asks for an FPL password.</p>
+          <p className="page-lede">Your public Team ID is stored only in this browser. Fantasy Football AI never asks for an FPL password.</p>
         </div>
       </header>
 
@@ -73,9 +73,9 @@ export function SettingsWorkspace() {
         </Card>
       </div>
 
-      <Card title="What FPL-AI can and cannot do" icon={<ShieldCheck size={16} />}>
-        <p>FPL-AI reads public manager data and gives decision support. It cannot make transfers, play chips or change your captain on the official game; every lineup and transfer on this site is a simulation until you make it yourself.</p>
-        <p className="card-note">Independent project. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. Club colours are shown as original, simplified kits and are not official designs.</p>
+      <Card title="What Fantasy Football AI can and cannot do" icon={<ShieldCheck size={16} />}>
+        <p>Fantasy Football AI is a free, independent tool. It reads public manager data and gives decision support. It cannot make transfers, play chips or change your captain on the official game; every lineup and transfer on this site is a simulation until you make it yourself.</p>
+        <p className="card-note">Not affiliated with or endorsed by the Premier League or Fantasy Premier League. Club colours are shown as original, simplified kits and are not official designs.</p>
       </Card>
     </div>
   );

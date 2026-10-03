@@ -38,7 +38,7 @@ export type KitProps = {
   bare?: boolean;
 };
 
-/** An original, club-inspired FPL-AI shirt. Decorative: callers provide accessible names. */
+/** An original, club-inspired Fantasy Football AI shirt. Decorative: callers provide accessible names. */
 export function Kit({ team, teamShort, goalkeeper = false, size = 44, className, bare = false }: KitProps) {
   const id = useId().replace(/:/g, "");
   const kit = kitDesign(team, teamShort, goalkeeper);

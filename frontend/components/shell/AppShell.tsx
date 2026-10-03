@@ -86,9 +86,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="masthead">
         <div className="masthead-row">
-          <Link href="/" className="brand" aria-label="FPL-AI overview">
+          <Link href="/" className="brand" aria-label="Fantasy Football AI overview">
             <BrandMark size={34} />
-            <span className="brand-text"><strong>FPL<em>·</em>AI</strong><small>Gameweek intelligence</small></span>
+            <span className="brand-text"><strong><span className="brand-full">Fantasy Football<em>·</em>AI</span><span className="brand-short" aria-hidden="true">FF<em>·</em>AI</span></strong><small>Gameweek intelligence</small></span>
           </Link>
           <nav className="topnav" aria-label="Primary">
             {NAV_ITEMS.filter((item) => item.key !== "settings").map((item) => {
@@ -140,8 +140,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main id="main-content" className="content" tabIndex={-1}>{children}</main>
 
       <footer className="site-foot">
-        <span>FPL-AI is an independent tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League.</span>
-        <span>Recommendations only. FPL-AI never changes your official team.</span>
+        <span>Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</span>
+        <span>Recommendations only.</span>
       </footer>
 
       <nav className="tabbar" aria-label="Mobile primary">
@@ -173,7 +173,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <p className="side-disclaimer">Independent tool. Not affiliated with the Premier League or FPL. FPL-AI never changes your official team.</p>
+        <p className="side-disclaimer">Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</p>
       </Sheet>
     </div>
   );

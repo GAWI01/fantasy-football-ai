@@ -117,7 +117,7 @@ function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
       <div className="chip-call">
         <span className="eyebrow">{locked ? "Locked for this deadline" : "Recommendation"}</span>
         <strong className={plan.chip.recommended ? "tone-warn" : undefined}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold your chips"}</strong>
-        <p className="muted">{plan.chip.recommended ? `The ${CHIP_LABEL[plan.chip.recommended]} case cleared the engine's threshold (score ${fixed(plan.chip.score, 2)}). Check team news before committing.` : "No chip clears the evidence bar this week. Chips are worth most in doubles, blanks or a squad crisis, so FPL-AI defaults to holding."}</p>
+        <p className="muted">{plan.chip.recommended ? `The ${CHIP_LABEL[plan.chip.recommended]} case cleared the engine's threshold (score ${fixed(plan.chip.score, 2)}). Check team news before committing.` : "No chip clears the evidence bar this week. Chips are worth most in doubles, blanks or a squad crisis, so the engine defaults to holding."}</p>
       </div>
       <div className="chip-grid">
         {chips.map((chip) => (

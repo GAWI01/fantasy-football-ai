@@ -1,4 +1,4 @@
-/** Original FPL-AI mark: a centre circle with an ascending signal path. */
+/** Original Fantasy Football AI mark: a centre circle with an ascending signal path. */
 export function BrandMark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false" className="brand-mark">

@@ -134,7 +134,7 @@ export function TeamWorkspace() {
         <div>
           <span className="eyebrow">{dashboard.data.team.name} · GW{activeMode === "live" ? state.currentEvent : state.targetEvent ?? state.currentEvent}</span>
           <h1>My Team</h1>
-          <p>Tap or drag players to test lineups, bench order and armbands. {locked ? "The deadline has passed, so this is a what-if view only." : "Changes stay in FPL-AI; set your real team in the official app."}</p>
+          <p>Tap or drag players to test lineups, bench order and armbands. {locked ? "The deadline has passed, so this is a what-if view only." : "Changes stay in Fantasy Football AI; set your real team in the official app."}</p>
         </div>
         <div className="page-head-actions">
           <Segmented<ValueMode>

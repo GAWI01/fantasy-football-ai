@@ -1,8 +1,8 @@
 /**
- * The FPL-AI kit system: original, club-inspired shirts.
+ * The Fantasy Football AI kit system: original, club-inspired shirts.
  *
  * Every club is represented by its colours plus one of a small family of
- * FPL-AI house patterns. Patterns are deliberately assigned so that no club
+ * Fantasy Football AI house patterns. Patterns are deliberately assigned so that no club
  * gets a reproduction of its real shirt layout (no Arsenal sleeves, no
  * Newcastle stripes, etc.). No crests, sponsors, maker marks or protected kit
  * details are used — only colour, geometry and the club's initials.
@@ -68,7 +68,7 @@ const neutral: Omit<KitDesign, "code"> = {
   body: "#3a3f52", detail: "#8b7cf6", trim: "#c9c3ff", ink: "#ffffff", pattern: "plain",
 };
 
-/** Goalkeeper shirts share one FPL-AI palette, trimmed in the club colour. */
+/** Goalkeeper shirts share one house palette, trimmed in the club colour. */
 const GOALKEEPER_BODY = "#20c997";
 
 export function clubCode(team?: string | null, teamShort?: string | null): string {

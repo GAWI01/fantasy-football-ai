@@ -36,9 +36,9 @@ export function ConnectHero() {
     <div className="connect">
       <section className="connect-hero" aria-labelledby="connect-title">
         <div className="connect-copy">
-          <span className="connect-brand"><BrandMark size={40} /><span className="eyebrow">FPL-AI · Gameweek intelligence</span></span>
+          <span className="connect-brand"><BrandMark size={40} /><span className="eyebrow">Fantasy Football AI · Gameweek intelligence</span></span>
           <h1 id="connect-title">Know your move <span>before the deadline.</span></h1>
-          <p>Connect your public team and FPL-AI turns official data, model projections and an optimizer into one plan: transfer or hold, captain, bench and chip, with the reasons and the risk.</p>
+          <p>Connect your public team and Fantasy Football AI turns official data, model projections and an optimizer into one plan: transfer or hold, captain, bench and chip, with the reasons and the risk.</p>
           <form className="connect-form" onSubmit={submit} noValidate>
             <label htmlFor="team-id-input" className="field-label">Your FPL Team ID</label>
             <div className="connect-input-row">
@@ -61,7 +61,7 @@ export function ConnectHero() {
             <p id="team-id-help" className="connect-help">Find it in your team’s web address: …/entry/<b>1234567</b>/event/…</p>
             {message ? <p id="team-id-error" className="connect-error" role="alert">{message}</p> : null}
           </form>
-          <p className="connect-trust"><Lock size={13} aria-hidden="true" /> Public data only. No password, and FPL-AI never changes your official team.</p>
+          <p className="connect-trust"><Lock size={13} aria-hidden="true" /> Public data only. No password, and Fantasy Football AI never changes your official team.</p>
         </div>
         <ul className="connect-promises" aria-label="What you get">
           {PROMISES.map(({ icon: Icon, title, text }) => (

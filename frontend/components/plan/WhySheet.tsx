@@ -48,7 +48,7 @@ export function ExplainPlan({ plan, modelVersion }: { plan: GameweekPlan; modelV
         <ul>
           <li><b>Next GW</b> is the native model projection for the coming Gameweek. Projections are forecasts, never results.</li>
           <li><b>5-GW gain</b> adds four further Gameweeks scaled by official fixture difficulty and home/away, with uncertainty widening the further out it looks.</li>
-          <li><b>Hits</b> cost 4 points per transfer beyond your free transfers. FPL-AI only proposes a hit when the multi-GW edge clearly exceeds it.</li>
+          <li><b>Hits</b> cost 4 points per transfer beyond your free transfers. The engine only proposes a hit when the multi-GW edge clearly exceeds it.</li>
           <li>Captain and vice-captain are always chosen from players you own.</li>
         </ul>
         {modelVersion ? <p className="faint">Model artifact: <span className="mono">{modelVersion}</span></p> : null}

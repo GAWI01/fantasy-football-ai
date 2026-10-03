@@ -25,10 +25,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "FPL-AI · Gameweek intelligence",
-    template: "%s · FPL-AI",
+    default: "Fantasy Football AI · Gameweek intelligence",
+    template: "%s · Fantasy Football AI",
   },
-  description: "Independent Fantasy Premier League decision support: transfers, captaincy, lineup, chips and a live Gameweek cockpit. Recommendations only; FPL-AI never changes your official team.",
+  description: "Independent Fantasy Premier League decision support: transfers, captaincy, lineup, chips and a live Gameweek cockpit. Fantasy Football AI is an independent, free tool and never changes your official team.",
 };
 
 export const viewport: Viewport = {

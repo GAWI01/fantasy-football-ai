@@ -5,8 +5,8 @@ import type { SourceKind } from "@/lib/model/phase";
 const SOURCE_COPY: Record<SourceKind, { label: string; hint: string }> = {
   live: { label: "Live", hint: "Live official match data for the Gameweek in progress. Can still change." },
   official: { label: "Official", hint: "Official FPL data for your public team." },
-  model: { label: "Model", hint: "FPL-AI model projection. A forecast, not a result." },
-  derived: { label: "Derived", hint: "Calculated by FPL-AI from official and model data." },
+  model: { label: "Model", hint: "Fantasy Football AI model projection. A forecast, not a result." },
+  derived: { label: "Derived", hint: "Calculated by Fantasy Football AI from official and model data." },
   cached: { label: "Cached", hint: "The official FPL service did not respond, so the last cached response is shown." },
 };
 
