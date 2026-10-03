@@ -141,7 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <footer className="site-foot">
         <span>Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</span>
-        <span>Recommendations only.</span>
+        <span className="site-foot-end">Recommendations only.<span className="site-credit">Made by <b>gawi</b></span></span>
       </footer>
 
       <nav className="tabbar" aria-label="Mobile primary">

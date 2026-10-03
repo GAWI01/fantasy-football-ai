@@ -88,6 +88,9 @@ export type GameweekPlan = {
 const num = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
+const text = (value: unknown): string | null =>
+  typeof value === "string" && value.trim() ? value : null;
+
 function toMoves(
   transfers: RecommendedTransfer[],
   squadById: Map<number, SquadPlayer>,
@@ -98,11 +101,12 @@ function toMoves(
     const incoming = market.get(transfer.player_in_id) ?? null;
     return {
       outId: transfer.player_out_id,
-      outName: transfer.player_out ?? out?.name ?? `Player ${transfer.player_out_id}`,
+      outName: text(transfer.player_out) ?? out?.name ?? `Player ${transfer.player_out_id}`,
       inId: transfer.player_in_id,
-      inName: transfer.player_in ?? `Player ${transfer.player_in_id}`,
-      inPrice: num(transfer.price),
-      position: transfer.position ?? out?.position ?? null,
+      // Older plan payloads carry only ids; fall back to the official player list.
+      inName: text(transfer.player_in) ?? text(incoming?.name) ?? `Player ${transfer.player_in_id}`,
+      inPrice: num(transfer.price) ?? num(incoming?.price),
+      position: transfer.position ?? out?.position ?? incoming?.position ?? null,
       out,
       incoming,
       inTeam: incoming?.team ?? null,
