@@ -11,7 +11,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "historical_data" / "current_data
 FILES = (
     "players_current.csv", "players_raw.csv", "teams_current.csv",
     "fixtures_current.csv", "gameweeks_current.csv", "manifest.json",
-    "gw3_predictions_v11.csv", "gw3_predictions_v11.csv.manifest.json",
+    "gw6_predictions_v11.csv", "gw6_predictions_v11.csv.manifest.json",
 )
 
 
@@ -25,7 +25,7 @@ def bundle(tmp_path):
 def test_serving_bundle_is_self_contained(bundle):
     result = validate_runtime_artifacts(bundle)
     assert result["loaded"] is True
-    assert result["prediction_rows"] == 623
+    assert result["prediction_rows"] == 667
     assert set(result["files"]) == set(FILES)
 
 
@@ -37,7 +37,7 @@ def test_missing_runtime_file_fails_validation(bundle, name):
 
 
 def test_manifest_row_count_must_match_csv(bundle):
-    for name in ("manifest.json", "gw3_predictions_v11.csv.manifest.json"):
+    for name in ("manifest.json", "gw6_predictions_v11.csv.manifest.json"):
         path = bundle / name
         payload = json.loads(path.read_text())
         payload["player_count"] = 624
@@ -47,7 +47,7 @@ def test_manifest_row_count_must_match_csv(bundle):
 
 
 def test_prediction_sidecar_must_match_manifest(bundle):
-    path = bundle / "gw3_predictions_v11.csv.manifest.json"
+    path = bundle / "gw6_predictions_v11.csv.manifest.json"
     payload = json.loads(path.read_text())
     payload["prediction_event"] = 4
     path.write_text(json.dumps(payload))
@@ -56,6 +56,6 @@ def test_prediction_sidecar_must_match_manifest(bundle):
 
 
 def test_prediction_csv_requires_serving_columns(bundle):
-    (bundle / "gw3_predictions_v11.csv").write_text("player_id,predicted_points\n1,2\n")
+    (bundle / "gw6_predictions_v11.csv").write_text("player_id,predicted_points\n1,2\n")
     with pytest.raises(ValueError, match="columns"):
         validate_runtime_artifacts(bundle)
