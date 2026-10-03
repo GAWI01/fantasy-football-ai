@@ -69,6 +69,8 @@ export type GameweekPlan = {
   hold: ScenarioView;
   alternatives: ScenarioView[];
   freeTransfers: number | null;
+  /** "user" when the manager set the count; otherwise an estimate from public data. */
+  freeTransfersSource: "user" | "derived" | "unknown";
   bank: number | null;
   captain: SquadPlayer | null;
   vice: SquadPlayer | null;
@@ -249,6 +251,7 @@ export function buildPlan(
     hold,
     alternatives,
     freeTransfers,
+    freeTransfersSource: decision.transfers?.free_transfers_source ?? "derived",
     bank: num(data.team.bank) ?? num(decision.current_team?.bank),
     captain,
     vice,

@@ -85,3 +85,17 @@ test("the example team opens gawi's cockpit in one click", async () => {
   await userEvent.click(await screen.findByRole("button", { name: /Try gawi’s team 6658075/ }));
   expect(fetch.mock.calls.some(([input]) => String(input).includes("/api/v1/dashboard/6658075"))).toBe(true);
 });
+
+test("the free-transfer count is marked as an estimate and the manager can set their own", async () => {
+  const fetchSpy = mockApi({ phase: "decision", verdict: "TRANSFER" });
+  const user = userEvent.setup();
+  renderOverview();
+  const plan = await screen.findByRole("region", { name: /Gameweek 7 plan/ });
+  expect(within(plan).getByText("1 free transfer, estimated from your public transfer history")).toBeInTheDocument();
+
+  await user.click(within(plan).getByRole("button", { name: "Not right? Set yours" }));
+  await user.click(within(within(plan).getByRole("group", { name: "Your free transfers" })).getByRole("button", { name: "0" }));
+
+  expect(fetchSpy.mock.calls.some(([input]) => String(input).endsWith("/api/v1/dashboard/4242?free_transfers=0"))).toBe(true);
+  expect(JSON.parse(localStorage.getItem("fpl-ai-free-transfers") ?? "null")).toMatchObject({ teamId: "4242", value: 0 });
+});

@@ -96,6 +96,36 @@ def test_decision_endpoint_returns_unified_result(monkeypatch):
     assert body["intelligence"]["horizon"]["horizon"] == 5
     assert body["intelligence"]["chip_state"]["known"] is True
     assert body["transfers"]["free_transfers"] == 3
+    assert body["transfers"]["free_transfers_source"] == "derived"
+
+
+def test_decision_uses_user_free_transfers_over_derived_count(monkeypatch):
+    monkeypatch.setattr("backend.main.get_team_data", lambda team_id: team())
+    monkeypatch.setattr("backend.main.load_predictions", lambda: predictions())
+    mock_plan_context(monkeypatch)
+
+    response = TestClient(app).get("/api/decision/123?free_transfers=0")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["transfers"]["free_transfers"] == 0
+    assert body["transfers"]["free_transfers_source"] == "user"
+
+
+def test_decision_marks_free_transfers_unknown_when_history_fails(monkeypatch):
+    monkeypatch.setattr("backend.main.get_team_data", lambda team_id: team())
+    monkeypatch.setattr("backend.main.load_predictions", lambda: predictions())
+    mock_plan_context(monkeypatch)
+
+    def unavailable(team_id, event, started_event):
+        raise LiveDataServiceError("transfers unavailable")
+
+    monkeypatch.setattr("backend.main.get_manager_transfer_state", unavailable)
+
+    response = TestClient(app).get("/api/decision/123")
+
+    assert response.status_code == 200
+    assert response.json()["transfers"]["free_transfers_source"] == "unknown"
 
 
 def test_decision_remains_available_when_chip_history_fails(monkeypatch):
@@ -238,7 +268,7 @@ def test_dashboard_v1_composes_existing_domain_services(monkeypatch):
     )
     monkeypatch.setattr(
         "backend.main.get_decision",
-        lambda team_id: {"transfers": {"net_gain": 0}},
+        lambda team_id, free_transfers=None: {"transfers": {"net_gain": 0}},
     )
 
     response = TestClient(app).get("/api/v1/dashboard/123")
@@ -253,6 +283,32 @@ def test_dashboard_v1_composes_existing_domain_services(monkeypatch):
     assert body["meta"]["actions_locked"] is False
     assert body["meta"]["prediction_version"] == "gw3_predictions_v11.csv"
     assert body["errors"] == []
+
+
+def test_dashboard_v1_passes_user_free_transfers_to_decision(monkeypatch):
+    seen = {}
+
+    def decision(team_id, free_transfers=None):
+        seen["free_transfers"] = free_transfers
+        return {"transfers": {"free_transfers": free_transfers}}
+
+    monkeypatch.setattr(
+        "backend.main.get_official_team",
+        lambda team_id: {"team_id": team_id, "name": "Test FC", "event": 2, "picks": []},
+    )
+    for name in ("get_live_team", "get_team_history_endpoint"):
+        monkeypatch.setattr(f"backend.main.{name}", lambda team_id: {})
+    monkeypatch.setattr("backend.main.get_upcoming_fixtures", lambda team_id, limit=10: {})
+    monkeypatch.setattr("backend.main.get_enriched_player_rankings", lambda limit=20, position=None: {})
+    monkeypatch.setattr("backend.main.get_decision", decision)
+
+    client = TestClient(app)
+    response = client.get("/api/v1/dashboard/123?free_transfers=0")
+
+    assert response.status_code == 200
+    assert seen["free_transfers"] == 0
+    assert response.json()["data"]["decision"]["transfers"]["free_transfers"] == 0
+    assert client.get("/api/v1/dashboard/123?free_transfers=6").status_code == 400
 
 
 def test_plan_v1_wraps_decision_with_model_version(monkeypatch):

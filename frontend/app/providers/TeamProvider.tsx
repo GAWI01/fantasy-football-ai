@@ -12,6 +12,7 @@ import {
 
 import { fetchDashboard } from "@/lib/api";
 import type { DashboardEnvelope } from "@/lib/contracts";
+import { overrideApplies, readFreeTransferOverride, writeFreeTransferOverride } from "@/lib/freeTransfers";
 
 
 export const TEAM_STORAGE_KEY = "fpl-ai-team-id";
@@ -29,6 +30,8 @@ type TeamContextValue = {
   connect: (teamId: string) => Promise<void>;
   disconnect: () => void;
   refresh: () => Promise<void>;
+  /** Set the manager's own free-transfer count for the planned Gameweek, or null to use the estimate. */
+  setFreeTransfers: (value: number | null) => Promise<void>;
 };
 
 
@@ -60,7 +63,13 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchDashboard(value, controller.signal);
+      const override = readFreeTransferOverride(value);
+      let result = await fetchDashboard(value, controller.signal, override?.value);
+      if (override && !overrideApplies(override, result.meta.prediction_event)) {
+        // The count was set for an earlier Gameweek: fall back to the estimate.
+        writeFreeTransferOverride(null);
+        result = await fetchDashboard(value, controller.signal);
+      }
       setTeamId(value);
       setDashboard(result);
       setLastLoadedAt(Date.now());
@@ -89,9 +98,24 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     }
   }, [load, teamId]);
 
+  const setFreeTransfers = useCallback(async (value: number | null) => {
+    if (!teamId) return;
+    writeFreeTransferOverride(value == null ? null : {
+      teamId,
+      event: dashboard?.meta.prediction_event ?? null,
+      value,
+    });
+    try {
+      await load(teamId, false);
+    } catch {
+      // The provider exposes the error while retaining the last good dashboard.
+    }
+  }, [dashboard, load, teamId]);
+
   const disconnect = useCallback(() => {
     abortRef.current?.abort();
     try { window.localStorage.removeItem(TEAM_STORAGE_KEY); } catch { /* ignore */ }
+    writeFreeTransferOverride(null);
     setTeamId(null);
     setDashboard(null);
     setError(null);
@@ -135,6 +159,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       connect,
       disconnect,
       refresh,
+      setFreeTransfers,
     }}>
       {children}
     </TeamContext.Provider>

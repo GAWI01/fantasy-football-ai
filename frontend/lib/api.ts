@@ -75,13 +75,15 @@ function assertDashboardContract(value: DashboardEnvelope): DashboardEnvelope {
 export async function fetchDashboard(
   teamId: string,
   signal?: AbortSignal,
+  freeTransfers?: number | null,
 ): Promise<DashboardEnvelope> {
   const normalized = teamId.trim();
   if (!/^\d+$/.test(normalized)) {
     throw new Error("Enter a numeric FPL Team ID");
   }
+  const query = freeTransfers == null ? "" : `?free_transfers=${freeTransfers}`;
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/dashboard/${normalized}`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/dashboard/${normalized}${query}`, {
     cache: "no-store",
     signal,
   });

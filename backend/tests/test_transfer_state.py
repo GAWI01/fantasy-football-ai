@@ -50,3 +50,15 @@ def test_first_deadline_has_unlimited_transfers():
     )
 
     assert state == {"free_transfers": 20, "known": True}
+
+
+def test_hits_do_not_carry_into_next_gameweek():
+    # Team 6658075 in 2026/27: BB GW2, wildcard GW3, -4 in GW4, -20 in GW5.
+    state = derive_free_transfers(
+        target_event=6,
+        started_event=1,
+        transfers=[{"event": 2}] + [{"event": 3}] * 41 + [{"event": 4}] * 2 + [{"event": 5}] * 6,
+        chips=[{"name": "bboost", "event": 2}, {"name": "wildcard", "event": 3}, {"name": "3xc", "event": 4}],
+    )
+
+    assert state == {"free_transfers": 1, "known": True}

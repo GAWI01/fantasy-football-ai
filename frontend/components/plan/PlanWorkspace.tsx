@@ -72,7 +72,7 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
         <div className="scenario-detail">
           <span className="eyebrow">Selected: {scenarioTitle(active)}</span>
           {active.moves.length ? active.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : <p className="muted">Keep the squad and carry the free transfer. Nothing changes this Gameweek, and you keep flexibility for team news.</p>}
-          <ScenarioMetrics scenario={active} freeTransfers={plan.freeTransfers} />
+          <ScenarioMetrics scenario={active} plan={plan} />
         </div>
       ) : null}
       {withHit ? (
@@ -228,7 +228,7 @@ export function PlanWorkspace() {
         </div>
         <div className="page-head-actions">
           {plan.confidence ? <span className={`pill ${plan.confidence.label === "HIGH" ? "pill-pos" : plan.confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(plan.confidence.label)} confidence</span> : null}
-          <span className="pill">{plan.freeTransfers == null ? "Free transfers unknown" : `${plan.freeTransfers} FT`}</span>
+          <span className="pill">{plan.freeTransfers == null || plan.freeTransfersSource === "unknown" ? "Free transfers unknown" : `${plan.freeTransfers} FT${plan.freeTransfersSource === "user" ? "" : " (est.)"}`}</span>
           <span className="pill">Bank {price(plan.bank)}</span>
         </div>
       </header>
@@ -243,7 +243,7 @@ export function PlanWorkspace() {
             {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
               <div className="rejected"><span className="eyebrow">Best move found, below threshold</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
             ) : <p className="muted">No evaluated transfer improves the squad.</p>}
-            {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} freeTransfers={plan.freeTransfers} /> : null}
+            {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
           </div>
         </Card>
 
