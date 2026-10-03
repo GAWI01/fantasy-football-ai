@@ -528,5 +528,6 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
     box-shadow: 1px 0 0 var(--line);
   }
   .market-table .table th:first-child { z-index: 3; }
-  .market-table .table td:nth-child(2) { min-width: 176px; }
+  /* Fixtures live in the player sheet on phones so xP and price stay in view. */
+  .market-table .table th:nth-child(2), .market-table .table td:nth-child(2) { display: none; }
 }
