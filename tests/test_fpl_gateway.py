@@ -1,4 +1,4 @@
-from backend.fpl_gateway import FplGateway, begin_gateway_trace, end_gateway_trace
+from backend.fpl_gateway import FplGateway, FplGatewayError, begin_gateway_trace, end_gateway_trace
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
@@ -125,3 +125,60 @@ def test_slow_request_does_not_serialize_unrelated_official_paths():
         release_first.set()
         first.result(timeout=1)
         second.result(timeout=1)
+
+
+def test_gateway_evicts_least_recently_used_entries():
+    gateway = FplGateway(
+        http_get=lambda *args, **kwargs: Response(),
+        clock=lambda: 100.0,
+        max_entries=2,
+    )
+
+    gateway.get_json("entry/1/", ttl_seconds=300)
+    gateway.get_json("entry/2/", ttl_seconds=300)
+    gateway.get_json("entry/1/", ttl_seconds=300)
+    gateway.get_json("entry/3/", ttl_seconds=300)
+
+    assert list(gateway._cache) == [
+        "https://fantasy.premierleague.com/api/entry/1/",
+        "https://fantasy.premierleague.com/api/entry/3/",
+    ]
+
+
+def test_gateway_caps_upstream_requests_per_minute():
+    calls = []
+    now = {"value": 100.0}
+    gateway = FplGateway(
+        http_get=lambda *args, **kwargs: calls.append(args[0]) or Response(),
+        clock=lambda: now["value"],
+        max_requests_per_minute=2,
+    )
+
+    gateway.get_json("entry/1/", ttl_seconds=300)
+    gateway.get_json("entry/2/", ttl_seconds=300)
+    try:
+        gateway.get_json("entry/3/", ttl_seconds=300)
+    except FplGatewayError:
+        pass
+    else:
+        raise AssertionError("third upstream request should exceed the budget")
+    assert len(calls) == 2
+
+    now["value"] = 161.0
+    assert gateway.get_json("entry/3/", ttl_seconds=300).stale is False
+    assert len(calls) == 3
+
+
+def test_gateway_serves_stale_cache_when_budget_is_exhausted():
+    now = {"value": 100.0}
+    gateway = FplGateway(
+        http_get=lambda *args, **kwargs: Response(),
+        clock=lambda: now["value"],
+        max_requests_per_minute=1,
+    )
+
+    gateway.get_json("bootstrap-static/", ttl_seconds=10)
+    now["value"] = 120.0
+
+    result = gateway.get_json("bootstrap-static/", ttl_seconds=10)
+    assert result.stale is True
