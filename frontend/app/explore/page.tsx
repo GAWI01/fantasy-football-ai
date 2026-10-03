@@ -1,3 +1,5 @@
-import { ExploreWorkspace } from "@/components/explore/ExploreWorkspace";
+import { redirect } from "next/navigation";
 
-export default function ExplorePage() { return <ExploreWorkspace />; }
+export default function ExplorePage() {
+  redirect("/players");
+}

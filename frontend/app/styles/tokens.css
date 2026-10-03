@@ -1,0 +1,114 @@
+/* Fantasy Football AI design tokens. Dark-first football intelligence palette. */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #04060d;
+  --bg-raised: #080b17;
+  --surface-1: #0b1020;
+  --surface-2: #10172b;
+  --surface-3: #18213a;
+  --surface-hover: #1b2540;
+  --overlay: rgba(3, 5, 12, 0.72);
+
+  /* Lines */
+  --line: rgba(148, 163, 209, 0.1);
+  --line-2: rgba(148, 163, 209, 0.16);
+  --line-3: rgba(148, 163, 209, 0.26);
+
+  /* Text */
+  --text: #eef1f8;
+  --text-2: #aab2c7;
+  --text-3: #737d97;
+  --text-inv: #0b0e18;
+
+  /* Brand + semantic */
+  --violet: #8b5cf6;
+  --violet-strong: #7c3aed;
+  --violet-text: #c4b5fd;
+  --violet-soft: rgba(139, 92, 246, 0.14);
+  --violet-line: rgba(139, 92, 246, 0.38);
+
+  --green: #34d399;
+  --green-text: #6ee7b7;
+  --green-soft: rgba(52, 211, 153, 0.13);
+  --green-line: rgba(52, 211, 153, 0.36);
+
+  --amber: #fbbf24;
+  --amber-text: #fcd34d;
+  --amber-soft: rgba(251, 191, 36, 0.12);
+  --amber-line: rgba(251, 191, 36, 0.36);
+
+  --red: #f87171;
+  --red-text: #fca5a5;
+  --red-soft: rgba(248, 113, 113, 0.12);
+  --red-line: rgba(248, 113, 113, 0.36);
+
+  --cyan: #22d3ee;
+  --cyan-text: #67e8f9;
+  --cyan-soft: rgba(34, 211, 238, 0.1);
+  --cyan-line: rgba(34, 211, 238, 0.32);
+
+  --slate-text: #b5c1de;
+  --slate-soft: rgba(148, 163, 209, 0.12);
+
+  /* Data-source classes */
+  --src-live: var(--green-text);
+  --src-official: var(--slate-text);
+  --src-model: var(--violet-text);
+  --src-derived: var(--cyan-text);
+  --src-cached: var(--amber-text);
+
+  /* Fixture difficulty: 1 easiest … 5 hardest */
+  --fdr-1: #0f5e45;
+  --fdr-2: #1f8a5b;
+  --fdr-3: #3a4258;
+  --fdr-4: #9c3b46;
+  --fdr-5: #6f1d2b;
+
+  /* Pitch */
+  --pitch-1: #0d3b2a;
+  --pitch-2: #0b3324;
+  --pitch-line: rgba(220, 255, 235, 0.14);
+
+  /* Shape + depth */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  --shadow-2: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 60px -22px rgba(0, 0, 0, 0.85);
+  --glow-violet: 0 0 0 1px var(--violet-line), 0 18px 50px -24px rgba(124, 58, 237, 0.55);
+
+  /* Type */
+  --font-display: var(--font-display-face, "Barlow Condensed"), "Arial Narrow", ui-sans-serif, sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --fs-xs: 0.6875rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 2rem;
+  --fs-3xl: 2.75rem;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 360ms;
+
+  /* Layout */
+  --topbar-h: 104px;
+  --tabbar-h: 62px;
+  --content-max: 1380px;
+  --gutter: 28px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+    --topbar-h: 92px;
+  }
+}

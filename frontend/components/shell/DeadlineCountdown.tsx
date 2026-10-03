@@ -20,14 +20,28 @@ export function formatDeadlineRemaining(deadline: string, now = Date.now()) {
 }
 
 
+/** Urgency drives colour only; the text always carries the remaining time. */
+export function deadlineUrgency(deadline: string, now = Date.now()): "calm" | "soon" | "urgent" | "passed" {
+  const target = Date.parse(deadline);
+  if (!Number.isFinite(target)) return "calm";
+  const hours = (target - now) / 3_600_000;
+  if (hours <= 0) return "passed";
+  if (hours < 3) return "urgent";
+  if (hours < 24) return "soon";
+  return "calm";
+}
+
+
 export function DeadlineCountdown({
   deadline,
   event,
   now,
+  compact = false,
 }: {
   deadline?: string | null;
   event?: number | null;
   now?: number;
+  compact?: boolean;
 }) {
   const [clock, setClock] = useState<number | null>(now ?? null);
 
@@ -42,10 +56,14 @@ export function DeadlineCountdown({
   }, [deadline, now]);
 
   if (!deadline) return null;
+  const urgency = clock == null ? "calm" : deadlineUrgency(deadline, clock);
   return (
-    <span className="deadline-countdown">
-      <Clock3 size={13} aria-hidden="true" />
-      <span><small>{event ? `GW${event} deadline` : "Next deadline"}</small><time role="timer" dateTime={deadline}>{clock == null ? "Calculating…" : formatDeadlineRemaining(deadline, clock)}</time></span>
+    <span className={`deadline deadline-${urgency}${compact ? " deadline-compact" : ""}`}>
+      <Clock3 size={14} aria-hidden="true" />
+      <span>
+        <small>{event ? `GW${event} deadline` : "Next deadline"}</small>
+        <time role="timer" aria-live="off" dateTime={deadline}>{clock == null ? "Calculating…" : formatDeadlineRemaining(deadline, clock)}</time>
+      </span>
     </span>
   );
 }

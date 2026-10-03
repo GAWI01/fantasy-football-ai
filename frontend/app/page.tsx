@@ -1,7 +1,5 @@
-"use client";
+import { Overview } from "@/components/overview/Overview";
 
-import { OverviewDashboard } from "@/components/dashboard/OverviewDashboard";
-
-export default function Page() {
-  return <OverviewDashboard />;
+export default function OverviewPage() {
+  return <Overview />;
 }

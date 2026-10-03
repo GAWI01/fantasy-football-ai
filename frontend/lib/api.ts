@@ -37,7 +37,7 @@ async function readJson<T>(response: Response): Promise<T> {
       response.status,
       typeof detail === "string"
         ? detail
-        : `FPL AI API returned ${response.status}`,
+        : `The Fantasy Football AI API returned ${response.status}`,
     );
   }
 
@@ -49,7 +49,7 @@ async function readJson<T>(response: Response): Promise<T> {
     || !("errors" in body)
     || !Array.isArray(body.errors)
   ) {
-    throw new Error("FPL AI returned an invalid API envelope");
+    throw new Error("The Fantasy Football AI API returned an invalid envelope");
   }
 
   return body as T;
@@ -66,7 +66,7 @@ function assertDashboardContract(value: DashboardEnvelope): DashboardEnvelope {
     || !Array.isArray(team.picks)
     || typeof value.meta?.generated_at !== "string"
   ) {
-    throw new Error("FPL AI returned an invalid dashboard contract");
+    throw new Error("The Fantasy Football AI API returned an invalid dashboard contract");
   }
   return value;
 }

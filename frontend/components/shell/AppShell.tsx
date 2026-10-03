@@ -1,186 +1,180 @@
 "use client";
 
 import {
-  CalendarDays,
-  ChartNoAxesCombined,
-  Compass,
+  CalendarRange,
   History,
-  House,
+  LayoutDashboard,
   Menu,
+  RefreshCw,
   Repeat2,
   Settings,
-  Sparkles,
-  UserRound,
+  Shirt,
   Users,
-  X,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useTeam } from "@/app/providers/TeamProvider";
+import { BrandMark } from "@/components/shell/BrandMark";
 import { DeadlineCountdown } from "@/components/shell/DeadlineCountdown";
+import { Sheet } from "@/components/ui/Sheet";
+import { compact, relativeAge } from "@/lib/format";
+import { deriveGameState, type GameState } from "@/lib/model/phase";
+import { isActive, MOBILE_PRIMARY, NAV_ITEMS, type NavKey } from "@/lib/navigation";
 
 
-type Destination = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
+const ICONS: Record<NavKey, LucideIcon> = {
+  overview: LayoutDashboard,
+  team: Shirt,
+  plan: Repeat2,
+  players: Users,
+  fixtures: CalendarRange,
+  review: History,
+  settings: Settings,
 };
 
 
-const desktopDestinations: Destination[] = [
-  { href: "/", label: "Overview", icon: House },
-  { href: "/team", label: "My Team", icon: Users },
-  { href: "/plan#transfer-center", label: "Transfer Center", icon: Repeat2 },
-  { href: "/plan#ai-recommendations", label: "AI Recommendations", icon: Sparkles },
-  { href: "/explore#player-market", label: "Players", icon: UserRound },
-  { href: "/explore#fixture-matrix", label: "Fixtures", icon: CalendarDays },
-  { href: "/plan#chip-advisor", label: "Chips", icon: Zap },
-  { href: "/review#statistics", label: "Statistics", icon: ChartNoAxesCombined },
-  { href: "/review", label: "Team History", icon: History },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
-const mobileDestinations: Destination[] = [
-  { href: "/", label: "Overview", icon: House },
-  { href: "/team", label: "My Team", icon: Users },
-  { href: "/plan", label: "Plan", icon: Sparkles },
-  { href: "/explore", label: "Explore", icon: Compass },
-];
+function PhaseChip({ state, connected }: { state: GameState; connected: boolean }) {
+  if (!connected) return <span className="phase-chip phase-setup">Connect a team</span>;
+  if (state.phase === "live") {
+    return <span className="phase-chip phase-live"><i aria-hidden="true" />GW{state.currentEvent ?? "—"} live</span>;
+  }
+  if (state.phase === "decision") {
+    return <span className="phase-chip phase-decision"><i aria-hidden="true" />GW{state.targetEvent ?? "—"} plan open</span>;
+  }
+  return <span className="phase-chip phase-settled"><i aria-hidden="true" />GW{state.currentEvent ?? "—"} settled</span>;
+}
 
 
-function Navigation({
-  mobile = false,
-  moreButtonRef,
-  moreOpen = false,
-  onMore,
-}: {
-  mobile?: boolean;
-  moreButtonRef?: RefObject<HTMLButtonElement | null>;
-  moreOpen?: boolean;
-  onMore?: () => void;
-}) {
-  const pathname = usePathname();
-  const destinations = mobile ? mobileDestinations : desktopDestinations;
+function Freshness({ generatedAt, stale }: { generatedAt: string | null; stale: boolean }) {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const first = window.setTimeout(() => setNow(Date.now()), 0);
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => { window.clearTimeout(first); window.clearInterval(timer); };
+  }, []);
+  if (!generatedAt || now == null) return null;
   return (
-    <nav className={mobile ? "saas-mobile-nav" : "saas-nav"} aria-label={mobile ? "Mobile primary" : "Primary"}>
-      {destinations.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href.split("#", 1)[0];
-        return (
-          <Link key={href} href={href} className="saas-nav-link" aria-current={active ? "page" : undefined}>
-            <Icon aria-hidden="true" size={18} />
-            <span>{label}</span>
-          </Link>
-        );
-      })}
-      {mobile ? <button ref={moreButtonRef} type="button" className="saas-nav-link saas-mobile-more-trigger" aria-expanded={moreOpen} aria-controls="mobile-more-sheet" onClick={onMore}>
-        <Menu aria-hidden="true" size={18} />
-        <span>More</span>
-      </button> : null}
-    </nav>
+    <span className={`freshness${stale ? " freshness-stale" : ""}`} title={new Date(generatedAt).toLocaleString()}>
+      {stale ? "Cached data · " : "Updated "}{relativeAge(generatedAt, now)}
+    </span>
   );
 }
 
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { dashboard, teamId } = useTeam();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const moreButtonRef = useRef<HTMLButtonElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileSheetRef = useRef<HTMLElement>(null);
-  const closeMobileMenu = useCallback(() => {
-    setMobileMenuOpen(false);
-    queueMicrotask(() => moreButtonRef.current?.focus());
-  }, []);
-  const event = dashboard?.meta.event;
-  const officialFetchedAt = dashboard?.meta.official?.fetched_at;
-  const stale = dashboard?.meta.stale ?? dashboard?.meta.official?.stale ?? false;
-  const liveMode = dashboard?.data.live?.status === "LIVE" && dashboard.data.live.finished !== true;
-  const sourceLabel = !dashboard ? "Setup" : stale ? "Cached" : liveMode ? "Live" : "Official";
-  const sourceClass = !dashboard ? "source-neutral" : stale ? "source-derived" : liveMode ? "source-live" : "source-official";
-  const dataStatus = !dashboard ? "Connect your team" : stale ? "Cached FPL data" : liveMode ? "Live data ready" : "Official FPL ready";
-  const freshness = officialFetchedAt
-    ? `${stale ? "Cached" : "Updated"} ${new Date(officialFetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-    : "Team not connected";
-
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    let active = true;
-    queueMicrotask(() => {
-      if (active) closeButtonRef.current?.focus();
-    });
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeMobileMenu();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusable = Array.from(
-        mobileSheetRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ?? [],
-      );
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      active = false;
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [closeMobileMenu, mobileMenuOpen]);
+  const pathname = usePathname();
+  const { dashboard, teamId, loading, refresh } = useTeam();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const state = deriveGameState(dashboard);
+  const team = dashboard?.data.team;
+  const connected = Boolean(dashboard);
+  // While a Gameweek is live the useful countdown is the next deadline, not the one that just passed.
+  const liveNext = state.liveActive ? dashboard?.data.live : null;
+  const deadlineEvent = liveNext?.next_deadline_time ? liveNext.next_event ?? null : state.targetEvent ?? dashboard?.data.live?.next_event ?? null;
+  const deadlineTime = liveNext?.next_deadline_time ?? state.deadline;
+  const showDeadline = connected && deadlineTime && state.phase !== "settled" ? deadlineTime : null;
+  const mobileItems = NAV_ITEMS.filter((item) => MOBILE_PRIMARY.includes(item.key));
+  const moreItems = NAV_ITEMS.filter((item) => !MOBILE_PRIMARY.includes(item.key));
+  const moreActive = moreItems.some((item) => isActive(item, pathname));
 
   return (
-    <div className="saas-shell">
+    <div className="app" data-phase={connected ? state.phase : "setup"}>
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <aside className="saas-sidebar">
-        <Link href="/" className="saas-brand" aria-label="FPL AI overview">
-          <span className="saas-brand-mark"><Sparkles size={18} aria-hidden="true" /></span>
-          <span>FPL AI<small>Decision intelligence</small></span>
-        </Link>
-        <Navigation />
-        <div className="saas-side-status">
-          <span className={dashboard && !stale ? "status-dot status-online" : "status-dot"} />
-          <div><strong>{dataStatus}</strong><small>{teamId ? `Team ${teamId}` : "Public Team ID"}</small></div>
-        </div>
-      </aside>
 
-      <div className="saas-stage">
-        <header className="saas-topbar">
-          <div><span className={`source-pill ${sourceClass}`}>{sourceLabel}</span><strong>{event ? `Gameweek ${event}` : "FPL season"}</strong></div>
-          <DeadlineCountdown deadline={dashboard?.meta.target_deadline_time ?? dashboard?.data.live?.next_deadline_time} event={dashboard?.meta.prediction_event ?? dashboard?.data.live?.next_event} />
-          <span className="saas-freshness">{freshness}</span>
-        </header>
-        {dashboard?.meta.degraded ? (
-          <div className="degraded-banner" role="status">
-            {stale ? "Official FPL is temporarily unavailable. Showing the last cached data." : "Some analysis is unavailable. Official team data remains visible."}
-          </div>
-        ) : null}
-        <main id="main-content" className="saas-content">{children}</main>
-      </div>
-      <Navigation mobile moreButtonRef={moreButtonRef} moreOpen={mobileMenuOpen} onMore={() => setMobileMenuOpen(true)} />
-      {mobileMenuOpen ? <div className="mobile-more-backdrop" onMouseDown={(event) => { if (event.currentTarget === event.target) closeMobileMenu(); }}>
-        <section id="mobile-more-sheet" className="mobile-more-sheet" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title" ref={mobileSheetRef}>
-          <header><div><span>Navigation</span><h2 id="mobile-more-title">More FPL AI tools</h2></div><button ref={closeButtonRef} type="button" aria-label="Close more tools" onClick={closeMobileMenu}><X size={18} aria-hidden="true" /></button></header>
-          <p>Jump directly to the decision surface you need.</p>
-          <nav aria-label="More destinations">
-            {desktopDestinations.slice(2).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={closeMobileMenu}><Icon size={17} aria-hidden="true" /><span>{label}</span></Link>)}
+      <header className="masthead">
+        <div className="masthead-row">
+          <Link href="/" className="brand" aria-label="Fantasy Football AI overview">
+            <BrandMark size={34} />
+            <span className="brand-text"><strong><span className="brand-full">Fantasy Football<em>·</em>AI</span><span className="brand-short" aria-hidden="true">FF<em>·</em>AI</span></strong><small>Gameweek intelligence</small></span>
+          </Link>
+          <nav className="topnav" aria-label="Primary">
+            {NAV_ITEMS.filter((item) => item.key !== "settings").map((item) => {
+              const Icon = ICONS[item.key];
+              const active = isActive(item, pathname);
+              return (
+                <Link key={item.key} href={item.href} className="topnav-link" aria-current={active ? "page" : undefined}>
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+            <Link href="/settings" className="topnav-link topnav-icon" aria-current={pathname === "/settings" ? "page" : undefined} aria-label="Settings" title="Settings">
+              <Settings size={16} aria-hidden="true" />
+              <span className="sr-only">Settings</span>
+            </Link>
           </nav>
-        </section>
-      </div> : null}
+          <div className="masthead-end">
+            {team ? (
+              <Link href="/settings" className="team-badge" aria-label={`Connected team ${team.name}. Open settings`}>
+                <span className="team-badge-mark" aria-hidden="true">{team.name.slice(0, 2).toUpperCase()}</span>
+                <span className="team-badge-text"><strong>{team.name}</strong><small>{team.overall_rank ? `OR ${compact(team.overall_rank)}` : `Team ${teamId}`}</small></span>
+              </Link>
+            ) : null}
+          </div>
+        </div>
+        <div className="statusbar">
+          <PhaseChip state={state} connected={connected} />
+          {showDeadline ? <DeadlineCountdown deadline={showDeadline} event={deadlineEvent} /> : null}
+          <div className="statusbar-end">
+            {connected ? <Freshness generatedAt={state.generatedAt} stale={state.stale} /> : null}
+            {connected ? (
+              <button type="button" className="icon-btn" onClick={() => void refresh()} disabled={loading} aria-label={loading ? "Refreshing data" : "Refresh data"} title="Refresh data">
+                <RefreshCw size={16} aria-hidden="true" className={loading ? "spin" : undefined} />
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </header>
+
+      {dashboard?.meta.degraded ? (
+        <div className={`banner ${state.stale ? "banner-stale" : "banner-warn"}`} role="status">
+          {state.stale
+            ? "The official FPL service is not responding. You are looking at the last cached data."
+            : `Some analysis is unavailable (${[...state.failedAreas].join(", ") || "partial data"}). Official team data is still shown.`}
+        </div>
+      ) : null}
+
+      <main id="main-content" className="content" tabIndex={-1}>{children}</main>
+
+      <footer className="site-foot">
+        <span>Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</span>
+        <span>Recommendations only.</span>
+      </footer>
+
+      <nav className="tabbar" aria-label="Mobile primary">
+        {mobileItems.map((item) => {
+          const Icon = ICONS[item.key];
+          const active = isActive(item, pathname);
+          return (
+            <Link key={item.key} href={item.href} className="tab" aria-current={active ? "page" : undefined}>
+              <Icon size={20} aria-hidden="true" />
+              <span>{item.short}</span>
+            </Link>
+          );
+        })}
+        <button type="button" className="tab" aria-haspopup="dialog" aria-expanded={moreOpen} data-active={moreActive || undefined} onClick={() => setMoreOpen(true)}>
+          <Menu size={20} aria-hidden="true" />
+          <span>More</span>
+        </button>
+      </nav>
+
+      <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="More" subtitle="Research, history and settings">
+        <nav className="more-nav" aria-label="More destinations">
+          {moreItems.map((item) => {
+            const Icon = ICONS[item.key];
+            return (
+              <Link key={item.key} href={item.href} className="more-link" aria-current={isActive(item, pathname) ? "page" : undefined} onClick={() => setMoreOpen(false)}>
+                <Icon size={18} aria-hidden="true" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <p className="side-disclaimer">Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</p>
+      </Sheet>
     </div>
   );
 }
