@@ -34,6 +34,8 @@
 .brand-text strong em { font-style: normal; color: var(--violet-text); margin: 0 1px; }
 .brand-short { display: none; }
 .brand-text small { color: var(--text-3); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 650; margin-top: 3px; }
+.brand-credit::before { content: "·"; margin: 0 6px; color: var(--text-3); }
+.brand-credit b { font-weight: 800; font-style: italic; color: var(--violet-text); letter-spacing: 0.08em; }
 .brand-mark { flex: none; }
 
 .topnav { display: flex; align-items: stretch; gap: 2px; height: 100%; min-width: 0; flex: 1; }
@@ -169,8 +171,12 @@
 
 @media (max-width: 767px) {
   .masthead-row { height: 54px; gap: 10px; }
-  .brand-text small { display: none; }
+  .brand-text { display: flex; align-items: center; gap: 8px; }
   .brand-text strong { font-size: 1.3rem; }
+  /* Phone: drop the tagline and keep the credit beside the short wordmark. */
+  .brand-text small { margin-top: 0; padding-left: 8px; border-left: 1px solid var(--line-2); letter-spacing: 0.12em; white-space: nowrap; }
+  .brand-tagline { display: none; }
+  .brand-credit::before { content: none; }
   .topnav { display: none; }
   .masthead-end { margin-left: auto; }
   .statusbar { padding-bottom: 8px; gap: 8px; }
