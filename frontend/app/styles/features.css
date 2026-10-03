@@ -70,6 +70,16 @@
 .connect-input-row .btn { min-height: 50px; padding: 0 20px; }
 .connect-help { font-size: var(--fs-xs); color: var(--text-3); }
 .connect-help b { color: var(--text-2); }
+.connect-example { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--fs-xs); }
+.example-chip {
+  display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--violet-line); background: var(--violet-soft); color: var(--text);
+  font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.example-chip .num { color: var(--violet-text); font-variant-numeric: tabular-nums; }
+.example-chip:hover:not(:disabled) { background: rgba(124, 58, 237, 0.3); border-color: var(--violet); }
+.example-chip:disabled { opacity: 0.55; }
 .connect-error { font-size: var(--fs-sm); color: var(--red-text); }
 .connect-trust { margin-top: 18px; display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--text-3); }
 .connect-promises { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }

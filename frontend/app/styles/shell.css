@@ -137,13 +137,6 @@
   font-size: 11px; color: var(--text-3); border-top: 1px solid var(--line);
 }
 
-.site-foot-end { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.site-credit {
-  font-family: var(--font-display); font-size: 0.82rem; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-3); padding-left: 12px; border-left: 1px solid var(--line-2);
-}
-.site-credit b { font-weight: 800; font-style: italic; color: var(--violet-text); letter-spacing: 0.06em; }
-
 /* Phone dock */
 .tabbar { display: none; }
 .more-nav { display: grid; gap: 6px; margin-bottom: 18px; }
@@ -155,8 +148,14 @@
 .more-link[aria-current="page"] { border-color: var(--violet-line); color: var(--violet-text); }
 .side-disclaimer { font-size: 11px; color: var(--text-3); line-height: 1.5; }
 
-/* Narrow desktop and tablet: icons only in the nav */
-@media (max-width: 1279px) {
+/* Below wide desktop the tagline would push the nav into the team badge; keep only the credit. */
+@media (max-width: 1439px) {
+  .brand-tagline { display: none; }
+  .brand-credit::before { content: none; }
+}
+
+/* Narrow desktop and tablet: compact nav, short wordmark */
+@media (max-width: 1339px) {
   .topnav-link { padding: 0 10px; font-size: 0.95rem; }
   .team-badge-text { display: none; }
   .team-badge { padding: 4px; }
