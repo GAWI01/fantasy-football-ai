@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="masthead-row">
           <Link href="/" className="brand" aria-label="Fantasy Football AI overview">
             <BrandMark size={34} />
-            <span className="brand-text"><strong><span className="brand-full">Fantasy Football<em>·</em>AI</span><span className="brand-short" aria-hidden="true">FF<em>·</em>AI</span></strong><small>Gameweek intelligence</small></span>
+            <span className="brand-text"><strong><span className="brand-full">Fantasy Football<em>·</em>AI</span><span className="brand-short" aria-hidden="true">FF<em>·</em>AI</span></strong><small><span className="brand-tagline">Gameweek intelligence</span><span className="brand-credit">Made by <b>gawi</b></span></small></span>
           </Link>
           <nav className="topnav" aria-label="Primary">
             {NAV_ITEMS.filter((item) => item.key !== "settings").map((item) => {
