@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowRight, CircleCheck, Crown, Info, Layers, Shield, Sh
 import Link from "next/link";
 import { useState } from "react";
 
+import { PlayerCard } from "@/components/player/PlayerCard";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { WhySheet } from "@/components/plan/WhySheet";
 import { Delta, SourceBadge } from "@/components/ui/primitives";
@@ -11,8 +12,39 @@ import { fixed, price, sentenceCase } from "@/lib/format";
 import { CHIP_LABEL, type GameweekPlan, type ScenarioView, type TransferMove } from "@/lib/model/plan";
 
 export function MoveRow({ move, compact = false }: { move: TransferMove; compact?: boolean }) {
+  if (!compact) {
+    const gain = move.inXp != null && move.outXp != null ? move.inXp - move.outXp : null;
+    return (
+      <div className="move move-cards">
+        <PlayerCard
+          tone="out"
+          tag="Out"
+          name={move.outName}
+          team={move.out?.team}
+          teamShort={move.out?.teamShort}
+          position={move.out?.position ?? move.position}
+          value={fixed(move.outXp)}
+          meta={`Sells ${price(move.out?.sellingPrice ?? move.out?.price)}`}
+        />
+        <span className="move-swap">
+          <ArrowRight size={22} role="img" aria-label="replaced by" />
+          {gain != null ? <span className="move-gain"><Delta value={gain} /><small>next GW</small></span> : null}
+        </span>
+        <PlayerCard
+          tone="in"
+          tag="In"
+          name={move.inName}
+          team={move.inTeam}
+          teamShort={move.inTeamShort}
+          position={move.position}
+          value={fixed(move.inXp)}
+          meta={`Costs ${price(move.inPrice)}`}
+        />
+      </div>
+    );
+  }
   return (
-    <div className={`move${compact ? " move-compact" : ""}`}>
+    <div className="move move-compact">
       <div className="move-side move-out">
         <span className="move-tag">Out</span>
         <PlayerChip
@@ -21,7 +53,7 @@ export function MoveRow({ move, compact = false }: { move: TransferMove; compact
           teamShort={move.out?.teamShort}
           position={move.out?.position ?? move.position}
           meta={<>{price(move.out?.sellingPrice ?? move.out?.price)} · <span className="tone-accent">{fixed(move.outXp)} xP</span></>}
-          size={compact ? 30 : 40}
+          size={30}
         />
       </div>
       <ArrowRight className="move-arrow" size={18} aria-label="replaced by" />
@@ -33,7 +65,7 @@ export function MoveRow({ move, compact = false }: { move: TransferMove; compact
           teamShort={move.inTeamShort}
           position={move.position}
           meta={<>{price(move.inPrice)} · <span className="tone-accent">{fixed(move.inXp)} xP</span></>}
-          size={compact ? 30 : 40}
+          size={30}
         />
       </div>
     </div>
@@ -93,13 +125,17 @@ export function GameweekPlanCard({
   const riskIcon = plan.mainRisk.tone === "calm" ? <CircleCheck size={16} aria-hidden="true" /> : plan.mainRisk.tone === "risk" ? <ShieldAlert size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />;
 
   return (
-    <section className="plan-hero card card-accent" aria-labelledby="gw-plan-title">
-      <header className="plan-hero-head">
-        <div>
-          <span className="eyebrow">Gameweek {event ?? "—"} plan</span>
+    <section className={`plan-hero plan-hero-${isTransfer ? "transfer" : "hold"}`} aria-labelledby="gw-plan-title">
+      <header className="hero-band">
+        <span className="hero-gw" aria-hidden="true">GW{event ?? "—"}</span>
+        <div className="hero-title">
+          <span className="eyebrow">Gameweek {event ?? "—"} plan · {isTransfer ? "Transfer" : "No transfer"}</span>
           <h2 id="gw-plan-title" className="sr-only">Gameweek {event ?? ""} plan</h2>
+          <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>
+            {isTransfer ? (plan.recommended.moves.length > 1 ? `${plan.recommended.moves.length} transfers` : "Make the move") : "Hold"}
+          </strong>
         </div>
-        <div className="card-meta">
+        <div className="hero-meta">
           {locked ? <span className="pill pill-warn">Read-only · deadline passed</span> : null}
           {confidence ? <span className={`pill ${confidence.label === "HIGH" ? "pill-pos" : confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(confidence.label)} confidence · {Math.round(confidence.score * 100)}%</span> : null}
           <SourceBadge kind="model" />
@@ -108,10 +144,6 @@ export function GameweekPlanCard({
 
       <div className="plan-hero-grid">
         <div className="verdict">
-          <span className="verdict-label">Transfer</span>
-          <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>
-            {isTransfer ? (plan.recommended.moves.length > 1 ? `${plan.recommended.moves.length} transfers` : "Make the move") : "Hold"}
-          </strong>
           {isTransfer ? (
             <div className="move-list">{plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />)}</div>
           ) : (
@@ -129,40 +161,53 @@ export function GameweekPlanCard({
           ) : null}
         </div>
 
-        <div className="decision-tiles">
-          <div className="tile tile-captain">
-            <span className="tile-label"><Crown size={14} aria-hidden="true" />Captain</span>
+        <div className="hero-side">
+          <div className="armband">
             {plan.captain ? (
-              <PlayerChip name={plan.captain.name} team={plan.captain.team} teamShort={plan.captain.teamShort} position={plan.captain.position} badge="C" meta={<><span className="tone-accent">{fixed(plan.captain.xp)} xP</span> · {plan.captain.opponent ? `${plan.captain.opponent}${plan.captain.home == null ? "" : plan.captain.home ? " (H)" : " (A)"}` : "Fixture —"}</>} size={36} />
-            ) : <span className="faint">Unavailable</span>}
+              <PlayerCard
+                tone="captain"
+                tag={<><Crown size={12} aria-hidden="true" />Captain</>}
+                badge="C"
+                name={plan.captain.name}
+                team={plan.captain.team}
+                teamShort={plan.captain.teamShort}
+                position={plan.captain.position}
+                value={fixed(plan.captain.xp)}
+                meta={plan.captain.opponent ? `${plan.captain.opponent}${plan.captain.home == null ? "" : plan.captain.home ? " (H)" : " (A)"}` : "Fixture —"}
+              />
+            ) : <div className="tile"><span className="tile-label"><Crown size={14} aria-hidden="true" />Captain</span><span className="faint">Unavailable</span></div>}
+            <div className="armband-side">
+              <div className="tile tile-score">
+                <span className="tile-label"><Sparkles size={14} aria-hidden="true" />Projected score</span>
+                <strong className="tile-number">{fixed(plan.projectedScore)}<small> xP</small></strong>
+                <small className="faint">Best XI + captain{plan.formation ? ` · ${plan.formation}` : ""}</small>
+              </div>
+              <div className="tile">
+                <span className="tile-label"><Shield size={14} aria-hidden="true" />Vice-captain</span>
+                {plan.vice ? (
+                  <PlayerChip name={plan.vice.name} team={plan.vice.team} teamShort={plan.vice.teamShort} position={plan.vice.position} badge="V" meta={<span className="tone-accent">{fixed(plan.vice.xp)} xP</span>} size={32} />
+                ) : <span className="faint">Unavailable</span>}
+              </div>
+            </div>
           </div>
-          <div className="tile">
-            <span className="tile-label"><Shield size={14} aria-hidden="true" />Vice-captain</span>
-            {plan.vice ? (
-              <PlayerChip name={plan.vice.name} team={plan.vice.team} teamShort={plan.vice.teamShort} position={plan.vice.position} badge="V" meta={<span className="tone-accent">{fixed(plan.vice.xp)} xP</span>} size={36} />
-            ) : <span className="faint">Unavailable</span>}
-          </div>
-          <div className="tile tile-score">
-            <span className="tile-label"><Sparkles size={14} aria-hidden="true" />Projected score</span>
-            <strong className="tile-number">{fixed(plan.projectedScore)}<small> xP</small></strong>
-            <small className="faint">Best XI + captain{plan.formation ? ` · ${plan.formation}` : ""}</small>
-          </div>
-          <div className="tile">
-            <span className="tile-label"><Zap size={14} aria-hidden="true" />Chip</span>
-            <strong className={`tile-word${plan.chip.recommended ? " tone-warn" : ""}`}>{plan.chip.recommended ? CHIP_LABEL[plan.chip.recommended] : "Hold chips"}</strong>
-            <small className="faint">{plan.chip.recommended ? "Opportunity cleared the threshold" : "No chip clears the evidence bar"}</small>
-          </div>
-          <div className="tile">
-            <span className="tile-label"><Layers size={14} aria-hidden="true" />Bench order</span>
-            <ol className="bench-mini">
-              {benchOutfield.map((player) => <li key={player.id}>{player.name}<small> {fixed(player.xp)}</small></li>)}
-              {!benchOutfield.length ? <li className="faint">Unavailable</li> : null}
-            </ol>
-          </div>
-          <div className={`tile tile-risk tile-risk-${plan.mainRisk.tone}`}>
-            <span className="tile-label">{riskIcon}Main risk</span>
-            <strong className="tile-risk-title">{plan.mainRisk.title}</strong>
-            <small>{plan.mainRisk.detail}</small>
+          <div className="decision-tiles">
+            <div className="tile">
+              <span className="tile-label"><Zap size={14} aria-hidden="true" />Chip</span>
+              <strong className={`tile-word${plan.chip.recommended ? " tone-warn" : ""}`}>{plan.chip.recommended ? CHIP_LABEL[plan.chip.recommended] : "Hold chips"}</strong>
+              <small className="faint">{plan.chip.recommended ? "Opportunity cleared the threshold" : "No chip clears the evidence bar"}</small>
+            </div>
+            <div className="tile">
+              <span className="tile-label"><Layers size={14} aria-hidden="true" />Bench order</span>
+              <ol className="bench-mini">
+                {benchOutfield.map((player) => <li key={player.id}>{player.name}<small> {fixed(player.xp)}</small></li>)}
+                {!benchOutfield.length ? <li className="faint">Unavailable</li> : null}
+              </ol>
+            </div>
+            <div className={`tile tile-risk tile-risk-${plan.mainRisk.tone}`}>
+              <span className="tile-label">{riskIcon}Main risk</span>
+              <strong className="tile-risk-title">{plan.mainRisk.title}</strong>
+              <small>{plan.mainRisk.detail}</small>
+            </div>
           </div>
         </div>
       </div>

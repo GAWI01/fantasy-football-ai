@@ -35,8 +35,6 @@ const ICONS: Record<NavKey, LucideIcon> = {
   settings: Settings,
 };
 
-const GROUP_LABEL = { decide: "Decide", research: "Research", account: "Account" } as const;
-
 
 function PhaseChip({ state, connected }: { state: GameState; connected: boolean }) {
   if (!connected) return <span className="phase-chip phase-setup">Connect a team</span>;
@@ -86,52 +84,41 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="app" data-phase={connected ? state.phase : "setup"}>
       <a className="skip-link" href="#main-content">Skip to content</a>
 
-      <aside className="sidebar" aria-label="Sidebar">
-        <Link href="/" className="brand" aria-label="FPL-AI overview">
-          <BrandMark />
-          <span className="brand-text"><strong>FPL-AI</strong><small>Gameweek intelligence</small></span>
-        </Link>
-        <nav className="side-nav" aria-label="Primary">
-          {(["decide", "research", "account"] as const).map((group) => (
-            <div className="side-group" key={group}>
-              <span className="side-group-label">{GROUP_LABEL[group]}</span>
-              {NAV_ITEMS.filter((item) => item.group === group).map((item) => {
-                const Icon = ICONS[item.key];
-                const active = isActive(item, pathname);
-                return (
-                  <Link key={item.key} href={item.href} className="side-link" aria-current={active ? "page" : undefined} title={item.label}>
-                    <Icon size={18} aria-hidden="true" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-        <div className="side-foot">
-          {team ? (
-            <Link href="/settings" className="team-card" aria-label={`Connected team ${team.name}. Open settings`}>
-              <span className="team-card-mark" aria-hidden="true">{team.name.slice(0, 2).toUpperCase()}</span>
-              <span className="team-card-text">
-                <strong>{team.name}</strong>
-                <small>{team.overall_rank ? `OR ${compact(team.overall_rank)}` : `Team ${teamId}`}</small>
-              </span>
+      <header className="masthead">
+        <div className="masthead-row">
+          <Link href="/" className="brand" aria-label="FPL-AI overview">
+            <BrandMark size={34} />
+            <span className="brand-text"><strong>FPL<em>·</em>AI</strong><small>Gameweek intelligence</small></span>
+          </Link>
+          <nav className="topnav" aria-label="Primary">
+            {NAV_ITEMS.filter((item) => item.key !== "settings").map((item) => {
+              const Icon = ICONS[item.key];
+              const active = isActive(item, pathname);
+              return (
+                <Link key={item.key} href={item.href} className="topnav-link" aria-current={active ? "page" : undefined}>
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+            <Link href="/settings" className="topnav-link topnav-icon" aria-current={pathname === "/settings" ? "page" : undefined} aria-label="Settings" title="Settings">
+              <Settings size={16} aria-hidden="true" />
+              <span className="sr-only">Settings</span>
             </Link>
-          ) : (
-            <Link href="/" className="team-card team-card-empty">
-              <span className="team-card-text"><strong>No team connected</strong><small>Add your public Team ID</small></span>
-            </Link>
-          )}
-          <p className="side-disclaimer">Independent tool. Not affiliated with the Premier League or FPL.</p>
+          </nav>
+          <div className="masthead-end">
+            {team ? (
+              <Link href="/settings" className="team-badge" aria-label={`Connected team ${team.name}. Open settings`}>
+                <span className="team-badge-mark" aria-hidden="true">{team.name.slice(0, 2).toUpperCase()}</span>
+                <span className="team-badge-text"><strong>{team.name}</strong><small>{team.overall_rank ? `OR ${compact(team.overall_rank)}` : `Team ${teamId}`}</small></span>
+              </Link>
+            ) : null}
+          </div>
         </div>
-      </aside>
-
-      <div className="stage">
-        <header className="topbar">
-          <Link href="/" className="topbar-brand" aria-label="FPL-AI overview"><BrandMark size={28} /></Link>
+        <div className="statusbar">
           <PhaseChip state={state} connected={connected} />
           {showDeadline ? <DeadlineCountdown deadline={showDeadline} event={deadlineEvent} /> : null}
-          <div className="topbar-end">
+          <div className="statusbar-end">
             {connected ? <Freshness generatedAt={state.generatedAt} stale={state.stale} /> : null}
             {connected ? (
               <button type="button" className="icon-btn" onClick={() => void refresh()} disabled={loading} aria-label={loading ? "Refreshing data" : "Refresh data"} title="Refresh data">
@@ -139,18 +126,23 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             ) : null}
           </div>
-        </header>
+        </div>
+      </header>
 
-        {dashboard?.meta.degraded ? (
-          <div className={`banner ${state.stale ? "banner-stale" : "banner-warn"}`} role="status">
-            {state.stale
-              ? "The official FPL service is not responding. You are looking at the last cached data."
-              : `Some analysis is unavailable (${[...state.failedAreas].join(", ") || "partial data"}). Official team data is still shown.`}
-          </div>
-        ) : null}
+      {dashboard?.meta.degraded ? (
+        <div className={`banner ${state.stale ? "banner-stale" : "banner-warn"}`} role="status">
+          {state.stale
+            ? "The official FPL service is not responding. You are looking at the last cached data."
+            : `Some analysis is unavailable (${[...state.failedAreas].join(", ") || "partial data"}). Official team data is still shown.`}
+        </div>
+      ) : null}
 
-        <main id="main-content" className="content" tabIndex={-1}>{children}</main>
-      </div>
+      <main id="main-content" className="content" tabIndex={-1}>{children}</main>
+
+      <footer className="site-foot">
+        <span>FPL-AI is an independent tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League.</span>
+        <span>Recommendations only. FPL-AI never changes your official team.</span>
+      </footer>
 
       <nav className="tabbar" aria-label="Mobile primary">
         {mobileItems.map((item) => {

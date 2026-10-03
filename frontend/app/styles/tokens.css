@@ -3,12 +3,12 @@
   color-scheme: dark;
 
   /* Surfaces */
-  --bg: #060811;
-  --bg-raised: #090c17;
-  --surface-1: #0d111d;
-  --surface-2: #121827;
-  --surface-3: #192034;
-  --surface-hover: #1b2338;
+  --bg: #04060d;
+  --bg-raised: #080b17;
+  --surface-1: #0b1020;
+  --surface-2: #10172b;
+  --surface-3: #18213a;
+  --surface-hover: #1b2540;
   --overlay: rgba(3, 5, 12, 0.72);
 
   /* Lines */
@@ -82,6 +82,7 @@
   --glow-violet: 0 0 0 1px var(--violet-line), 0 18px 50px -24px rgba(124, 58, 237, 0.55);
 
   /* Type */
+  --font-display: var(--font-display-face, "Barlow Condensed"), "Arial Narrow", ui-sans-serif, sans-serif;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
   --fs-xs: 0.6875rem;
@@ -99,10 +100,8 @@
   --dur-3: 360ms;
 
   /* Layout */
-  --sidebar-w: 248px;
-  --rail-w: 76px;
-  --topbar-h: 60px;
-  --tabbar-h: 64px;
+  --topbar-h: 104px;
+  --tabbar-h: 62px;
   --content-max: 1380px;
   --gutter: 28px;
 }
@@ -110,6 +109,6 @@
 @media (max-width: 767px) {
   :root {
     --gutter: 16px;
-    --topbar-h: 56px;
+    --topbar-h: 92px;
   }
 }

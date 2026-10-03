@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
 
 import type { ReactNode } from "react";
 import { TeamProvider } from "./providers/TeamProvider";
@@ -9,6 +9,13 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const display = Barlow_Condensed({
+  variable: "--font-display-face",
+  subsets: ["latin", "latin-ext"],
+  weight: ["500", "600", "700", "800"],
+  style: ["normal", "italic"],
 });
 
 const geistMono = Geist_Mono({
@@ -25,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#060811",
+  themeColor: "#04060d",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -34,7 +41,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${display.variable}`}>
       <body>
         <TeamProvider>
           <AppShell>{children}</AppShell>
