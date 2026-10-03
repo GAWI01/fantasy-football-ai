@@ -394,6 +394,8 @@ export type DashboardDecision = {
     recommended_transfers?: RecommendedTransfer[];
     transfers_used?: number;
     free_transfers?: number;
+    /** "user" when the manager set it, "derived" from public transfer history, "unknown" when history failed. */
+    free_transfers_source?: "user" | "derived" | "unknown";
     hit_cost?: number;
     gross_gain?: number;
     net_gain?: number;

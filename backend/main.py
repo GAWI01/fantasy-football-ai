@@ -831,7 +831,7 @@ def get_decision(
         chip_state["free_transfers"] = effective_free_transfers
         chip_state["free_transfers_known"] = bool(transfer_state["known"])
 
-        return build_decision(
+        decision = build_decision(
             team,
             predictions,
             budget=budget,
@@ -841,6 +841,14 @@ def get_decision(
             horizon=5,
             chip_state=chip_state,
         )
+        # Public FPL data cannot see every transfer rule, so tell clients
+        # whether the count came from the user or was derived.
+        decision["transfers"]["free_transfers_source"] = (
+            "user"
+            if free_transfers is not None
+            else "derived" if transfer_state["known"] else "unknown"
+        )
+        return decision
 
     except HTTPException:
         raise
@@ -851,9 +859,14 @@ def get_decision(
 
 
 @app.get("/api/v1/dashboard/{team_id}", response_model=DashboardEnvelopeModel)
-def get_dashboard_v1(team_id: int):
+def get_dashboard_v1(team_id: int, free_transfers: int | None = None):
     if team_id <= 0:
         raise HTTPException(status_code=400, detail="team_id must be positive")
+    if free_transfers is not None and not 0 <= free_transfers <= 5:
+        raise HTTPException(
+            status_code=400,
+            detail="free_transfers must be between 0 and 5",
+        )
 
     trace_token = begin_gateway_trace()
     dependencies = DashboardDependencies(
@@ -862,7 +875,7 @@ def get_dashboard_v1(team_id: int):
         history=get_team_history_endpoint,
         fixtures=lambda value: get_upcoming_fixtures(value, limit=10),
         players=lambda: get_enriched_player_rankings(limit=50),
-        decision=get_decision,
+        decision=lambda value: get_decision(value, free_transfers=free_transfers),
     )
     try:
         payload = build_dashboard(team_id, dependencies)

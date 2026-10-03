@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { PlayerChip } from "@/components/player/PlayerChip";
+import { FreeTransfersControl } from "@/components/plan/FreeTransfersControl";
 import { WhySheet } from "@/components/plan/WhySheet";
 import { Delta, SourceBadge } from "@/components/ui/primitives";
 import { fixed, price, sentenceCase } from "@/lib/format";
@@ -72,7 +73,7 @@ export function MoveRow({ move, compact = false }: { move: TransferMove; compact
   );
 }
 
-export function ScenarioMetrics({ scenario, freeTransfers }: { scenario: ScenarioView; freeTransfers: number | null }) {
+export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; plan: GameweekPlan }) {
   return (
     <dl className="metrics">
       <div>
@@ -93,7 +94,7 @@ export function ScenarioMetrics({ scenario, freeTransfers }: { scenario: Scenari
       </div>
       <div className="metrics-note">
         <dt className="sr-only">Free transfers</dt>
-        <dd>{freeTransfers == null ? "Free transfers unknown" : `${freeTransfers} free transfer${freeTransfers === 1 ? "" : "s"} available`}</dd>
+        <dd><FreeTransfersControl count={plan.freeTransfers} source={plan.freeTransfersSource} /></dd>
       </div>
     </dl>
   );
@@ -155,7 +156,7 @@ export function GameweekPlanCard({
               {plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}
             </div>
           ) : null}
-          {scenario ? <ScenarioMetrics scenario={scenario} freeTransfers={plan.freeTransfers} /> : null}
+          {scenario ? <ScenarioMetrics scenario={scenario} plan={plan} /> : null}
           {isTransfer && (plan.recommended.hit ?? 0) > 0 ? (
             <p className="hit-note"><Info size={14} aria-hidden="true" />This plan takes a −{plan.recommended.hit} hit. The engine only accepts hits when the multi-GW edge clearly exceeds the cost.</p>
           ) : null}

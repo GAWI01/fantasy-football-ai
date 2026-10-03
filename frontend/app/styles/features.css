@@ -676,3 +676,8 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
   /* Fixtures live in the player sheet on phones so xP and price stay in view. */
   .market-table .table th:nth-child(2), .market-table .table td:nth-child(2) { display: none; }
 }
+
+.ft-control { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ft-link { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--violet-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.ft-link:hover { color: var(--text); }
+.ft-link:focus-visible { outline: 2px solid var(--violet-text); outline-offset: 2px; border-radius: 2px; }
