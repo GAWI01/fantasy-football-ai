@@ -13,9 +13,11 @@ export function formatDeadlineRemaining(deadline: string, now = Date.now()) {
   const hours = Math.floor((seconds % 86_400) / 3_600);
   const minutes = Math.floor((seconds % 3_600) / 60);
   const remainingSeconds = seconds % 60;
-  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
+  // Seconds are always shown so the countdown visibly ticks; padding keeps the width steady.
+  const pad = (value: number) => String(value).padStart(2, "0");
+  if (days > 0) return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(remainingSeconds)}s`;
+  if (hours > 0) return `${hours}h ${pad(minutes)}m ${pad(remainingSeconds)}s`;
+  if (minutes > 0) return `${minutes}m ${pad(remainingSeconds)}s`;
   return `${remainingSeconds}s`;
 }
 
