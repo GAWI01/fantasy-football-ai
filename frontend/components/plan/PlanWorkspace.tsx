@@ -1,256 +1,276 @@
 "use client";
 
-import {
-  Activity,
-  AlertTriangle,
-  ArrowRight,
-  Crown,
-  Gauge,
-  GitCompareArrows,
-  Lightbulb,
-  ShieldCheck,
-  Sparkles,
-  Zap,
-} from "lucide-react";
+import { Crown, GitCompareArrows, Grid3x3, History, Info, Lightbulb, Repeat2, Zap } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import { useTeam } from "@/app/providers/TeamProvider";
+import { Kit } from "@/components/kit/Kit";
+import { MoveRow, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
+import { ExplainPlan } from "@/components/plan/WhySheet";
+import { PlayerChip } from "@/components/player/PlayerChip";
 import { DataState } from "@/components/states/DataState";
-import { PlanHistoryPanel } from "@/components/plan/PlanHistoryPanel";
-import type { DecisionPlayer, RecommendedTransfer, TransferScenario } from "@/lib/contracts";
+import { Card, Delta, Meter, SourceBadge } from "@/components/ui/primitives";
+import { fixed, price, sentenceCase, signed } from "@/lib/format";
+import { useCockpit } from "@/lib/hooks/useCockpit";
+import { usePlanHistory } from "@/lib/hooks/usePlanHistory";
+import { chipAvailability, CHIP_LABEL, planSnapshot, transferHeadline, type GameweekPlan, type ScenarioView } from "@/lib/model/plan";
+import type { SquadPlayer } from "@/lib/model/squad";
 
+function scenarioTitle(scenario: ScenarioView): string {
+  if (!scenario.moves.length) return "Hold · roll the transfer";
+  return scenario.moves.map((move) => `${move.outName} → ${move.inName}`).join(", ");
+}
 
-type ScenarioOption = {
-  id: string;
-  label: string;
-  ariaLabel: string;
-  selectionLabel: string;
-  scenario: TransferScenario;
-  hitCost: number | null;
-};
+function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
+  const rows = useMemo(() => {
+    const list: ScenarioView[] = [plan.hold];
+    const primary = plan.verdict === "TRANSFER" ? plan.recommended : plan.bestRejected;
+    if (primary) list.push(primary);
+    for (const alternative of plan.alternatives) {
+      if (!list.some((row) => scenarioTitle(row) === scenarioTitle(alternative))) list.push(alternative);
+    }
+    return list;
+  }, [plan]);
+  const recommendedTitle = scenarioTitle(plan.verdict === "TRANSFER" ? plan.recommended : plan.hold);
+  const [selected, setSelected] = useState(recommendedTitle);
+  const active = rows.find((row) => scenarioTitle(row) === selected) ?? rows[0];
+  const noHit = rows.filter((row) => row.moves.length && row.hit === 0).sort((left, right) => (right.horizonNet ?? -99) - (left.horizonNet ?? -99))[0];
+  const withHit = rows.filter((row) => (row.hit ?? 0) > 0).sort((left, right) => (right.horizonNet ?? -99) - (left.horizonNet ?? -99))[0];
 
+  return (
+    <Card id="compare" title="Compare options" eyebrow="What-if" icon={<GitCompareArrows size={16} />} source={["model", "derived"]}>
+      <div className="scenarios" role="radiogroup" aria-label="Transfer scenarios">
+        <div className="scenario scenario-head" aria-hidden="true">
+          <span>Option</span><span>Next GW</span><span>5-GW gain</span><span>Hit</span><span>5-GW net</span>
+        </div>
+        {rows.map((row) => {
+          const title = scenarioTitle(row);
+          const isRecommended = title === recommendedTitle;
+          return (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={title === selected}
+              key={title}
+              className={`scenario${isRecommended ? " is-recommended" : ""}`}
+              onClick={() => setSelected(title)}
+            >
+              <span className="scenario-title">
+                {isRecommended ? <span className="pill pill-accent">Recommended</span> : null}
+                <b>{title}</b>
+              </span>
+              <span data-label="Next GW"><Delta value={row.nextGwGain} /></span>
+              <span data-label="5-GW gain"><Delta value={row.horizonGain} /></span>
+              <span data-label="Hit" className={row.hit ? "tone-neg" : "faint"}>{row.hit == null ? "?" : row.hit ? `−${row.hit}` : "0"}</span>
+              <span data-label="5-GW net"><Delta value={row.horizonNet} /></span>
+            </button>
+          );
+        })}
+      </div>
+      {active ? (
+        <div className="scenario-detail">
+          <span className="eyebrow">Selected: {scenarioTitle(active)}</span>
+          {active.moves.length ? active.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : <p className="muted">Keep the squad and carry the free transfer. Nothing changes this Gameweek, and you keep flexibility for team news.</p>}
+          <ScenarioMetrics scenario={active} freeTransfers={plan.freeTransfers} />
+        </div>
+      ) : null}
+      {withHit ? (
+        <p className="card-note">
+          <b>Hit check:</b> best plan with a hit nets {signed(withHit.horizonNet)} over five Gameweeks{noHit ? `, versus ${signed(noHit.horizonNet)} for the best free move` : ""}. {plan.recommended.hit ? "The engine accepts this hit." : "The engine does not take the hit."}
+        </p>
+      ) : null}
+      <p className="card-note">Next GW uses each player’s native model projection. 5-GW gain is the model’s minutes-adjusted horizon before hits; 5-GW net subtracts the hit. Options are ranked by the engine’s weighted multi-GW score.</p>
+    </Card>
+  );
+}
 
-const number = (value?: number | null, digits = 1) =>
-  typeof value === "number" ? value.toFixed(digits) : "—";
+function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlayer[] }) {
+  const options = plan.captainOptions.length ? plan.captainOptions : squad.filter((player) => player.isStarter && player.xp != null).sort((left, right) => (right.xp ?? 0) - (left.xp ?? 0)).slice(0, 5).map((player) => ({ player, captainScore: null }));
+  const [pick, setPick] = useState<number | null>(null);
+  const active = options.find((option) => option.player.id === pick)?.player ?? plan.captain;
+  const max = Math.max(1, ...options.map((option) => option.player.xp ?? 0));
+  const delta = active?.xp != null && plan.captain?.xp != null ? active.xp - plan.captain.xp : null;
+  return (
+    <Card title="Captaincy" eyebrow="Owned players only" icon={<Crown size={16} />} source="model">
+      <div className="cap-list" role="radiogroup" aria-label="Captain options">
+        {options.map(({ player, captainScore }) => (
+          <button type="button" role="radio" aria-checked={active?.id === player.id} key={player.id} className={`cap-row${plan.captain?.id === player.id ? " is-recommended" : ""}`} onClick={() => setPick(player.id)}>
+            <PlayerChip name={player.name} team={player.team} teamShort={player.teamShort} position={player.position} size={30} badge={plan.captain?.id === player.id ? "C" : plan.vice?.id === player.id ? "V" : undefined} meta={`${player.opponent ?? "Fixture —"}${player.home == null ? "" : player.home ? " (H)" : " (A)"} · ${player.xmins == null ? "—" : Math.round(player.xmins)} xMins`} />
+            <span className="cap-bar" aria-hidden="true"><i style={{ width: `${((player.xp ?? 0) / max) * 100}%` }} /></span>
+            <span className="cap-xp num"><b>{fixed(player.xp)}</b><small>{captainScore != null ? `score ${fixed(captainScore, 2)}` : "xP"}</small></span>
+          </button>
+        ))}
+      </div>
+      {active && plan.captain && active.id !== plan.captain.id ? (
+        <p className="card-note">Captaining <b>{active.name}</b> instead of {plan.captain.name}: <Delta value={delta} unit=" xP" /> expected from the armband. <SourceBadge kind="derived" /></p>
+      ) : <p className="card-note">The model captain balances projected points with minutes security and fixture. Vice: <b>{plan.vice?.name ?? "—"}</b>.</p>}
+    </Card>
+  );
+}
 
-const signed = (value?: number | null) =>
-  typeof value === "number" ? `${value > 0 ? "+" : ""}${value.toFixed(1)}` : "—";
+function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
+  const chips = chipAvailability(plan.chip.state);
+  const state = plan.chip.state;
+  return (
+    <Card id="chips" title="Chips" icon={<Zap size={16} />} source={["model", "official"]}>
+      <div className="chip-call">
+        <span className="eyebrow">{locked ? "Locked for this deadline" : "Recommendation"}</span>
+        <strong className={plan.chip.recommended ? "tone-warn" : undefined}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold your chips"}</strong>
+        <p className="muted">{plan.chip.recommended ? `The ${CHIP_LABEL[plan.chip.recommended]} case cleared the engine's threshold (score ${fixed(plan.chip.score, 2)}). Check team news before committing.` : "No chip clears the evidence bar this week. Chips are worth most in doubles, blanks or a squad crisis, so FPL-AI defaults to holding."}</p>
+      </div>
+      <div className="chip-grid">
+        {chips.map((chip) => (
+          <span key={chip.chip} className={`chip-pill chip-${chip.status}`}>
+            <b>{chip.label}</b>
+            <small>{chip.status === "available" ? "Available" : chip.status === "used" ? "Used this half" : "Unknown"}</small>
+          </span>
+        ))}
+      </div>
+      {state ? (
+        <p className="card-note">
+          {state.double_gameweek ? "Double Gameweek fixtures exist in the target Gameweek. " : ""}
+          {state.blank_gameweek ? "Some clubs blank in the target Gameweek. " : ""}
+          {!state.double_gameweek && !state.blank_gameweek ? "Normal Gameweek: every club plays once. " : ""}
+          {state.known ? "Availability comes from your official chip history." : "Chip history could not be read, so availability is unknown."}
+        </p>
+      ) : null}
+    </Card>
+  );
+}
 
-const sentenceCase = (value?: string | null) => value
-  ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase().replaceAll("_", " ")
-  : "Unavailable";
+function HorizonGrid({ squad }: { squad: SquadPlayer[] }) {
+  const gameweeks = [...new Set(squad.flatMap((player) => player.horizon.map((gameweek) => gameweek.gameweek)))].sort((left, right) => left - right);
+  if (!gameweeks.length) return <DataState compact tone="unavailable" title="Five-Gameweek horizon unavailable">The model did not return multi-Gameweek projections.</DataState>;
+  const max = Math.max(1, ...squad.flatMap((player) => player.horizon.map((gameweek) => gameweek.predicted_points)));
+  const sorted = [...squad].sort((left, right) => (right.horizonTotal ?? 0) - (left.horizonTotal ?? 0));
+  return (
+    <Card title="Squad outlook" eyebrow={`GW${gameweeks[0]}–${gameweeks[gameweeks.length - 1]} projected points`} icon={<Grid3x3 size={16} />} source="model">
+      <div className="heat-wrap">
+        <table className="heat">
+          <thead>
+            <tr><th scope="col">Player</th>{gameweeks.map((gameweek) => <th scope="col" key={gameweek}>GW{gameweek}</th>)}<th scope="col" className="num">Total</th></tr>
+          </thead>
+          <tbody>
+            {sorted.map((player) => (
+              <tr key={player.id} className={player.isStarter ? undefined : "is-bench"}>
+                <th scope="row"><span className="heat-player"><Kit team={player.team} teamShort={player.teamShort} goalkeeper={player.position === "GKP"} size={22} bare /><span>{player.name}<small>{player.position}{player.isStarter ? "" : " · bench"}</small></span></span></th>
+                {gameweeks.map((gameweek) => {
+                  const cell = player.horizon.find((item) => item.gameweek === gameweek);
+                  if (!cell) return <td key={gameweek} className="heat-cell heat-empty">—</td>;
+                  const blank = cell.fixture_count === 0;
+                  const intensity = blank ? 0 : cell.predicted_points / max;
+                  return (
+                    <td key={gameweek} className={`heat-cell${blank ? " heat-blank" : ""}`} style={{ ["--heat" as string]: intensity.toFixed(3) }} title={`${player.name} GW${gameweek}: ${blank ? "blank" : `${cell.opponent ?? "TBC"}${cell.home == null ? "" : cell.home ? " (H)" : " (A)"}`} · ${fixed(cell.predicted_points)} xP`}>
+                      <b>{blank ? "—" : fixed(cell.predicted_points)}</b>
+                      <small>{blank ? "Blank" : `${(cell.opponent ?? "").slice(0, 3).toUpperCase()}${cell.home == null ? "" : cell.home ? " H" : " A"}`}</small>
+                    </td>
+                  );
+                })}
+                <td className="num heat-total"><b>{fixed(player.horizonTotal)}</b></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="card-note">Darker cells mean more expected points. Totals are minutes-adjusted. Bench players are dimmed.</p>
+    </Card>
+  );
+}
 
-const transferLabel = (transfers?: RecommendedTransfer[]) => {
-  if (!transfers?.length) return "Hold the transfer";
-  return transfers.map((item) => `${item.player_out ?? `Player ${item.player_out_id}`} → ${item.player_in ?? `Player ${item.player_in_id}`}`).join(" · ");
-};
-
-const chipName = (value?: string | null) => value ? sentenceCase(value) : "Hold chips";
-
+function RiskCard({ squad }: { squad: SquadPlayer[] }) {
+  const risky = squad.filter((player) => player.risk).sort((left, right) => (right.risk?.score ?? 0) - (left.risk?.score ?? 0)).slice(0, 5);
+  return (
+    <Card title="Minutes risk" icon={<Info size={16} />} source="model">
+      {risky.length ? (
+        <div className="list">
+          {risky.map((player) => (
+            <div className="list-row" key={player.id}>
+              <PlayerChip name={player.name} team={player.team} teamShort={player.teamShort} position={player.position} size={28} meta={`${player.isStarter ? "Starter" : "Bench"} · ${sentenceCase(player.risk?.label)}`} />
+              <span className="risk-meter"><Meter value={player.risk?.score} label={`${player.name} risk`} tone={(player.risk?.score ?? 0) >= 0.45 ? "neg" : (player.risk?.score ?? 0) >= 0.2 ? "warn" : "pos"} /></span>
+            </div>
+          ))}
+        </div>
+      ) : <p className="faint">Risk model unavailable.</p>}
+    </Card>
+  );
+}
 
 export function PlanWorkspace() {
-  const { dashboard, loading, error } = useTeam();
-  const [selectedScenario, setSelectedScenario] = useState(0);
-  const [selectedCaptainId, setSelectedCaptainId] = useState<number | null>(null);
+  const { ready, dashboard, loading, error, refresh, state, squad, plan, marketLoading } = useCockpit();
+  const snapshot = useMemo(
+    () => (plan && state.actionsOpen && dashboard ? planSnapshot(plan, state.targetEvent, state.modelVersion, dashboard.meta.generated_at) : null),
+    [plan, state.actionsOpen, state.targetEvent, state.modelVersion, dashboard],
+  );
+  const { history, change } = usePlanHistory(snapshot);
 
-  if (!dashboard) {
+  if (!ready || (!dashboard && loading)) return <DataState title="Loading your plan" loading>Running the decision engine on your squad.</DataState>;
+  if (!dashboard && error) return <DataState tone="error" title="Your plan could not be loaded" action={<button className="btn btn-sm btn-primary" onClick={() => void refresh()}>Try again</button>}>{error}</DataState>;
+  if (!dashboard) return <DataState tone="empty" title="Connect a team to build a plan" action={<Link className="btn btn-sm btn-primary" href="/">Connect your team</Link>}>Plans use your squad, bank, free transfers and chip history.</DataState>;
+  if (!plan) {
     return (
-      <DataState title={loading ? "Loading your plan…" : "Connect your team to build a plan"} tone={error ? "error" : "neutral"} loading={loading}>
-        {error}
-      </DataState>
+      <div>
+        <header className="page-head"><div><span className="eyebrow">Plan & Transfers</span><h1>No plan available</h1></div></header>
+        <DataState tone="unavailable" title="The decision engine returned no plan">Official team data is still available on My Team. Try refreshing; if model projections are missing for the next Gameweek, the plan appears once they are published.</DataState>
+      </div>
     );
   }
 
-  const decision = dashboard.data.decision;
-  const transfer = decision?.transfers?.recommended_transfers?.[0]
-    ?? decision?.transfers?.recommended
-    ?? null;
-  const netGain = decision?.transfers?.net_gain ?? null;
-  const hitCost = decision?.transfers?.hit_cost ?? 0;
-  const shouldHold = typeof netGain === "number" && netGain <= 0;
-  const gameweekLocked = dashboard.meta.actions_locked ?? true;
-  const predictionEvent = dashboard.meta.prediction_event
-    ?? dashboard.data.team.prediction_event
-    ?? dashboard.meta.event;
-  const intelligence = decision?.intelligence;
-  const confidence = intelligence?.confidence;
-  const strategy = intelligence?.transfer_strategy;
-  const recommendedScenario: TransferScenario = {
-    transfers: strategy?.selected_transfers?.length
-      ? strategy.selected_transfers
-      : transfer ? [transfer] : [],
-    current_net_gain: strategy?.current_net_gain ?? netGain ?? 0,
-    horizon_gain: strategy?.horizon_gain ?? 0,
-    combined_score: strategy?.combined_score ?? netGain ?? 0,
-    coverage: strategy?.coverage ?? 0,
-  };
-  const freeTransfers = decision?.transfers?.free_transfers;
-  const rollScenario: TransferScenario = {
-    transfers: [],
-    current_net_gain: 0,
-    horizon_gain: 0,
-    combined_score: 0,
-    coverage: strategy?.coverage ?? 0,
-  };
-  const scenarioOptions: ScenarioOption[] = [
-    {
-      id: "recommended",
-      label: recommendedScenario.transfers.length ? "Recommended" : "Recommended HOLD",
-      ariaLabel: "Compare recommended plan",
-      selectionLabel: "Recommended plan selected",
-      scenario: recommendedScenario,
-      hitCost: decision?.transfers?.hit_cost ?? null,
-    },
-    ...(recommendedScenario.transfers.length ? [{
-      id: "roll",
-      label: "Roll / HOLD",
-      ariaLabel: "Compare roll transfer",
-      selectionLabel: "Roll transfer selected",
-      scenario: rollScenario,
-      hitCost: 0,
-    }] : []),
-    ...(strategy?.alternatives ?? []).map((scenario, index) => ({
-      id: `alternative-${index + 1}`,
-      label: `Alternative ${index + 1}`,
-      ariaLabel: `Compare alternative ${index + 1}`,
-      selectionLabel: `Alternative ${index + 1} selected`,
-      scenario,
-      hitCost: typeof freeTransfers === "number"
-        ? Math.max(0, scenario.transfers.length - freeTransfers) * 4
-        : null,
-    })),
-  ];
-  const activeOption = scenarioOptions[Math.min(selectedScenario, Math.max(0, scenarioOptions.length - 1))];
-  const activeScenario = activeOption?.scenario;
-  const ownedIds = new Set(dashboard.data.team.picks.map((pick) => pick.player_id));
-  const captainById = new Map<number, DecisionPlayer>();
-  for (const candidate of [
-    decision?.captain,
-    decision?.vice_captain,
-    ...(intelligence?.captain_decision.alternatives ?? []),
-  ]) {
-    if (candidate?.player_id != null && ownedIds.has(candidate.player_id)) {
-      captainById.set(candidate.player_id, candidate);
-    }
-  }
-  const captainCandidates = [...captainById.values()];
-  const activeCaptain = captainCandidates.find((candidate) => candidate.player_id === selectedCaptainId)
-    ?? captainCandidates.find((candidate) => candidate.player_id === decision?.captain?.player_id)
-    ?? captainCandidates[0];
-  const captainDelta = typeof activeCaptain?.predicted_points === "number"
-    && typeof decision?.captain?.predicted_points === "number"
-    ? activeCaptain.predicted_points - decision.captain.predicted_points
-    : null;
-  const captainHorizon = (
-    activeCaptain?.player_id === decision?.captain?.player_id
-      ? intelligence?.horizon.captain_projection
-      : undefined
-  ) ?? intelligence?.horizon.team_player_projections.find(
-    (player) => player.player_id === activeCaptain?.player_id,
-  ) ?? intelligence?.horizon.captain_projection;
-  const chipState = intelligence?.chip_state;
-  const health = intelligence?.squad_health;
-
+  const locked = !state.actionsOpen;
+  const isTransfer = plan.verdict === "TRANSFER";
   return (
-    <section className="workspace-page">
-      <div className="workspace-heading">
+    <div className="plan-page">
+      <header className="page-head">
         <div>
-          <span className="eyebrow">GAMEWEEK {predictionEvent ?? "—"} DECISION ROOM</span>
-          <h1>Plan the move, not just the squad.</h1>
-          <p>One clear recommendation, with the points math and uncertainty exposed.</p>
+          <span className="eyebrow">Plan & Transfers · Gameweek {state.targetEvent ?? "—"}</span>
+          <h1>{isTransfer ? transferHeadline(plan) : "Hold this week"}</h1>
+          <p>{isTransfer ? "The engine found a move that clears its threshold after cost and uncertainty." : "No transfer clears the threshold. Rolling banks the transfer for next week's team news."}</p>
         </div>
-        <div className="heading-pills"><span className="source-pill source-model">Model</span>{confidence ? <span className={`confidence-pill confidence-${confidence.label.toLowerCase()}`}>{sentenceCase(confidence.label)} confidence</span> : null}</div>
+        <div className="page-head-actions">
+          {plan.confidence ? <span className={`pill ${plan.confidence.label === "HIGH" ? "pill-pos" : plan.confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(plan.confidence.label)} confidence</span> : null}
+          <span className="pill">{plan.freeTransfers == null ? "Free transfers unknown" : `${plan.freeTransfers} FT`}</span>
+          <span className="pill">Bank {price(plan.bank)}</span>
+        </div>
+      </header>
+
+      {locked ? <DataState tone="stale" compact title={state.liveActive ? "Gameweek in progress" : "Deadline passed"}>These recommendations target GW{state.targetEvent}, whose deadline has passed. They are shown for context and cannot be acted on.</DataState> : null}
+      {marketLoading ? <p className="faint loading-note">Loading incoming-player projections…</p> : null}
+
+      <div className="plan-grid">
+        <Card id="transfers" title="Transfer decision" icon={<Repeat2 size={16} />} source="model" tone={isTransfer ? "accent" : undefined} className="plan-transfer">
+          <div className="verdict verdict-inline">
+            <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>{isTransfer ? "Transfer" : "Hold"}</strong>
+            {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
+              <div className="rejected"><span className="eyebrow">Best move found, below threshold</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
+            ) : <p className="muted">No evaluated transfer improves the squad.</p>}
+            {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} freeTransfers={plan.freeTransfers} /> : null}
+          </div>
+        </Card>
+
+        <CaptainCompare plan={plan} squad={squad} />
+        <ScenarioCompare plan={plan} />
+        <ChipCard plan={plan} locked={locked} />
+        <div className="plan-wide"><HorizonGrid squad={squad} /></div>
+        <Card id="why" title="Why this plan" icon={<Lightbulb size={16} />} className="plan-why">
+          <ExplainPlan plan={plan} modelVersion={state.modelVersion} />
+        </Card>
+        <div className="stack">
+          <RiskCard squad={squad} />
+          <Card title="Plan history" icon={<History size={16} />} source="derived">
+            {change ? <p className="change-line"><s>{change.previous.action}</s> → <b>{change.current.action}</b></p> : null}
+            {history.length ? (
+              <ol className="history-list">
+                {history.map((item, index) => (
+                  <li key={`${item.recordedAt}-${item.action}`}>
+                    <span className="faint">GW{item.event}</span>
+                    <span><b>{item.action}</b><small>Captain {item.captain}</small></span>
+                    <span className="faint">{index === 0 ? "Now" : new Date(item.recordedAt).toLocaleDateString([], { day: "numeric", month: "short" })}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : <p className="faint">Plans are remembered in this browser when the recommendation changes meaningfully.</p>}
+          </Card>
+        </div>
       </div>
-
-      {decision ? (
-        <div className="plan-grid">
-          <article id="transfer-center" className="premium-card plan-primary">
-            <header><div><Sparkles size={16} aria-hidden="true" /><h2>Gameweek call</h2></div><span className="source-pill source-derived">Derived</span></header>
-            <div className="plan-call">
-              <span className={shouldHold || gameweekLocked ? "plan-icon hold" : "plan-icon"}><ArrowRight aria-hidden="true" /></span>
-              <div>
-                <small>{gameweekLocked ? "LIVE MODE" : "RECOMMENDATION"}</small>
-                <h3>{gameweekLocked ? "Gameweek locked" : shouldHold ? "Hold the transfer" : transfer ? `${transfer.player_out} → ${transfer.player_in}` : "Hold the transfer"}</h3>
-                <p>{gameweekLocked
-                  ? "The deadline has passed. Transfers are no longer actionable, so FPL AI is monitoring live performance instead."
-                  : shouldHold
-                  ? "The projected gain does not cover the cost. Preserve flexibility for the next deadline."
-                  : "The model expects this move to improve your starting XI after transfer costs."}</p>
-              </div>
-            </div>
-            {gameweekLocked ? <div className="plan-locked-note"><ShieldCheck size={16} aria-hidden="true" /><p><strong>Read-only target.</strong> Transfer calculations are hidden until a new actionable deadline plan is available.</p></div> : <div className="plan-math">
-              <div><span>Gross gain</span><strong>+{number(decision.transfers?.gross_gain ?? transfer?.gain)} xPts</strong></div>
-              <div><span>Transfer cost</span><strong>{hitCost ? `−${hitCost} hit` : "Free"}</strong></div>
-              <div><span>Net decision</span><strong className={shouldHold ? "negative" : "positive"}>{typeof netGain === "number" && netGain > 0 ? "+" : ""}{number(netGain)} net xPts</strong></div>
-            </div>}
-          </article>
-
-          <article id="ai-recommendations" className="premium-card captain-card">
-            <header><div><Crown size={16} aria-hidden="true" /><h2>Armband</h2></div><span className="source-pill source-model">Model</span></header>
-            <div className="captain-choice"><span>C</span><div><strong>{decision.captain?.name ?? "Unavailable"}</strong><small>{decision.captain?.team ?? "Captain model"}</small></div><b>{number(decision.captain?.predicted_points)} xPts</b></div>
-            <div className="captain-choice vice"><span>VC</span><div><strong>{decision.vice_captain?.name ?? "Unavailable"}</strong><small>{decision.vice_captain?.team ?? "Vice-captain model"}</small></div><b>{number(decision.vice_captain?.predicted_points)} xPts</b></div>
-          </article>
-
-          <article className="premium-card honesty-card">
-            <header><div><Gauge size={16} aria-hidden="true" /><h2>{intelligence ? "Decision confidence" : "Decision limits"}</h2></div><span className="source-pill source-official">Transparent</span></header>
-            <div className="honesty-note"><AlertTriangle size={18} aria-hidden="true" /><p>{intelligence ? <><strong>{Math.round((intelligence.horizon.coverage ?? 0) * 100)}% horizon coverage.</strong> GW+2 to GW+5 use fixture-scaled model estimates with wider uncertainty than the native next-GW prediction. Chip recommendations need clear multi-week evidence before FPL AI advises using one.</> : <><strong>One-gameweek horizon.</strong> Chip recommendations need multi-week projections and are intentionally unavailable until that model is live.</>}</p></div>
-            <div className="confidence-row"><span>Free transfers supplied</span><b>{decision.transfers?.free_transfers ?? "—"}</b></div>
-            <div className="confidence-row"><span>Transfers in plan</span><b>{decision.transfers?.transfers_used ?? (transfer ? 1 : 0)}</b></div>
-            {confidence ? <div className="confidence-row"><span>Model confidence</span><b>{Math.round(confidence.score * 100)}% · {sentenceCase(confidence.label)}</b></div> : null}
-          </article>
-
-          {!gameweekLocked && intelligence && activeScenario ? <article className="premium-card plan-wide scenario-lab">
-            <header><div><GitCompareArrows size={16} aria-hidden="true" /><h2>What-if simulator</h2></div><span className="source-pill source-derived">Local only</span></header>
-            <div className="scenario-tabs" role="group" aria-label="Transfer scenarios">
-              {scenarioOptions.map((option, index) => <button type="button" key={option.id} aria-pressed={selectedScenario === index} aria-label={option.ariaLabel} onClick={() => setSelectedScenario(index)}>{option.label}</button>)}
-            </div>
-            <div className="scenario-result">
-              <div><small>{activeOption.selectionLabel}</small><strong>Scenario: {transferLabel(activeScenario.transfers)}</strong><p>Compare current-Gameweek value and the fixture-scaled five-Gameweek effect. Nothing here changes your official FPL team.</p></div>
-              <div className="scenario-metrics"><span><small>Next GW</small><b>{signed(activeScenario.current_net_gain)} xPts</b></span><span><small>Future horizon</small><b>{signed(activeScenario.horizon_gain)} xPts</b></span><span><small>Hit cost</small><b>{activeOption.hitCost == null ? "Unknown" : activeOption.hitCost > 0 ? `−${activeOption.hitCost} pts` : "No hit"}</b></span><span><small>Decision score</small><b>{signed(activeScenario.combined_score)} combined</b></span><span><small>Coverage</small><b>{Math.round(activeScenario.coverage * 100)}%</b></span></div>
-            </div>
-            {captainCandidates.length ? <div className="captain-simulator"><div><span>CAPTAIN WHAT-IF</span><strong>{activeCaptain?.player_id === decision.captain?.player_id ? "Model captain selected" : `${activeCaptain?.name} selected locally`}</strong><small>{captainDelta == null ? "Captain delta unavailable" : `${captainDelta < 0 ? "−" : captainDelta > 0 ? "+" : ""}${Math.abs(captainDelta).toFixed(1)} captain xPts`}</small></div><div role="group" aria-label="Captain scenarios">{captainCandidates.map((candidate) => <button type="button" key={candidate.player_id} aria-pressed={candidate.player_id === activeCaptain?.player_id} aria-label={`Try ${candidate.name} as captain`} onClick={() => setSelectedCaptainId(candidate.player_id)}>{candidate.name}<small>{number(candidate.predicted_points)} xPts</small></button>)}</div><Link href="/team">Open lineup and bench simulator <ArrowRight size={12} aria-hidden="true" /></Link></div> : null}
-          </article> : null}
-
-          {intelligence ? <article className="premium-card plan-wide horizon-card">
-            <header><div><Activity size={16} aria-hidden="true" /><h2>{intelligence.horizon.horizon}-GW outlook</h2></div><span className="source-pill source-model">Model + fixtures</span></header>
-            <div className="horizon-summary"><div><span>Squad horizon</span><strong>{number(intelligence.horizon.team_projected_points)} xPts</strong></div><p>First week is the native model. Later weeks are scaled by official home/away fixtures and FDR; uncertainty expands with distance.</p></div>
-            <div className="horizon-strip">{captainHorizon?.gameweeks.map((gameweek) => <div key={`${gameweek.gameweek}-${gameweek.opponent}`}><span>GW{gameweek.gameweek}</span><strong>{number(gameweek.predicted_points)}<small> ±{number(gameweek.uncertainty)}</small></strong><b>{gameweek.opponent ?? "TBC"}</b><em>{gameweek.projection_method === "native_model" ? "Native" : gameweek.fixture_count === 0 ? "Blank" : "Scaled"}</em></div>) ?? <p>Player-level horizon unavailable.</p>}</div>
-          </article> : null}
-
-          {intelligence ? <article id="chip-advisor" className="premium-card chip-card">
-            <header><div><Zap size={16} aria-hidden="true" /><h2>Chip decision</h2></div><span className="source-pill source-official">Official state</span></header>
-            <div className="chip-call"><span>{gameweekLocked ? "LOCKED" : intelligence.chip_advisor.recommended_chip ? "OPPORTUNITY" : "CONSERVATIVE"}</span><strong>{gameweekLocked ? "Gameweek locked" : chipName(intelligence.chip_advisor.recommended_chip)}</strong><p>{gameweekLocked ? "Chip actions are locked for this target Gameweek. Availability remains visible for planning the next deadline." : intelligence.chip_advisor.recommended_chip ? `The ${chipName(intelligence.chip_advisor.recommended_chip)} scenario clears the current decision threshold.` : "No available chip clears the evidence threshold. Preserve optionality."}</p></div>
-            <div className="chip-grid">{[
-              ["Wildcard", chipState?.wildcard_available],
-              ["Free Hit", chipState?.free_hit_available],
-              ["Bench Boost", chipState?.bench_boost_available],
-              ["Triple Captain", chipState?.triple_captain_available],
-            ].map(([label, available]) => <span key={String(label)} className={available ? "available" : "used"}><ShieldCheck size={13} />{label}<b>{chipState?.known ? available ? "Ready" : "Used" : "Unknown"}</b></span>)}</div>
-          </article> : null}
-
-          {intelligence ? <article className="premium-card health-card">
-            <header><div><ShieldCheck size={16} aria-hidden="true" /><h2>Squad health</h2></div><span className={`health-status health-${(health?.status ?? "unknown").toLowerCase()}`}>{sentenceCase(health?.status)}</span></header>
-            <div className="health-score"><strong>{number(health?.average_xmins, 0)}<small>avg xMins</small></strong><div><span><b>{health?.unavailable_count ?? 0}</b> unavailable</span><span><b>{health?.high_risk_count ?? 0}</b> high risk</span></div></div>
-          </article> : null}
-
-          {intelligence?.insights?.length ? <article className="premium-card plan-wide insights-card">
-            <header><div><Lightbulb size={16} aria-hidden="true" /><h2>Why this plan</h2></div><span className="source-pill source-derived">Evidence-backed</span></header>
-            <div>{intelligence.insights.slice(0, 3).map((insight) => <section key={`${insight.type}-${insight.reason}`}><span>{sentenceCase(insight.type)}</span><p>{insight.reason}</p><b>{sentenceCase(insight.severity)}</b></section>)}</div>
-          </article> : null}
-
-          {!gameweekLocked ? <PlanHistoryPanel snapshot={{
-            event: predictionEvent ?? 0,
-            action: shouldHold ? "Hold the transfer" : transfer ? `${transfer.player_out} → ${transfer.player_in}` : "Hold the transfer",
-            captain: decision.captain?.name ?? "Unavailable",
-            netGain,
-            confidenceScore: confidence?.score ?? null,
-            confidenceLabel: confidence?.label ?? null,
-            modelVersion: dashboard.meta.prediction_version ?? dashboard.data.team.prediction_file ?? null,
-            recordedAt: dashboard.meta.generated_at,
-          }} /> : null}
-        </div>
-      ) : <DataState title="Plan unavailable" tone="warning">Model analysis is unavailable. Official team data remains safe.</DataState>}
-    </section>
+    </div>
   );
 }

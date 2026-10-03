@@ -14,15 +14,18 @@ import { fetchDashboard } from "@/lib/api";
 import type { DashboardEnvelope } from "@/lib/contracts";
 
 
-const STORAGE_KEY = "fpl-ai-team-id";
+export const TEAM_STORAGE_KEY = "fpl-ai-team-id";
 const REFRESH_INTERVAL_MS = 60_000;
 
 
 type TeamContextValue = {
+  /** False until the browser has checked for a saved Team ID. */
+  ready: boolean;
   teamId: string | null;
   dashboard: DashboardEnvelope | null;
   loading: boolean;
   error: string | null;
+  lastLoadedAt: number | null;
   connect: (teamId: string) => Promise<void>;
   disconnect: () => void;
   refresh: () => Promise<void>;
@@ -32,11 +35,22 @@ type TeamContextValue = {
 const TeamContext = createContext<TeamContextValue | null>(null);
 
 
+function readSavedTeamId(): string | null {
+  try {
+    return window.localStorage.getItem(TEAM_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+
 export function TeamProvider({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<DashboardEnvelope | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastLoadedAt, setLastLoadedAt] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async (value: string, persist: boolean) => {
@@ -49,7 +63,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       const result = await fetchDashboard(value, controller.signal);
       setTeamId(value);
       setDashboard(result);
-      if (persist) localStorage.setItem(STORAGE_KEY, value);
+      setLastLoadedAt(Date.now());
+      if (persist) {
+        try { window.localStorage.setItem(TEAM_STORAGE_KEY, value); } catch { /* Private mode: keep the session-only connection. */ }
+      }
     } catch (caught) {
       if (controller.signal.aborted) return;
       setError(caught instanceof Error ? caught.message : "Could not load FPL team");
@@ -60,8 +77,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const connect = useCallback(async (value: string) => {
-    const normalized = value.trim();
-    await load(normalized, true);
+    await load(value.trim(), true);
   }, [load]);
 
   const refresh = useCallback(async () => {
@@ -75,18 +91,24 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   const disconnect = useCallback(() => {
     abortRef.current?.abort();
-    localStorage.removeItem(STORAGE_KEY);
+    try { window.localStorage.removeItem(TEAM_STORAGE_KEY); } catch { /* ignore */ }
     setTeamId(null);
     setDashboard(null);
     setError(null);
     setLoading(false);
+    setLastLoadedAt(null);
   }, []);
 
   useEffect(() => {
     let active = true;
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) queueMicrotask(() => {
-      if (active) void load(saved, false).catch(() => undefined);
+    const saved = readSavedTeamId();
+    queueMicrotask(() => {
+      if (!active) return;
+      if (saved) {
+        setTeamId(saved);
+        void load(saved, false).catch(() => undefined);
+      }
+      setReady(true);
     });
     return () => {
       active = false;
@@ -104,10 +126,12 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   return (
     <TeamContext.Provider value={{
+      ready,
       teamId,
       dashboard,
       loading,
       error,
+      lastLoadedAt,
       connect,
       disconnect,
       refresh,

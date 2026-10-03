@@ -1,55 +1,51 @@
-import { render } from "@testing-library/react";
-import { beforeEach, test, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, test, vi } from "vitest";
 
 import { TeamProvider } from "@/app/providers/TeamProvider";
-import type { TeamPick } from "@/lib/contracts";
 import { expectNoA11yViolations } from "@/test-utils/accessibility";
+import { mockApi } from "@/test-utils/mockApi";
+import { FixturesWorkspace } from "./fixtures/FixturesWorkspace";
+import { PlanWorkspace } from "./plan/PlanWorkspace";
+import { PlayersWorkspace } from "./players/PlayersWorkspace";
+import { ReviewWorkspace } from "./review/ReviewWorkspace";
 import { SettingsWorkspace } from "./settings/SettingsWorkspace";
-import { AppShell } from "./shell/AppShell";
-import { TeamPitch } from "./team/TeamPitch";
 
+beforeEach(() => localStorage.setItem("fpl-ai-team-id", "4242"));
+afterEach(() => { localStorage.clear(); vi.restoreAllMocks(); });
 
-vi.mock("next/navigation", () => ({
-  usePathname: () => "/",
-}));
+const inProvider = (node: React.ReactNode) => render(<TeamProvider>{node}</TeamProvider>);
 
-const positions = ["GKP", "DEF", "DEF", "DEF", "DEF", "MID", "MID", "MID", "MID", "FWD", "FWD", "GKP", "DEF", "MID", "FWD"];
-const picks: TeamPick[] = positions.map((position_name, index) => ({
-  player_id: index + 1,
-  position: index + 1,
-  name: `Player ${index + 1}`,
-  position_name,
-  team: `Club ${index + 1}`,
-  price: 5 + index / 10,
-  status: "a",
-  event_points: index + 1,
-  prediction: { predicted_points: 20 - index / 2 },
-  is_captain: index === 5,
-  is_vice_captain: index === 6,
-}));
-
-beforeEach(() => localStorage.clear());
-
-test("application shell has no automated WCAG A/AA violations", async () => {
-  const { container } = render(
-    <TeamProvider>
-      <AppShell><div>Page content</div></AppShell>
-    </TeamProvider>,
-  );
-
+test("plan workspace has no automated WCAG A/AA violations", async () => {
+  mockApi();
+  const { container } = inProvider(<PlanWorkspace />);
+  await screen.findByRole("heading", { name: "Compare options" });
   await expectNoA11yViolations(container);
 });
 
-test("interactive squad has no automated WCAG A/AA violations", async () => {
-  const { container } = render(<TeamPitch picks={picks} preferredMode="projected" />);
-
+test("players workspace has no automated WCAG A/AA violations", async () => {
+  mockApi();
+  const { container } = inProvider(<PlayersWorkspace />);
+  await screen.findByRole("button", { name: "Open Castellano details" });
   await expectNoA11yViolations(container);
 });
 
-test("settings form has no automated WCAG A/AA violations", async () => {
-  const { container } = render(
-    <TeamProvider><SettingsWorkspace /></TeamProvider>,
-  );
+test("fixtures workspace has no automated WCAG A/AA violations", async () => {
+  mockApi();
+  const { container } = inProvider(<FixturesWorkspace />);
+  await screen.findByRole("rowheader", { name: /Arsenal/ });
+  await expectNoA11yViolations(container);
+});
 
+test("review workspace has no automated WCAG A/AA violations", async () => {
+  mockApi();
+  const { container } = inProvider(<ReviewWorkspace />);
+  await screen.findByText("GW6 against the model");
+  await expectNoA11yViolations(container);
+});
+
+test("settings has no automated WCAG A/AA violations", async () => {
+  mockApi();
+  const { container } = inProvider(<SettingsWorkspace />);
+  await screen.findByText("Midnight Pressers");
   await expectNoA11yViolations(container);
 });

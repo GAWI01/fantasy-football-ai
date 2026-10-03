@@ -52,6 +52,10 @@ export type TeamPick = {
   expected_goals?: number | null;
   expected_assists?: number | null;
   ict_index?: number | null;
+  chance_of_playing_next_round?: number | null;
+  news?: string | null;
+  news_added?: string | null;
+  team_id?: number | null;
   prediction?: Prediction | null;
 };
 
@@ -75,6 +79,26 @@ export type DashboardTeam = {
 
 export type LivePick = TeamPick & {
   multiplied_points?: number | null;
+  goals?: number | null;
+  assists?: number | null;
+  bonus?: number | null;
+  saves?: number | null;
+};
+
+export type LiveFixture = {
+  fixture_id: number;
+  home_team_id: number;
+  away_team_id: number;
+  home_team: string;
+  home_team_short?: string;
+  away_team: string;
+  away_team_short?: string;
+  home_score: number | null;
+  away_score: number | null;
+  kickoff_time?: string | null;
+  started: boolean;
+  finished: boolean;
+  minutes: number;
 };
 
 export type LiveEvent = {
@@ -105,21 +129,7 @@ export type DashboardLive = {
     players_without_fixture?: number;
   };
   events?: LiveEvent[];
-  fixtures?: Array<{
-    fixture_id: number;
-    home_team_id: number;
-    away_team_id: number;
-    home_team: string;
-    home_team_short?: string;
-    away_team: string;
-    away_team_short?: string;
-    home_score: number | null;
-    away_score: number | null;
-    kickoff_time?: string | null;
-    started: boolean;
-    finished: boolean;
-    minutes: number;
-  }>;
+  fixtures?: LiveFixture[];
 };
 
 export type RankHistoryItem = {
@@ -128,6 +138,10 @@ export type RankHistoryItem = {
   total_points?: number | null;
   overall_rank?: number | null;
   event_rank?: number | null;
+  /** Tenths of a million, as FPL reports them. */
+  bank?: number | null;
+  value?: number | null;
+  transfers?: number | null;
 };
 
 export type Fixture = {
@@ -141,6 +155,13 @@ export type Fixture = {
   difficulty?: number | null;
   home_team?: string;
   away_team?: string;
+  home_team_id?: number;
+  away_team_id?: number;
+  home_short?: string;
+  away_short?: string;
+  home_difficulty?: number | null;
+  away_difficulty?: number | null;
+  selected_team_ids?: number[];
   kickoff_time?: string | null;
   started?: boolean;
   finished?: boolean;
@@ -206,6 +227,10 @@ export type DecisionPlayer = {
   availability?: string | null;
   difficulty?: number | null;
   captain_score?: number | null;
+  opponent?: string | null;
+  home?: boolean | null;
+  form?: number | null;
+  rotation_risk?: string | null;
 };
 
 export type RecommendedTransfer = {
@@ -216,6 +241,16 @@ export type RecommendedTransfer = {
   price?: number | null;
   predicted_points?: number | null;
   gain?: number | null;
+  selling_price?: number | null;
+  position?: string | null;
+};
+
+export type TransferPlanAlternative = {
+  transfers: RecommendedTransfer[];
+  transfers_used?: number;
+  gross_gain?: number;
+  hit_cost?: number;
+  net_gain?: number;
 };
 
 export type Confidence = {
@@ -303,6 +338,8 @@ export type DecisionIntelligence = {
   transfer_strategy: {
     action: string;
     current_net_gain: number;
+    gross_gain?: number;
+    hit_cost?: number;
     horizon_gain: number;
     combined_score: number;
     coverage: number;
@@ -316,6 +353,7 @@ export type DecisionIntelligence = {
     alternatives: Array<{ chip: string; score: number }>;
   };
   chip_state: ChipState;
+  wildcard_pressure?: number;
   risk_summary: {
     average_risk: number;
     high_risk_players: number;
@@ -359,7 +397,9 @@ export type DashboardDecision = {
     hit_cost?: number;
     gross_gain?: number;
     net_gain?: number;
-    alternatives?: RecommendedTransfer[];
+    alternatives?: TransferPlanAlternative[];
+    base_projected_points?: number;
+    projected_points_after_transfers?: number;
   };
   intelligence?: DecisionIntelligence;
 };

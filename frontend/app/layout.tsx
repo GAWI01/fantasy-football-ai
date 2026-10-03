@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import type { ReactNode } from "react";
 import { TeamProvider } from "./providers/TeamProvider";
 import { AppShell } from "@/components/shell/AppShell";
 import "./globals.css";
@@ -15,17 +17,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FPL-AI · Gameweek Intelligence",
-  description: "FPL-AI live Fantasy Premier League decision dashboard.",
+  title: {
+    default: "FPL-AI · Gameweek intelligence",
+    template: "%s · FPL-AI",
+  },
+  description: "Independent Fantasy Premier League decision support: transfers, captaincy, lineup, chips and a live Gameweek cockpit. Recommendations only; FPL-AI never changes your official team.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export const viewport: Viewport = {
+  themeColor: "#060811",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>
         <TeamProvider>
           <AppShell>{children}</AppShell>
         </TeamProvider>
