@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +53,15 @@ st.set_page_config(
 # -------------------------------------------------------------------
 
 def get_prediction_file():
-    """Return the best available prediction CSV."""
+    """Return the served forecast named by manifest.json, else a legacy CSV."""
+
+    try:
+        manifest = json.loads((PREDICTIONS_DIR / "manifest.json").read_text(encoding="utf-8"))
+        served = PREDICTIONS_DIR / manifest["prediction_file"]
+        if served.exists():
+            return served
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
 
     for filename in PREDICTION_FILES:
         path = PREDICTIONS_DIR / filename
