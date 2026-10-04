@@ -46,7 +46,7 @@ def schedule_signature(path: Path) -> str | None:
         return None
     frame = pd.read_csv(path)
     columns = [column for column in SCHEDULE_COLUMNS if column in frame.columns]
-    table = frame[columns].sort_values("id").astype(str).to_csv(index=False)
+    table = frame[columns].sort_values("id").astype(str).to_csv(index=False, lineterminator="\n")
     return hashlib.sha256(table.encode("utf-8")).hexdigest()
 
 

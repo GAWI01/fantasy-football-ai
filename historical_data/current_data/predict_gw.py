@@ -219,24 +219,43 @@ def _digest(paths: list[Path]) -> str:
     return hashlib.sha256(b"".join(path.read_bytes() for path in paths)).hexdigest()
 
 
-def target_schedule_digest(fixtures: pd.DataFrame, gw: int) -> str:
-    """What the forecast depends on in the target Gameweek's schedule: its fixtures and clubs."""
+def _schedule_digest(fixtures: pd.DataFrame, gw: int, line_end: str) -> str:
     events = pd.to_numeric(fixtures["event"], errors="coerce")
     table = fixtures.loc[events == gw, ["id", "team_h", "team_a"]].astype(int).sort_values("id")
-    return hashlib.sha256(table.to_csv(index=False).encode("utf-8")).hexdigest()
+    return hashlib.sha256(table.to_csv(index=False, lineterminator=line_end).encode("utf-8")).hexdigest()
 
 
-def published_forecast(gw: int, model_sha256: str | None, schedule: str) -> Path | None:
+def target_schedule_digest(fixtures: pd.DataFrame, gw: int) -> str:
+    """What the forecast depends on in the target Gameweek's schedule: its fixtures and clubs.
+
+    LF line endings make the digest identical on every platform.
+    """
+    return _schedule_digest(fixtures, gw, "\n")
+
+
+def published_forecast(gw: int, model_sha256: str | None, fixtures: pd.DataFrame) -> Path | None:
     """The served artifact if it already forecasts `gw` with this model and schedule."""
     try:
         manifest = load_current_manifest(CURRENT_DIR / "manifest.json")
     except ValueError:
         return None
     provenance = manifest.model_provenance or {}
+    # GW6 v12 was published on Windows, where the digest used CRLF line endings.
+    schedules = {target_schedule_digest(fixtures, gw), _schedule_digest(fixtures, gw, "\r\n")}
     if (manifest.prediction_event == gw and provenance.get("model_sha256") == model_sha256
-            and provenance.get("target_schedule_sha256") == schedule):
+            and provenance.get("target_schedule_sha256") in schedules):
         return manifest.prediction_path
     return None
+
+
+def served_identical(content: bytes) -> Path | None:
+    """The served artifact if it already has exactly these bytes."""
+    try:
+        manifest = load_current_manifest(CURRENT_DIR / "manifest.json")
+    except ValueError:
+        return None
+    path = manifest.prediction_path
+    return path if path.is_file() and path.read_bytes() == content else None
 
 
 def main(force: bool = False) -> Path:
@@ -260,7 +279,7 @@ def main(force: bool = False) -> Path:
     players, teams = pd.read_csv(PLAYERS_PATH), pd.read_csv(TEAMS_PATH)
     fixtures = pd.read_csv(fixtures_path)
     schedule = target_schedule_digest(fixtures, gw)
-    existing = None if force else published_forecast(gw, provenance.get("model_sha256"), schedule)
+    existing = None if force else published_forecast(gw, provenance.get("model_sha256"), fixtures)
     if existing is not None:
         print(f"GW{gw}: already published as {existing.name}")
         return existing
@@ -279,6 +298,10 @@ def main(force: bool = False) -> Path:
     # Content-address the actual generator sources, including local changes.
     provenance["code_revision"] = "sha256:" + _digest([path for path in sources if path.is_file()])
     content = result.to_csv(index=False, lineterminator="\n").encode("utf-8")
+    unchanged = served_identical(content)
+    if unchanged is not None:
+        print(f"GW{gw}: already served with identical content as {unchanged.name}")
+        return unchanged
     output_path = artifact_path(CURRENT_DIR, gw, content)
     manifest = publish_prediction_artifact(
         output_path, content, season=season, prediction_event=gw,

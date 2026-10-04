@@ -4,6 +4,8 @@ Teams 1-3. GW1: 1 v 2 (team 3 blank). GW2: 1 v 3 and 2 v 1 (team 1 doubles).
 GW3: 2 v 3 (team 1 blank).
 """
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -121,6 +123,41 @@ def test_forecast_waits_for_final_scores_in_earlier_gameweeks(tmp_path, monkeypa
     gameweeks.to_csv(current / "gameweeks_current.csv", index=False)
     with pytest.raises(predict_gw.HistoryIncompleteError, match="GW2"):
         predict_gw.main()
+
+
+def test_schedule_digest_does_not_depend_on_the_platform_line_ending(monkeypatch):
+    import hashlib
+    import os
+
+    expected = hashlib.sha256(b"id,team_h,team_a\n31,2,3\n").hexdigest()
+    for line_end in ("\n", "\r\n"):
+        monkeypatch.setattr(os, "linesep", line_end)
+        assert predict_gw.target_schedule_digest(FIXTURES, 3) == expected
+
+
+def _rewrite_served_schedule_digest(current, digest):
+    """Simulate metadata written on another platform (manifest and sidecar agree)."""
+    manifest = json.loads((current / "manifest.json").read_text(encoding="utf-8"))
+    manifest["model_provenance"]["target_schedule_sha256"] = digest
+    for name in ("manifest.json", f"{manifest['prediction_file']}.manifest.json"):
+        (current / name).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
+def test_a_forecast_published_on_windows_is_recognised_on_linux(tmp_path, monkeypatch):
+    current = setup_season(tmp_path, monkeypatch, target=3)
+    first = predict_gw.main()
+    # Before the fix the digest followed os.linesep; GW6 v12 carries the CRLF form.
+    _rewrite_served_schedule_digest(current, predict_gw._schedule_digest(FIXTURES, 3, "\r\n"))
+    assert predict_gw.main() == first
+    assert sorted(path.name for path in current.glob("gw3_predictions_*.csv")) == [first.name]
+
+
+def test_identical_content_is_never_republished(tmp_path, monkeypatch):
+    current = setup_season(tmp_path, monkeypatch, target=3)
+    first = predict_gw.main()
+    _rewrite_served_schedule_digest(current, "0" * 64)
+    assert predict_gw.main() == first
+    assert sorted(path.name for path in current.glob("gw3_predictions_*.csv")) == [first.name]
 
 
 def test_season_comes_from_source_gameweeks_not_the_generation_date(tmp_path, monkeypatch):
