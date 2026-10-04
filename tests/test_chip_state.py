@@ -36,3 +36,23 @@ def test_unknown_chip_history_is_conservative():
     assert state["free_hit_available"] is False
     assert state["bench_boost_available"] is False
     assert state["triple_captain_available"] is False
+
+
+def test_free_hit_cannot_be_played_across_consecutive_chip_periods():
+    state = normalize_manager_chip_state(20, {"chips": [{"name": "freehit", "event": 19}]})
+    assert state["free_hit_available"] is False
+    assert state["wildcard_available"] is True
+
+
+def test_wildcard_and_free_hit_are_unavailable_for_opening_gameweek():
+    state = normalize_manager_chip_state(1, {"chips": []})
+    assert state["wildcard_available"] is False
+    assert state["free_hit_available"] is False
+    assert state["bench_boost_available"] is True
+    assert state["triple_captain_available"] is True
+
+
+def test_late_joiners_cannot_rebuild_with_chips_in_their_opening_gameweek():
+    state = normalize_manager_chip_state(12, {"chips": [], "started_event": 12})
+    assert state["wildcard_available"] is False
+    assert state["free_hit_available"] is False

@@ -227,6 +227,7 @@ def build_intelligence(
     horizon_predictions: Mapping[int, pd.DataFrame] | None = None,
     horizon: int = 3,
     chip_state: Mapping[str, Any] | None = None,
+    manager_picks: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     predictions_by_gw = normalize_horizon_predictions(predictions, horizon_predictions, horizon)
     team_players = list(current_team.get("players", []))
@@ -304,6 +305,17 @@ def build_intelligence(
     )
 
     current_frame = pd.DataFrame(team_players)
+    # Chip gains are measured against the owned XI and captain this plan
+    # recommends, so the chip numbers match the lineup the manager is shown.
+    # The previous Gameweek's published picks are not this Gameweek's choice.
+    chip_xi_ids = [int(player_id) for player_id in starting_xi["player_id"]]
+    chip_captain_id = int(captain["captain"]["player_id"])
+    if manager_picks:
+        picks_by_id = {int(pick["player_id"]): pick for pick in manager_picks}
+        for field in ("purchase_price", "selling_price", "selling_price_source"):
+            supplied = current_frame["player_id"].map(lambda player_id: picks_by_id.get(int(player_id), {}).get(field))
+            if supplied.notna().any():
+                current_frame[field] = supplied
     chip_scenarios = evaluate_chip_scenarios(
         current_frame,
         predictions,
@@ -315,7 +327,11 @@ def build_intelligence(
         },
         double_gameweek=bool(state.get("double_gameweek", False)),
         blank_gameweek=bool(state.get("blank_gameweek", False)),
+        bank=float(current_team.get("bank") or 0.0),
+        starting_xi_ids=chip_xi_ids,
+        captain_id=chip_captain_id,
     )
+    chip_scenarios["lineup_source"] = "recommended_owned_lineup"
     risk_details = [
         risk_adjusted_points(player) | {
             "player_id": int(player["player_id"]),

@@ -113,6 +113,7 @@ def build_decision(
         horizon_predictions=horizon_predictions,
         horizon=horizon,
         chip_state=chip_state,
+        manager_picks=team["picks"],
     )
 
     # Use the intelligence captain/vice only when both are valid XI members.

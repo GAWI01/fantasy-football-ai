@@ -145,3 +145,41 @@ def test_decision_captain_keeps_explanation_fields():
     assert result["captain"]["team"]
     assert result["captain"]["xmins"] == 90.0
     assert result["captain"]["start_probability"] == 1.0
+
+
+def test_chip_budget_preserves_supplied_owned_selling_values():
+    team = make_team()
+    team["bank"] = 3.0
+    team["picks"] = [{"player_id": i, "selling_price": 4.0} for i in range(1, 16)]
+    result = build_decision(team, make_predictions(), chip_state={"wildcard_available": True})
+    scenarios = result["intelligence"]["chip_scenarios"]
+    assert scenarios["budget"] == 63.0
+    assert scenarios["selling_prices_known"] is True
+
+
+def test_chip_captain_matches_the_owned_captain_recommendation():
+    values = make_predictions()
+    values["start_probability"] = 1.0
+    values["availability"] = "AVAILABLE"
+    values.loc[values.player_id == 8, ["predicted_points", "start_probability", "availability"]] = [10.0, 0.2, "RISK"]
+    values.loc[values.player_id == 9, "predicted_points"] = 8.0
+    result = build_decision(make_team(), values, chip_state={"triple_captain_available": True, "double_gameweek": True})
+    assert result["captain"]["player_id"] == 9
+    assert result["intelligence"]["chip_scenarios"]["scenarios"][0]["score"] == 8.0
+
+
+def test_chip_gains_use_the_recommended_owned_lineup_not_last_gameweeks_picks():
+    values = make_predictions()
+    values.loc[values.player_id == 8, "predicted_points"] = 10.0
+    team = make_team()
+    # The published picks are the previous Gameweek's lineup: M1 benched, F1 captain.
+    lineup_order = [1, 3, 4, 5, 6, 7, 9, 10, 13, 14, 15, 8, 11, 12, 2]
+    team["picks"] = [{"player_id": player_id, "position": position, "is_captain": player_id == 13}
+                     for position, player_id in enumerate(lineup_order, start=1)]
+    result = build_decision(team, values, chip_state={"bench_boost_available": True, "triple_captain_available": True, "double_gameweek": True})
+    assert result["captain"]["player_id"] == 8
+    scenarios = result["intelligence"]["chip_scenarios"]
+    # Recommended XI scores 56 with M1 (10) as captain; its bench is 3+3+3+3.
+    assert {s["chip"]: s["score"] for s in scenarios["scenarios"]} == {"BENCH_BOOST": 12.0, "TRIPLE_CAPTAIN": 10.0}
+    assert scenarios["baseline_value"] == 66.0
+    assert scenarios["lineup_source"] == "recommended_owned_lineup"

@@ -92,3 +92,18 @@ def test_invalid_current_team_is_rejected():
             free_transfers=1,
             transfer_out_id=8,
         )
+
+
+def test_single_decision_uses_supplied_selling_value_for_affordability():
+    manager = team()
+    manager["picks"][7]["selling_price"] = 7.4
+    result = analyze_transfer_decision(manager, predictions(), transfer_out_id=8)
+    assert result["recommended"]["player_in_id"] == 17
+    assert result["recommended"]["price"] <= result["recommended"]["selling_price"]
+    assert result["recommended"]["selling_price_source"] == "provided_selling_price"
+
+
+def test_single_decision_labels_market_price_as_an_estimate():
+    result = analyze_transfer_decision(team(), predictions(), transfer_out_id=8)
+    assert result["budget_is_estimate"] is True
+    assert result["recommended"]["selling_price_source"] == "market_price_estimate"
