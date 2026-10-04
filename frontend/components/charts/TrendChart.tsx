@@ -123,10 +123,13 @@ export function TrendChart({
         ) : null}
       </div>
       {reference ? <figcaption className="trend-caption"><i aria-hidden="true" />{reference.label}</figcaption> : null}
-      <table className="sr-only">
-        <caption>{label}</caption>
-        <tbody>{points.map((point) => <tr key={point.x}><th scope="row">{xLabel(point.x)}</th><td>{yLabel(point.y)}</td></tr>)}</tbody>
-      </table>
+      {/* A table ignores width: 1px, so the wrapper does the hiding and keeps it from widening the page. */}
+      <div className="sr-only">
+        <table>
+          <caption>{label}</caption>
+          <tbody>{points.map((point) => <tr key={point.x}><th scope="row">{xLabel(point.x)}</th><td>{yLabel(point.y)}</td></tr>)}</tbody>
+        </table>
+      </div>
     </figure>
   );
 }
