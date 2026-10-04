@@ -164,11 +164,15 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
     );
   }
 
+  // Official stats describe the current Gameweek; xP forecasts the next one.
+  const statsEvent = market.data?.data.current_event ?? null;
+  const forecastEvent = market.data?.data.prediction_event ?? null;
+
   return (
     <div className="players-page">
       <header className="page-head">
         <div>
-          <span className="eyebrow">Player market{market.data?.data.current_event ? ` · GW${market.data.data.current_event}` : ""}</span>
+          <span className="eyebrow">Player market{statsEvent ? ` · GW${statsEvent} stats` : ""}{forecastEvent ? ` · GW${forecastEvent} forecast` : ""}</span>
           <h1>Players</h1>
           <p>Every player with official stats and the model’s next-Gameweek projection. Shortlist up to four to compare.</p>
         </div>
@@ -212,11 +216,11 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
                   <tr>
                     <th scope="col">Player</th>
                     <th scope="col">Next 3</th>
-                    {header("xp", "xP")}
+                    {header("xp", forecastEvent ? `xP GW${forecastEvent}` : "xP")}
                     <th scope="col" className="num">xMins</th>
                     {header("value", "xP/£")}
                     {header("form", "Form")}
-                    {header("event", "GW pts")}
+                    {header("event", statsEvent ? `GW${statsEvent} pts` : "GW pts")}
                     {header("price", "Price")}
                     {header("ownership", "Own%")}
                     <th scope="col"><span className="sr-only">Shortlist</span></th>

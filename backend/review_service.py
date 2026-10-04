@@ -35,17 +35,18 @@ def select_review_prediction_file(
     except (TypeError, ValueError):
         raise ReviewDataError(f"Official deadline is unavailable for GW{event}")
 
-    candidates: list[tuple[int, Path]] = []
-    pattern = re.compile(rf"^gw{event}_predictions_v(?P<version>\d+)\.csv$")
+    candidates: list[tuple[tuple[int, int], Path]] = []
+    # A republished Gameweek (e.g. after a postponement) is `..._v12_r2.csv`.
+    pattern = re.compile(rf"^gw{event}_predictions_v(?P<version>\d+)(?:_r(?P<revision>\d+))?\.csv$")
     for path in predictions_dir.glob(f"gw{event}_predictions_v*.csv"):
         match = pattern.match(path.name)
         if match:
-            candidates.append((int(match.group("version")), path))
+            candidates.append(((int(match.group("version")), int(match.group("revision") or 1)), path))
     exact = predictions_dir / f"gw{event}_predictions.csv"
     if exact.exists():
-        candidates.append((0, exact))
+        candidates.append(((0, 1), exact))
 
-    eligible: list[tuple[datetime, int, Path]] = []
+    eligible: list[tuple[datetime, tuple[int, int], Path]] = []
     for version, path in candidates:
         sidecar = path.with_suffix(path.suffix + ".manifest.json")
         try:
