@@ -56,11 +56,24 @@ No persistent database or volume is necessary for this immutable-image strategy.
 The Docker build runs `python -m backend.runtime_artifacts` and imports the API.
 Validation checks current tables, prediction columns, row count, finite numeric
 values, IDs and matching manifest/sidecar metadata. It does not call FPL or claim
-freshness. To publish a new snapshot, generate it offline with the existing
-pipeline, preserve its real generation timestamp, validate all eight files,
-update explicit Git/Docker exceptions for the new prediction and sidecar, and
-redeploy. Keep older certified pairs explicitly if Review needs them. Never
-rewrite old certification timestamps to manufacture pre-deadline evidence.
+freshness. To publish a new forecast, run
+`python -m historical_data.refresh_predictions`, commit its output and merge it
+to `master`; Git and Docker already allow every versioned forecast and sidecar.
+Older artifacts stay in place for Review. Never rewrite old certification
+timestamps to manufacture pre-deadline evidence.
+
+## Automatic deploys
+
+Merging to `master` deploys both services; no CLI step is needed.
+
+- Railway service `backend`: source `GAWI01/fantasy-football-ai`, branch
+  `master` (reconnected 2026-10-04 after the repository rename from `FPL-AI`).
+- Vercel project `fpl-ai-staging`: production branch `master`, no Ignored Build
+  Step (it was `exit 0`, which cancelled every Git build). Other branches get
+  preview deployments.
+
+Manual fallback from the repository root: `railway up --service backend --ci`
+and `vercel deploy --prod --yes`.
 
 ## Railway backend
 
