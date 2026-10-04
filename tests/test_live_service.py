@@ -147,6 +147,24 @@ def test_normalized_live_players_preserve_official_availability_news():
     assert rows[0]["news_added"] == "2026-09-01T08:00:00Z"
 
 
+@pytest.mark.parametrize("web_name,second_name,want", [
+    (None, "Surname", "Surname"),
+    ("missing", "Surname", "Surname"),
+    ("", "Surname", "Surname"),
+    (None, None, "Player 1"),
+])
+def test_live_player_name_fallback_never_displays_the_first_name(web_name, second_name, want):
+    bootstrap = {
+        "teams": [{"id": 1, "name": "Arsenal", "short_name": "ARS"}],
+        "elements": [{"id": 1, "team": 1, "element_type": 3, "web_name": web_name,
+                      "first_name": "PrivateFirst", "second_name": second_name, "now_cost": 75}],
+    }
+    if web_name == "missing":
+        bootstrap["elements"][0].pop("web_name")
+    rows = live_service.normalize_live_players(bootstrap, {"elements": []})
+    assert rows[0]["name"] == want
+
+
 def test_normalized_live_players_keeps_new_market_entries_without_event_stats():
     bootstrap = {
         "teams": [{"id": 1, "name": "Arsenal", "short_name": "ARS"}],

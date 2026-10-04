@@ -182,7 +182,7 @@ def _player_label(
     team = teams.get(int(player.get("team", 0)), {})
     return {
         "player_id": player_id,
-        "name": str(player.get("web_name") or player.get("first_name") or "Unknown"),
+        "name": str(player.get("web_name") or player.get("second_name") or "Unknown"),
         "team_short": str(team.get("short_name") or "UNK"),
         "position": {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}.get(
             int(player.get("element_type", 0)), "UNK"
@@ -246,6 +246,16 @@ def build_post_gameweek_review(
             + ", ".join(str(player_id) for player_id in missing_live)
         )
 
+    # Public picks carry realized multipliers (including vice-captain fallback).
+    # Reconstruct the selected XI for the projection instead of using hindsight.
+    selected_slots = {int(pick["element"]): int(pick.get("position", 0) or 0) for pick in picks}
+    for substitution in picks_payload.get("automatic_subs") or []:
+        player_out = int(substitution.get("element_out", 0))
+        player_in = int(substitution.get("element_in", 0))
+        if selected_slots.get(player_out, 0) > 11 and 0 < selected_slots.get(player_in, 0) <= 11:
+            selected_slots[player_out], selected_slots[player_in] = selected_slots[player_in], selected_slots[player_out]
+    captain_multiplier = 3 if picks_payload.get("active_chip") == "3xc" else 2
+    bench_boost = picks_payload.get("active_chip") == "bboost"
     pick_rows: list[dict[str, Any]] = []
     projected_total = 0.0
     for pick in picks:
@@ -255,15 +265,20 @@ def build_post_gameweek_review(
         multiplier = int(pick.get("multiplier", 0) or 0)
         predicted = prediction_by_id[player_id]
         actual = actual_by_id[player_id]
-        projected_contribution = predicted * multiplier
+        selected_slot = selected_slots[player_id]
+        projected_multiplier = 1 if bench_boost or 0 < selected_slot <= 11 else 0
+        if pick.get("is_captain") and projected_multiplier:
+            projected_multiplier = captain_multiplier
+        projected_contribution = predicted * projected_multiplier
         actual_contribution = actual * multiplier
         projected_total += projected_contribution
         label = _player_label(player_id, players, teams)
         pick_rows.append(
             {
                 **label,
-                "slot": int(pick.get("position", 0) or 0),
+                "slot": selected_slot,
                 "multiplier": multiplier,
+                "projected_multiplier": projected_multiplier,
                 "is_captain": bool(pick.get("is_captain")),
                 "is_vice_captain": bool(pick.get("is_vice_captain")),
                 "predicted_points": _round_points(predicted),

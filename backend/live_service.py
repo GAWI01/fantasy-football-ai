@@ -332,7 +332,7 @@ def normalize_live_players(
         rows.append({
             "player_id": player_id,
             "team_id": int(player["team"]),
-            "name": player.get("web_name", player.get("first_name", "Unknown")),
+            "name": player.get("web_name") or player.get("second_name") or f"Player {player_id}",
             "team": team.get("name", "Unknown"),
             "team_short": team.get("short_name", "UNK"),
             "position": _position_name(int(player.get("element_type", 0))),

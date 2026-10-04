@@ -17,7 +17,7 @@ def test_v1_players_wraps_live_rankings_with_source_metadata(monkeypatch):
         lambda value: [GatewayResult(data={}, fetched_at=fetched_at, stale=True)],
     )
     monkeypatch.setattr(
-        "backend.main.get_live_player_rankings",
+        "backend.main.get_enriched_player_rankings",
         lambda limit=20, position=None: {
             "event": 2,
             "players": [{"player_id": 1, "name": "Palmer", "position": position}],
@@ -36,6 +36,10 @@ def test_v1_players_wraps_live_rankings_with_source_metadata(monkeypatch):
 
 
 def test_v1_players_combines_official_status_with_model_minutes(monkeypatch):
+    monkeypatch.setattr("backend.main.get_bootstrap_data", lambda: {
+        "events": [{"id": 2, "is_current": True}, {"id": 3, "is_next": True}],
+        "elements": [{"id": 1, "web_name": "Palmer", "status": "d", "chance_of_playing_next_round": 75}],
+    })
     monkeypatch.setattr(
         "backend.main.get_live_player_rankings",
         lambda limit=20, position=None: {
@@ -60,7 +64,7 @@ def test_v1_players_combines_official_status_with_model_minutes(monkeypatch):
     )
     monkeypatch.setattr(
         "backend.main.load_current_manifest",
-        lambda path: SimpleNamespace(prediction_file="gw3_predictions_v11.csv"),
+        lambda path: SimpleNamespace(prediction_file="gw3_predictions_v11.csv", prediction_event=3, model_provenance=None),
     )
 
     response = TestClient(app).get("/api/v1/players?position=MID&limit=12")

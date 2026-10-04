@@ -24,7 +24,7 @@ from .data_loader import (
     load_players,
     load_teams as load_current_teams,
 )
-from .data_manifest import load_current_manifest
+from .data_manifest import load_current_manifest, model_validation_state, season_for_date
 from .runtime_artifacts import validate_runtime_artifacts
 from .dashboard_service import DashboardDependencies, build_dashboard
 from .fpl_gateway import (
@@ -101,6 +101,76 @@ def health():
     return {"status": "ok"}
 
 
+def _validate_prediction_target(manifest, bootstrap: dict) -> None:
+    """Reject forecasts for another Gameweek/season before enriching or optimizing."""
+    events = bootstrap.get("events") or []
+    target = next((event for event in events if event.get("is_next")), None)
+    target = target or next((event for event in events if event.get("is_current")), None)
+    if not target or not isinstance(target.get("id"), int):
+        raise DataLoaderError("Official target Gameweek is unknown")
+    if manifest.prediction_event != target["id"]:
+        raise DataLoaderError(
+            f"Prediction GW{manifest.prediction_event} does not match official target GW{target['id']}"
+        )
+    opening = next((event for event in events if event.get("id") == 1), None)
+    if opening and opening.get("deadline_time"):
+        try:
+            deadline = datetime.fromisoformat(opening["deadline_time"].replace("Z", "+00:00"))
+        except (TypeError, ValueError) as exc:
+            raise DataLoaderError("Official season deadline is invalid") from exc
+        expected_season = season_for_date(deadline)
+        if manifest.season != expected_season:
+            raise DataLoaderError(
+                f"Prediction season {manifest.season} does not match official season {expected_season}"
+            )
+
+
+def _model_validation_state(manifest) -> str:
+    return model_validation_state(manifest)
+
+
+def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> pd.DataFrame:
+    """Availability is runtime official state, not an assumption in an older CSV."""
+    official = {int(player["id"]): player for player in bootstrap.get("elements") or []}
+    if not official:
+        raise DataLoaderError("Official player data is unavailable")
+    teams = {int(team["id"]): team for team in bootstrap.get("teams") or []}
+    # A player the official game no longer lists cannot be selected; drop the
+    # row instead of failing every prediction consumer for one stale entry.
+    result = predictions[predictions["player_id"].astype(int).isin(official)].copy()
+    for index, row in result.iterrows():
+        player = official[int(row["player_id"])]
+        result.at[index, "name"] = str(player.get("web_name") or player.get("second_name") or f"Player {player['id']}")
+        if player.get("now_cost") is not None:
+            result.at[index, "price"] = float(player["now_cost"]) / 10
+        if player.get("element_type") in {1, 2, 3, 4}:
+            result.at[index, "position"] = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}[player["element_type"]]
+        club = teams.get(player.get("team"), {})
+        if club.get("name"):
+            result.at[index, "team"] = club["name"]
+        status = player.get("status")
+        chance = player.get("chance_of_playing_next_round")
+        unavailable = status in {"s", "u", "n"} or chance == 0 or (status == "i" and chance is None)
+        if unavailable:
+            result.at[index, "availability"] = "UNAVAILABLE"
+            result.at[index, "predicted_points"] = 0.0
+            result.at[index, "xmins"] = 0.0
+            result.at[index, "start_probability"] = 0.0
+        elif status == "a" and chance in (None, 100):
+            result.at[index, "availability"] = "AVAILABLE"
+        else:
+            result.at[index, "availability"] = "RISK"
+        if row.get("xmins") is not None and pd.notna(row.get("xmins")) and float(row["xmins"]) <= 0:
+            result.at[index, "predicted_points"] = 0.0
+            result.at[index, "start_probability"] = 0.0
+        result.at[index, "status"] = status
+        result.at[index, "chance_of_playing_next_round"] = chance
+        if "price" in result.columns and pd.notna(result.at[index, "price"]):
+            price = float(result.at[index, "price"])
+            result.at[index, "value"] = float(result.at[index, "predicted_points"]) / price if price > 0 else 0.0
+    return result
+
+
 @app.get("/api/v1/status", response_model=StatusEnvelopeModel)
 def get_status_v1():
     errors: list[dict[str, str]] = []
@@ -153,6 +223,7 @@ def get_status_v1():
             "matches_target_event": (
                 manifest.prediction_event == target_event if target_event is not None else None
             ),
+            "validation_state": _model_validation_state(manifest),
         }
         meta["model"] = source_meta(
             "model",
@@ -166,6 +237,14 @@ def get_status_v1():
                 "area": "model",
                 "message": f"Prediction GW{manifest.prediction_event} does not match official target GW{target_event}",
             })
+        if data["official"] is not None:
+            try:
+                _validate_prediction_target(manifest, bootstrap)
+            except DataLoaderError as exc:
+                if not any(error["message"] == str(exc) for error in errors):
+                    errors.append({"area": "model", "message": str(exc)})
+        if _model_validation_state(manifest) != "validated":
+            errors.append({"area": "model", "message": "Model provenance and production validation are unverified"})
     except ValueError as exc:
         errors.append({"area": "model", "message": str(exc)})
 
@@ -274,8 +353,6 @@ def _prediction_by_id(
             "opponent",
             "home",
             "difficulty",
-            "form",
-            "minutes",
             "xmins",
             "start_probability",
             "availability",
@@ -396,12 +473,11 @@ def get_live_team(team_id: int):
             if fixture.get("home_team_id") in owned_team_ids
             or fixture.get("away_team_id") in owned_team_ids
         ]
-        fixture_by_team = {
-            int(team): fixture
-            for fixture in relevant_fixtures
-            for team in (fixture.get("home_team_id"), fixture.get("away_team_id"))
-            if team is not None
-        }
+        fixtures_by_team: dict[int, list[dict]] = {}
+        for fixture in relevant_fixtures:
+            for club_id in (fixture.get("home_team_id"), fixture.get("away_team_id")):
+                if club_id is not None:
+                    fixtures_by_team.setdefault(int(club_id), []).append(fixture)
         active_picks = [
             pick for pick in picks if int(pick.get("multiplier", 0) or 0) > 0
         ]
@@ -411,12 +487,12 @@ def get_live_team(team_id: int):
         players_without_fixture = 0
         for pick in active_picks:
             club_id = pick.get("team_id")
-            fixture = fixture_by_team.get(int(club_id)) if club_id is not None else None
-            if fixture is None:
+            matches = fixtures_by_team.get(int(club_id), []) if club_id is not None else []
+            if not matches:
                 players_without_fixture += 1
-            elif fixture.get("finished"):
+            elif all(fixture.get("finished") for fixture in matches):
                 players_finished += 1
-            elif fixture.get("started"):
+            elif any(fixture.get("started") and not fixture.get("finished") for fixture in matches):
                 players_live += 1
             else:
                 players_remaining += 1
@@ -425,7 +501,7 @@ def get_live_team(team_id: int):
             "captain_contribution": sum(
                 int(pick["multiplied_points"])
                 for pick in active_picks
-                if pick.get("is_captain")
+                if int(pick.get("multiplier", 0) or 0) > 1
             ),
             "players_finished": players_finished,
             "players_live": players_live,
@@ -464,6 +540,9 @@ def get_live_team(team_id: int):
             "current_event": live["current_event"],
             "gameweek_name": live["gameweek_name"],
             "status": live["status"],
+            "finished": bool(live.get("finished")),
+            "next_event": live.get("next_event"),
+            "next_deadline_time": live.get("next_deadline_time"),
             "picks": picks,
             "summary": summary,
             "fixtures": relevant_fixtures,
@@ -506,7 +585,7 @@ def get_official_team(team_id: int) -> dict:
         picks.append(
             {
                 **pick,
-                "name": str(player.get("web_name") or player.get("first_name") or player_id),
+                "name": str(player.get("web_name") or player.get("second_name") or f"Player {player_id}"),
                 "position_name": position_names.get(int(player.get("element_type", 0) or 0), "UNK"),
                 "team": str(club.get("name") or "Unknown"),
                 "team_short": str(club.get("short_name") or "UNK"),
@@ -574,6 +653,11 @@ def get_team(team_id: int):
             prediction_event
         )
 
+        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+        bootstrap = get_bootstrap_data()
+        _validate_prediction_target(manifest, bootstrap)
+        predictions = _apply_official_player_state(predictions, bootstrap)
+
         prediction_by_id = _prediction_by_id(
             predictions
         )
@@ -598,6 +682,7 @@ def get_team(team_id: int):
             **team,
             "prediction_event": prediction_event,
             "prediction_file": prediction_file,
+            "model_validation_state": _model_validation_state(manifest),
             "picks": enriched_picks,
         }
 
@@ -691,13 +776,18 @@ def get_top_players(
             prediction_event
         )
 
-        teams = pd.read_csv(
-            PREDICTIONS_DIR / "teams_current.csv"
-        )
+        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+        bootstrap = get_bootstrap_data()
+        _validate_prediction_target(manifest, bootstrap)
+        predictions = _apply_official_player_state(predictions, bootstrap)
+        players = pd.DataFrame(bootstrap.get("elements") or []).rename(columns={"id": "player_id"})
+
+        teams = pd.DataFrame(bootstrap.get("teams") or [])
 
         return {
             "prediction_event": prediction_event,
             "prediction_file": prediction_file,
+            "model_validation_state": _model_validation_state(manifest),
             "players": build_top_players(
                 predictions,
                 players,
@@ -773,10 +863,10 @@ def get_decision(
             status_code=400,
             detail="budget must be greater than 0",
         )
-    if free_transfers is not None and free_transfers < 0:
+    if free_transfers is not None and not 0 <= free_transfers <= 5:
         raise HTTPException(
             status_code=400,
-            detail="free_transfers cannot be negative",
+            detail="free_transfers must be between 0 and 5",
         )
     if max_transfers is not None and max_transfers < 0:
         raise HTTPException(
@@ -788,6 +878,12 @@ def get_decision(
         team = get_team_data(team_id)
         predictions = load_predictions()
         manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+        bootstrap = get_bootstrap_data()
+        try:
+            _validate_prediction_target(manifest, bootstrap)
+        except DataLoaderError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        predictions = _apply_official_player_state(predictions, bootstrap)
         fixtures = load_current_fixtures()
         teams = load_current_teams()
         try:
@@ -808,22 +904,25 @@ def get_decision(
             if max_transfers is not None
             else min(5, max(1, effective_free_transfers))
         )
+        effective_horizon = min(5, 39 - manifest.prediction_event)
         horizon_predictions = build_fixture_scaled_horizon(
             predictions,
             fixtures,
             teams,
             prediction_event=manifest.prediction_event,
-            horizon=5,
+            horizon=effective_horizon,
         )
         try:
             chip_state = get_manager_chip_state(
                 team_id,
                 manifest.prediction_event,
+                started_event=team.get("started_event"),
             )
         except LiveDataServiceError:
             chip_state = normalize_manager_chip_state(
                 manifest.prediction_event,
                 {},
+                started_event=team.get("started_event"),
             )
         chip_state.update(
             gameweek_flags(fixtures, teams, manifest.prediction_event)
@@ -838,7 +937,7 @@ def get_decision(
             free_transfers=effective_free_transfers,
             max_transfers=effective_max_transfers,
             horizon_predictions=horizon_predictions,
-            horizon=5,
+            horizon=effective_horizon,
             chip_state=chip_state,
         )
         # Public FPL data cannot see every transfer rule, so tell clients
@@ -852,7 +951,7 @@ def get_decision(
 
     except HTTPException:
         raise
-    except (TeamServiceError, FixtureServiceError) as exc:
+    except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except (DataLoaderError, ValueError, TypeError, KeyError) as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -881,13 +980,21 @@ def get_dashboard_v1(team_id: int, free_transfers: int | None = None):
         payload = build_dashboard(team_id, dependencies)
         try:
             manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+            bootstrap = get_bootstrap_data()
+            _validate_prediction_target(manifest, bootstrap)
             planning_state = build_planning_state(
-                get_bootstrap_data(),
+                bootstrap,
                 prediction_event=manifest.prediction_event,
             )
             payload["meta"].update(planning_state)
             payload["meta"]["prediction_version"] = manifest.prediction_file
-        except (LiveDataServiceError, ValueError, OSError):
+            payload["meta"]["model_validation_state"] = _model_validation_state(manifest)
+            if _model_validation_state(manifest) != "validated":
+                payload["meta"]["degraded"] = True
+                payload["errors"].append({
+                    "area": "model", "message": "Model provenance and production validation are unverified",
+                })
+        except (DataLoaderError, LiveDataServiceError, ValueError, OSError) as exc:
             payload["meta"].update(
                 {
                     "current_event": payload["meta"].get("event"),
@@ -899,7 +1006,7 @@ def get_dashboard_v1(team_id: int, free_transfers: int | None = None):
             )
             payload["meta"]["degraded"] = True
             payload["errors"].append(
-                {"area": "planning_state", "message": "Planning deadline is unavailable"}
+                {"area": "planning_state", "message": f"Planning is unavailable: {exc}"}
             )
     finally:
         official_trace = end_gateway_trace(trace_token)
@@ -940,17 +1047,22 @@ def get_enriched_player_rankings(
 ) -> dict:
     data = get_live_player_rankings(limit=limit, position=position)
     try:
-        prediction_by_id = _prediction_by_id(load_predictions())
+        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+        bootstrap = get_bootstrap_data()
+        _validate_prediction_target(manifest, bootstrap)
+        prediction_by_id = _prediction_by_id(_apply_official_player_state(load_predictions(), bootstrap))
         for player in data.get("players") or []:
             if not isinstance(player, dict) or player.get("player_id") is None:
                 continue
             prediction = prediction_by_id.get(int(player["player_id"]))
             if prediction:
                 player.update(prediction)
-        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
         data["model_version"] = manifest.prediction_file
-    except (DataLoaderError, ValueError, OSError, pd.errors.ParserError) as exc:
+        data["prediction_event"] = manifest.prediction_event
+        data["model_validation_state"] = _model_validation_state(manifest)
+    except (DataLoaderError, LiveDataServiceError, ValueError, OSError, pd.errors.ParserError) as exc:
         data["model_version"] = None
+        data["prediction_event"] = None
         data["model_error"] = str(exc)
     return data
 

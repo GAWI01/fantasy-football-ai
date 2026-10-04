@@ -63,10 +63,11 @@ def build_fixture_scaled_horizon(
     _require_columns(predictions, _PREDICTION_COLUMNS, "predictions")
     _require_columns(fixtures, _FIXTURE_COLUMNS, "fixtures")
     _require_columns(teams, _TEAM_COLUMNS, "teams")
-    if not isinstance(prediction_event, int) or prediction_event < 1:
-        raise ValueError("prediction_event must be a positive integer")
+    if not isinstance(prediction_event, int) or not 1 <= prediction_event <= 38:
+        raise ValueError("prediction_event must be between 1 and 38")
     if not isinstance(horizon, int) or not 1 <= horizon <= 5:
         raise ValueError("horizon must be between 1 and 5")
+    horizon = min(horizon, 39 - prediction_event)
 
     team_ids = {
         str(row.name).casefold(): int(row.id)
@@ -82,7 +83,6 @@ def build_fixture_scaled_horizon(
         base["opponent"] = None
     base["gameweek"] = prediction_event
     base["projection_method"] = "native_model"
-    base["fixture_count"] = 1
     base["uncertainty"] = base["predicted_points"].map(lambda value: _uncertainty(float(value), 1))
 
     result: dict[int, pd.DataFrame] = {1: base}
@@ -91,10 +91,11 @@ def build_fixture_scaled_horizon(
         prediction_event + step - 1
         for step in range(2, horizon + 1)
     }
+    requested_events = future_events | {prediction_event}
     fixtures_by_event_and_team: dict[
         int,
         dict[int, list[tuple[int, float, bool]]],
-    ] = {event: {} for event in future_events}
+    ] = {event: {} for event in requested_events}
     for fixture in fixtures.loc[:, sorted(_FIXTURE_COLUMNS)].itertuples(index=False):
         try:
             event = int(fixture.event)
@@ -104,11 +105,18 @@ def build_fixture_scaled_horizon(
             away_difficulty = float(fixture.team_a_difficulty)
         except (TypeError, ValueError):
             continue
-        if event not in future_events:
+        if event not in requested_events:
             continue
         event_map = fixtures_by_event_and_team[event]
         event_map.setdefault(team_h, []).append((team_a, home_difficulty, True))
         event_map.setdefault(team_a, []).append((team_h, away_difficulty, False))
+
+    base_matches = fixtures_by_event_and_team[prediction_event]
+    base["fixture_count"] = base["team"].map(
+        lambda team: len(base_matches.get(team_ids.get(str(team).casefold()), []))
+    )
+    # Keep the native total once. Future projections scale per fixture, not per DGW.
+    base_records = base.to_dict("records")
 
     for step in range(2, horizon + 1):
         event = prediction_event + step - 1
@@ -140,7 +148,10 @@ def build_fixture_scaled_horizon(
             opponents: list[str] = []
             difficulties: list[float] = []
             homes: list[bool] = []
-            base_factor = _base_factor(player)
+            target_matches = base_matches.get(team_id, [])
+            base_factor = sum(_fixture_factor(difficulty, home) for _, difficulty, home in target_matches)
+            if not base_factor:
+                base_factor = _base_factor(player)
             for opponent_id, difficulty, home in matches:
                 projected += float(player["predicted_points"]) * _fixture_factor(difficulty, home) / base_factor
                 opponents.append(team_names.get(opponent_id, f"Team {opponent_id}"))

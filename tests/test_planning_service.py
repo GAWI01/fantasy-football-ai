@@ -63,6 +63,27 @@ def test_blank_and_double_gameweeks_are_explicit():
     assert double["opponent"] == "Beta / Gamma"
 
 
+def test_double_base_gw_is_not_counted_twice_in_single_future_gw():
+    players = predictions()
+    players['difficulty'] = 3
+    players['home'] = True
+    fixtures = pd.DataFrame([
+        {'event': event, 'team_h': 1, 'team_a': opponent,
+         'team_h_difficulty': 3, 'team_a_difficulty': 3}
+        for event, opponent in [(3, 2), (3, 3), (4, 2)]
+    ])
+    result = build_fixture_scaled_horizon(players, fixtures, teams(), prediction_event=3, horizon=2)
+    assert result[1].iloc[0]['fixture_count'] == 2
+    assert result[2].iloc[0]['predicted_points'] == 5.0
+
+
+def test_horizon_stops_at_final_official_gameweek():
+    fixtures = pd.DataFrame(columns=['event', 'team_h', 'team_a', 'team_h_difficulty', 'team_a_difficulty'])
+    result = build_fixture_scaled_horizon(predictions(), fixtures, teams(), prediction_event=38, horizon=5)
+    assert len(result) == 1
+    assert result[1].iloc[0]['gameweek'] == 38
+
+
 def test_full_five_gameweek_horizon_stays_within_interactive_latency_budget():
     team_rows = [
         {"id": team_id, "name": f"Team {team_id}", "short_name": f"T{team_id}"}

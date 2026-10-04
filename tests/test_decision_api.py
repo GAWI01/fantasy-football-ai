@@ -37,6 +37,16 @@ def team():
 
 def mock_plan_context(monkeypatch, chip_reader=None):
     monkeypatch.setattr(
+        "backend.main.get_bootstrap_data",
+        lambda: {
+            "events": [{"id": 2, "is_current": True}, {"id": 3, "is_next": True}],
+            "elements": [
+                {"id": int(row.player_id), "web_name": row.name, "status": "a"}
+                for row in predictions().itertuples(index=False)
+            ],
+        },
+    )
+    monkeypatch.setattr(
         "backend.main.load_current_manifest",
         lambda path: type("Manifest", (), {"prediction_file": "gw3.csv", "prediction_event": 3})(),
     )
@@ -50,7 +60,7 @@ def mock_plan_context(monkeypatch, chip_reader=None):
     )
     monkeypatch.setattr(
         "backend.main.get_manager_chip_state",
-        chip_reader or (lambda team_id, event: {
+        chip_reader or (lambda team_id, event, **kwargs: {
             "known": True,
             "period": 1,
             "period_events": [1, 19],
@@ -132,7 +142,7 @@ def test_decision_remains_available_when_chip_history_fails(monkeypatch):
     monkeypatch.setattr("backend.main.get_team_data", lambda team_id: team())
     monkeypatch.setattr("backend.main.load_predictions", lambda: predictions())
 
-    def unavailable(team_id, event):
+    def unavailable(team_id, event, **kwargs):
         raise LiveDataServiceError("history unavailable")
 
     mock_plan_context(monkeypatch, unavailable)
@@ -221,6 +231,7 @@ def test_dashboard_v1_composes_existing_domain_services(monkeypatch):
             {
                 "prediction_file": "gw3_predictions_v11.csv",
                 "prediction_event": 3,
+                "model_provenance": None,
             },
         )(),
     )
@@ -282,7 +293,8 @@ def test_dashboard_v1_composes_existing_domain_services(monkeypatch):
     assert body["meta"]["prediction_event"] == 3
     assert body["meta"]["actions_locked"] is False
     assert body["meta"]["prediction_version"] == "gw3_predictions_v11.csv"
-    assert body["errors"] == []
+    assert body["meta"]["model_validation_state"] == "unverified"
+    assert body["errors"] == [{"area": "model", "message": "Model provenance and production validation are unverified"}]
 
 
 def test_dashboard_v1_passes_user_free_transfers_to_decision(monkeypatch):
