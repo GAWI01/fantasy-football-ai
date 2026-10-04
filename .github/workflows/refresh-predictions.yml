@@ -1,0 +1,46 @@
+name: Refresh predictions
+
+on:
+  schedule:
+    - cron: "23 */3 * * *"
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/refresh-predictions.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-predictions
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-pipeline.txt
+      - run: pip install -r requirements-pipeline.txt
+      - id: refresh
+        run: python -m historical_data.refresh_predictions
+      - if: steps.refresh.outputs.changed == 'true'
+        env:
+          MESSAGE: ${{ steps.refresh.outputs.message }}
+          SEASON: ${{ steps.refresh.outputs.season }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add historical_data/current_data
+          if [ -n "$SEASON" ]; then git add "historical_data/$SEASON"; fi
+          git commit -m "$MESSAGE"
+          git pull --rebase origin master
+          git push origin HEAD:master
