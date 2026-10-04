@@ -317,6 +317,24 @@ def test_select_review_prediction_file_prefers_latest_certified_pre_deadline_ver
     ) == latest
 
 
+def test_select_review_prediction_file_uses_a_republished_revision(tmp_path: Path):
+    original = tmp_path / "gw7_predictions_v12.csv"
+    original.write_text("v12", encoding="utf-8")
+    _certify(original, event=7, generated_at="2026-10-14T10:00:00+00:00")
+    revision = tmp_path / "gw7_predictions_v12_r2.csv"
+    revision.write_text("v12 r2", encoding="utf-8")
+    _certify(revision, event=7, generated_at="2026-10-15T10:00:00+00:00")
+    late = tmp_path / "gw7_predictions_v12_r3.csv"
+    late.write_text("after deadline", encoding="utf-8")
+    _certify(late, event=7, generated_at="2026-10-17T12:00:00+00:00")
+
+    assert select_review_prediction_file(
+        tmp_path,
+        7,
+        deadline_time="2026-10-17T10:00:00Z",
+    ) == revision
+
+
 def test_select_review_prediction_file_rejects_uncertified_artifact(tmp_path: Path):
     base = tmp_path / "gw2_predictions.csv"
     base.write_text("base", encoding="utf-8")
