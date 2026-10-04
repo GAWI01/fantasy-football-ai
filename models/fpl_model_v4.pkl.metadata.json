@@ -1,0 +1,10 @@
+{
+  "feature_contract_version": 4,
+  "xp_source": "previous_completed_gw_points_mean_v1",
+  "target": "same_fixture_total_points",
+  "validation_state": "validated",
+  "model_sha256": "b5c02560306f7d90acf17ffbff9cfe4f900f212d262ddafe3d17f06e25a37a3a",
+  "sklearn_version": "1.5.2",
+  "validation_report_file": "fpl_model_v4.pkl.validation.json",
+  "validation_report_sha256": "aa382ead55e209964669003f0bc4468d10e7f82fe071ef9c77a5c3fcc07f724b"
+}

@@ -91,8 +91,9 @@ flowchart LR
 ## The model
 
 The forecast is a gradient-boosting model of each player's points per fixture
-(`models/fpl_model_v3.pkl`), built from the player's last five completed
-Gameweeks (points, minutes, starts, goals, assists, BPS and ICT), price,
+(`models/fpl_model_v4.pkl`), built from the player's last five completed
+Gameweeks (points, minutes, starts, goals, assists, BPS and ICT), how many of
+those Gameweeks exist yet, price,
 position, home or away, and the official fixture difficulty. Training,
 validation and live forecasting share one feature implementation, so live
 inputs are computed exactly as in training.
@@ -102,12 +103,17 @@ completed Gameweeks (2026-27 GW1–5), which it never saw:
 
 | At certification (October 2026) | Mean abs. error | RMSE | Points of its top 10 per GW |
 |---|---|---|---|
-| **Model** | **1.229** | **2.293** | **6.20** |
+| **Model** | **1.256** | **2.230** | **6.06** |
 | Baseline: last-five average | 1.350 | 2.650 | 3.46 |
 
 A model is certified only if it beats that baseline, its features provably
 ignore results from the Gameweek being forecast, and the live path reproduces
-the validation inputs exactly. The method, limitations and commands are in
+the validation inputs exactly. After every Gameweek the forecast is scored
+against the final points (`historical_data/current_data/forecast_checks.csv`),
+so drift shows up within a week. Forecasts are expected points, not
+guarantees: one player's Gameweek is very random, and the five-Gameweek
+outlook scales next week's forecast by fixture difficulty rather than
+forecasting each week separately. The method, limitations and commands are in
 [docs/MODEL_PIPELINE.md](docs/MODEL_PIPELINE.md).
 
 ## Run it locally

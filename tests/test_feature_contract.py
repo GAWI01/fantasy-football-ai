@@ -17,7 +17,7 @@ class FeatureContractTests(unittest.TestCase):
             "goals_last_5": 1, "assists_last_5": 2, "bps_avg_5": 18,
             "influence_avg_5": 22, "creativity_avg_5": 15,
             "threat_avg_5": 30, "ict_index_avg_5": 6.7,
-            "fixture_difficulty": 3, "position": "MID",
+            "history_gw_count": 5, "fixture_difficulty": 3, "position": "MID",
         }
 
         training = build_feature_row(raw)

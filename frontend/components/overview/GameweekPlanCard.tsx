@@ -139,7 +139,7 @@ export function GameweekPlanCard({
         </div>
         <div className="hero-meta">
           {locked ? <span className="pill pill-warn">Read-only · deadline passed</span> : null}
-          {confidence ? <span className={`pill ${confidence.label === "HIGH" ? "pill-pos" : confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(confidence.label)} confidence · {Math.round(confidence.score * 100)}%</span> : null}
+          {confidence ? <span className={`pill ${confidence.label === "HIGH" ? "pill-pos" : confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(confidence.label)} confidence</span> : null}
           <SourceBadge kind="model" />
         </div>
       </header>

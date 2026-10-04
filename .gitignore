@@ -57,7 +57,7 @@ frontend/node_modules/
 models/*.joblib
 models/*.pkl
 # The certified production model is small and versioned with its evidence.
-!models/fpl_model_v3.pkl
+!models/fpl_model_v4.pkl
 
 # Generated prediction outputs
 historical_data/current_data/*_predictions*.csv
