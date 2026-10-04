@@ -30,8 +30,8 @@ Requirements:
 Clone and start the complete stack:
 
 ```powershell
-git clone https://github.com/GAWI01/FPL-AI.git
-cd FPL-AI
+git clone https://github.com/GAWI01/fantasy-football-ai.git
+cd fantasy-football-ai
 docker compose up --build
 ```
 
@@ -54,8 +54,8 @@ Requirements:
 Clone the repository and prepare the backend from PowerShell:
 
 ```powershell
-git clone https://github.com/GAWI01/FPL-AI.git
-cd FPL-AI
+git clone https://github.com/GAWI01/fantasy-football-ai.git
+cd fantasy-football-ai
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
@@ -66,7 +66,7 @@ python -m uvicorn backend.main:app --reload --port 8000
 Leave that terminal running. In a second PowerShell terminal:
 
 ```powershell
-cd FPL-AI\frontend
+cd fantasy-football-ai\frontend
 corepack enable
 pnpm install --frozen-lockfile
 Copy-Item ..\.env.example .env.local
@@ -138,8 +138,11 @@ The project has successfully built:
 - rotation-risk features
 - initial squad/Wildcard optimizer experiments
 
-The current certified GW3 model artifact contains 623 players; the live official
-2026/27 bootstrap smoke on 2026-09-01 returned 629 players.
+The current serving manifest selects GW6/2026-27 with 667 players, published
+2026-10-03. The archived GW3 artifact remains historical. Publication metadata
+does not prove model quality: GW6 lacks verified model/input provenance, so the
+status API reports the model as unverified. The audited pipeline corrections
+require honest retraining and production-parity evaluation before validation.
 
 ## V1–V5: what we learned
 

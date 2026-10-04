@@ -104,7 +104,7 @@ function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlaye
       </div>
       {active && plan.captain && active.id !== plan.captain.id ? (
         <p className="card-note">Captaining <b>{active.name}</b> instead of {plan.captain.name}: <Delta value={delta} unit=" xP" /> expected from the armband. <SourceBadge kind="derived" /></p>
-      ) : <p className="card-note">The model captain balances projected points with minutes security and fixture. Vice: <b>{plan.vice?.name ?? "—"}</b>.</p>}
+      ) : <p className="card-note">The model selected this captain from your owned players. Vice: <b>{plan.vice?.name ?? "—"}</b>.</p>}
     </Card>
   );
 }
@@ -118,6 +118,7 @@ function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
         <span className="eyebrow">{locked ? "Locked for this deadline" : "Recommendation"}</span>
         <strong className={plan.chip.recommended ? "tone-warn" : undefined}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold your chips"}</strong>
         <p className="muted">{plan.chip.recommended ? `The ${CHIP_LABEL[plan.chip.recommended]} case cleared the engine's threshold (score ${fixed(plan.chip.score, 2)}). Check team news before committing.` : "No chip clears the evidence bar this week. Chips are worth most in doubles, blanks or a squad crisis, so the engine defaults to holding."}</p>
+        {plan.chipBudgetIsEstimate ? <p className="card-note">Chip squad affordability is estimated from market prices. Check your actual selling prices in FPL.</p> : null}
       </div>
       <div className="chip-grid">
         {chips.map((chip) => (
@@ -197,12 +198,12 @@ function RiskCard({ squad }: { squad: SquadPlayer[] }) {
 }
 
 export function PlanWorkspace() {
-  const { ready, dashboard, loading, error, refresh, state, squad, plan, marketLoading } = useCockpit();
+  const { ready, teamId, dashboard, loading, error, refresh, state, squad, plan, marketLoading } = useCockpit();
   const snapshot = useMemo(
     () => (plan && state.actionsOpen && dashboard ? planSnapshot(plan, state.targetEvent, state.modelVersion, dashboard.meta.generated_at) : null),
     [plan, state.actionsOpen, state.targetEvent, state.modelVersion, dashboard],
   );
-  const { history, change } = usePlanHistory(snapshot);
+  const { history, change } = usePlanHistory(snapshot, teamId);
 
   if (!ready || (!dashboard && loading)) return <DataState title="Loading your plan" loading>Running the decision engine on your squad.</DataState>;
   if (!dashboard && error) return <DataState tone="error" title="Your plan could not be loaded" action={<button className="btn btn-sm btn-primary" onClick={() => void refresh()}>Try again</button>}>{error}</DataState>;
@@ -211,6 +212,7 @@ export function PlanWorkspace() {
     return (
       <div>
         <header className="page-head"><div><span className="eyebrow">Plan & Transfers</span><h1>No plan available</h1></div></header>
+        {error ? <DataState tone="error" compact title="Refresh failed">{error} Showing the last loaded data.</DataState> : null}
         <DataState tone="unavailable" title="The decision engine returned no plan">Official team data is still available on My Team. Try refreshing; if model projections are missing for the next Gameweek, the plan appears once they are published.</DataState>
       </div>
     );
@@ -233,6 +235,7 @@ export function PlanWorkspace() {
         </div>
       </header>
 
+      {error ? <DataState tone="error" compact title="Refresh failed" action={<button className="btn btn-sm" onClick={() => void refresh()}>Try again</button>}>{error} Showing the last loaded plan.</DataState> : null}
       {locked ? <DataState tone="stale" compact title={state.liveActive ? "Gameweek in progress" : "Deadline passed"}>These recommendations target GW{state.targetEvent}, whose deadline has passed. They are shown for context and cannot be acted on.</DataState> : null}
       {marketLoading ? <p className="faint loading-note">Loading incoming-player projections…</p> : null}
 

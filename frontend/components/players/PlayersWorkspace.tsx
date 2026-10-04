@@ -176,6 +176,7 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
       </header>
 
       {market.error && !players.length ? <DataState tone="error" title="The player market is unavailable" action={<button className="btn btn-sm" onClick={market.reload}>Try again</button>}>{market.error}</DataState> : null}
+      {market.data?.data.model_validation_state === "unverified" ? <DataState tone="warning" compact title="Unverified model forecasts">The forecasts are shown for evaluation only.</DataState> : null}
       {market.data?.errors.some((item) => item.area === "model") ? <DataState tone="warning" compact title="Model projections unavailable">Official data is shown; xP and xMins columns are empty until projections load.</DataState> : null}
       {market.data?.meta.stale ? <DataState tone="stale" compact title="Showing cached FPL data">The official service did not respond.</DataState> : null}
 

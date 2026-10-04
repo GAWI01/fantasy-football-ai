@@ -25,6 +25,12 @@ Every surface labels its data class (Cached is shown when the official service d
 - `Model`: versioned prediction or optimizer output.
 - `Derived`: calculations made from the above.
 
+Official freshness uses the upstream `fetched_at` timestamp. Mounted page resources refresh at expiry, when an expired tab regains focus, and from the shared refresh button; their cache keys include the Gameweek and model version. A known deadline also closes actions locally without waiting for another API response.
+
+Live expectations are available only when the forecast event matches the live event and all active picks have forecasts. They use official pick multipliers, including triple captain, vice-captain fallback and bench boost. Incomplete lineup forecasts are unavailable rather than partial totals. Unverified forecasts and estimated affordability are labelled in the existing views.
+
+Local plan history is scoped to the selected Team ID. Free-transfer overrides are scoped to a team and target Gameweek, survive blocked storage for the current session, and bind to the first known target before expiring on rollover. Season goals are personal browser preferences and do not change recommendations.
+
 The prediction manifest is `historical_data/current_data/manifest.json`. Publishers replace it atomically only after the full prediction artifact exists.
 
 ## Local development

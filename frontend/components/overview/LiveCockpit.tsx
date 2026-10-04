@@ -65,7 +65,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
           <div className="live-score">
             <strong className="num" aria-label={live.points == null ? "Live points unavailable" : `${live.points} live points`}>{live.points ?? "—"}</strong>
             <span className="live-score-context">
-              {live.projectedXI != null ? <>Model expected <b className="tone-accent">{fixed(live.projectedXI)} xP</b> for this XI <SourceBadge kind="model" /></> : "Model expectation unavailable"}
+              {live.projectedXI != null ? <>Model expected <b className="tone-accent">{fixed(live.projectedXI)} xP</b> for your active picks <SourceBadge kind="model" /></> : "Model expectation unavailable"}
               {delta != null ? <span className={delta >= 0 ? "tone-pos" : "tone-neg"}> · {delta >= 0 ? "+" : "−"}{Math.abs(delta).toFixed(1)} vs expected</span> : null}
             </span>
           </div>

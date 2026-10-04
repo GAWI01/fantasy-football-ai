@@ -8,7 +8,15 @@ Before commercial/public launch, the project owner must re-review the Premier Le
 
 ## Prediction artifacts
 
-Model output is generated inside this project from approved inputs and published with a versioned manifest. The UI labels these values `Model`, never `Live` or `Official`.
+Model output is generated inside this project and published with a versioned manifest. A publication timestamp certifies when an artifact was published, not that its inputs are licensed or that its model was validated. The UI labels these values `Model`, never `Live` or `Official`. Existing GW6 artifacts do not identify the trained model, input hashes or a leakage-safe production evaluation; they remain unverified.
+
+## Historical FPL and Understat data
+
+Offline training and mapping scripts use [Vaastav's Fantasy-Premier-League repository](https://github.com/vaastav/Fantasy-Premier-League). The retained FPL seasons and Understat files are separate data dependencies. The upstream software licence does not establish permission from the original FPL/Understat data owners for downstream data reuse. No provider agreement, pinned source revision or complete retrieval/hash register is present in this repository.
+
+Before regenerating a model for release, record the exact source revision, retrieval time, input checksums, attribution and applicable data-use permission. Understat player-name/ID mapping is currently an offline path; its football statistics are not established live model inputs. Do not describe these sources as approved until evidence exists.
+
+Historical scraped `xP` has an upstream lookahead warning. The corrected feature contract uses completed-Gameweek history and requires retraining and fresh evaluation; earlier stored error metrics are not evidence for the corrected production pipeline.
 
 ## Product boundary
 

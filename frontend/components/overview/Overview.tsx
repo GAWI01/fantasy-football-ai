@@ -36,7 +36,7 @@ export function Overview() {
     () => (plan && state.actionsOpen && dashboard ? planSnapshot(plan, state.targetEvent, state.modelVersion, dashboard.meta.generated_at) : null),
     [plan, state.actionsOpen, state.targetEvent, state.modelVersion, dashboard],
   );
-  const { change } = usePlanHistory(snapshot);
+  const { change } = usePlanHistory(snapshot, teamId);
 
   if (!ready || (!dashboard && loading)) return <OverviewSkeleton />;
   if (!dashboard && teamId && error) {

@@ -25,8 +25,9 @@ export function describePlanChange(previous: PlanSnapshot, current: PlanSnapshot
 }
 
 /** Records meaningful plan changes in this browser and reports the latest one for the same Gameweek. */
-export function usePlanHistory(snapshot: PlanSnapshot | null) {
-  const [history, setHistory] = useState<PlanSnapshot[]>([]);
+export function usePlanHistory(snapshot: PlanSnapshot | null, teamId: string | null) {
+  const [stored, setStored] = useState<{ teamId: string | null; history: PlanSnapshot[] }>({ teamId: null, history: [] });
+  const history = stored.teamId === teamId ? stored.history : [];
   const key = snapshot ? JSON.stringify({ ...snapshot, recordedAt: undefined }) : null;
 
   useEffect(() => {
@@ -34,15 +35,15 @@ export function usePlanHistory(snapshot: PlanSnapshot | null) {
     queueMicrotask(() => {
       if (cancelled) return;
       try {
-        setHistory(snapshot ? recordPlanSnapshot(window.localStorage, snapshot) : readPlanHistory(window.localStorage));
+        setStored({ teamId, history: teamId ? (snapshot ? recordPlanSnapshot(window.localStorage, snapshot, teamId) : readPlanHistory(window.localStorage, teamId)) : [] });
       } catch {
-        setHistory([]);
+        setStored({ teamId, history: [] });
       }
     });
     return () => { cancelled = true; };
     // `key` captures every meaningful field of the snapshot.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, teamId]);
 
   const current = history[0];
   const previous = history[1] && current && history[1].event === current.event ? history[1] : null;

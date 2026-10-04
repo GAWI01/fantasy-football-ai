@@ -14,7 +14,7 @@ export type LiveView = {
   remaining: number;
   noFixture: number;
   benchPoints: number | null;
-  /** Model expectation for the same XI, for context only. */
+  /** Same-event model expectation for official active picks, including chip multipliers. */
   projectedXI: number | null;
   fixtures: LiveFixture[];
   events: LiveEvent[];
@@ -23,19 +23,23 @@ export type LiveView = {
   topContributors: SquadPlayer[];
 };
 
-export function buildLiveView(data: DashboardData, squad: SquadPlayer[]): LiveView | null {
+export function buildLiveView(data: DashboardData, squad: SquadPlayer[], predictionEvent = data.team.prediction_event): LiveView | null {
   const live = data.live;
   if (!live) return null;
   const starters = squad.filter((player) => player.isStarter);
   const bench = squad.filter((player) => !player.isStarter).sort((left, right) => left.slot - right.slot);
-  const contributions = starters.map((player) => player.liveContribution);
-  const summed = contributions.every((value) => value != null)
+  const activePicks = squad.filter((player) => player.multiplier != null && player.multiplier > 0);
+  const contributions = activePicks.map((player) => player.liveContribution);
+  const multipliersKnown = squad.length > 0 && squad.every((player) => player.multiplier != null);
+  const summed = multipliersKnown && activePicks.length > 0 && contributions.every((value) => value != null)
     ? contributions.reduce<number>((total, value) => total + (value ?? 0), 0)
     : null;
-  const captain = squad.find((player) => player.isCaptain) ?? null;
+  const captain = activePicks.find((player) => (player.multiplier ?? 0) > 1) ?? squad.find((player) => player.isCaptain) ?? null;
   const benchValues = bench.map((player) => player.livePoints);
-  const projected = starters.every((player) => player.xp != null)
-    ? starters.reduce((total, player) => total + (player.xp ?? 0) * (player.isCaptain ? 2 : 1), 0)
+  const projected = predictionEvent === live.current_event && activePicks.length > 0
+    && multipliersKnown
+    && activePicks.every((player) => player.xp != null)
+    ? activePicks.reduce((total, player) => total + (player.xp ?? 0) * (player.multiplier ?? 0), 0)
     : null;
 
   const ownedTeams = new Set(squad.map((player) => player.teamId).filter((id): id is number => id != null));
@@ -66,10 +70,10 @@ export function buildLiveView(data: DashboardData, squad: SquadPlayer[]): LiveVi
     points: live.summary?.live_points ?? summed,
     captain,
     captainContribution: live.summary?.captain_contribution ?? captain?.liveContribution ?? null,
-    finished: live.summary?.players_finished ?? starters.filter((player) => player.fixtureState === "finished").length,
-    playing: live.summary?.players_live ?? starters.filter((player) => player.fixtureState === "live").length,
-    remaining: live.summary?.players_remaining ?? starters.filter((player) => player.fixtureState === "upcoming").length,
-    noFixture: live.summary?.players_without_fixture ?? starters.filter((player) => player.fixtureState === "none").length,
+    finished: live.summary?.players_finished ?? activePicks.filter((player) => player.fixtureState === "finished").length,
+    playing: live.summary?.players_live ?? activePicks.filter((player) => player.fixtureState === "live").length,
+    remaining: live.summary?.players_remaining ?? activePicks.filter((player) => player.fixtureState === "upcoming").length,
+    noFixture: live.summary?.players_without_fixture ?? activePicks.filter((player) => player.fixtureState === "none").length,
     benchPoints: benchValues.every((value) => value != null) ? benchValues.reduce<number>((total, value) => total + (value ?? 0), 0) : null,
     projectedXI: projected,
     fixtures: (ownedTeams.size ? (live.fixtures ?? []).filter((fixture) => ownedTeams.has(fixture.home_team_id) || ownedTeams.has(fixture.away_team_id)) : [...(live.fixtures ?? [])]).sort((left, right) => {
@@ -78,8 +82,8 @@ export function buildLiveView(data: DashboardData, squad: SquadPlayer[]): LiveVi
     }),
     events: live.events ?? [],
     autoSubWatch,
-    yetToPlay: starters.filter((player) => player.fixtureState === "upcoming" || player.fixtureState === "live"),
-    topContributors: [...starters]
+    yetToPlay: activePicks.filter((player) => player.fixtureState === "upcoming" || player.fixtureState === "live"),
+    topContributors: [...activePicks]
       .filter((player) => player.liveContribution != null)
       .sort((left, right) => (right.liveContribution ?? 0) - (left.liveContribution ?? 0))
       .slice(0, 3),

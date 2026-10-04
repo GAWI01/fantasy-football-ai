@@ -96,6 +96,7 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
         <dt className="sr-only">Free transfers</dt>
         <dd><FreeTransfersControl count={plan.freeTransfers} source={plan.freeTransfersSource} /></dd>
       </div>
+      {plan.budgetIsEstimate && scenario.moves.length > 0 ? <div className="metrics-note"><dt className="sr-only">Affordability</dt><dd>Affordability is estimated from market prices. Check your actual selling prices in FPL before making the move.</dd></div> : null}
     </dl>
   );
 }
@@ -196,6 +197,7 @@ export function GameweekPlanCard({
               <span className="tile-label"><Zap size={14} aria-hidden="true" />Chip</span>
               <strong className={`tile-word${plan.chip.recommended ? " tone-warn" : ""}`}>{plan.chip.recommended ? CHIP_LABEL[plan.chip.recommended] : "Hold chips"}</strong>
               <small className="faint">{plan.chip.recommended ? "Opportunity cleared the threshold" : "No chip clears the evidence bar"}</small>
+              {plan.chipBudgetIsEstimate ? <small className="faint">Squad affordability estimated from market prices.</small> : null}
             </div>
             <div className="tile">
               <span className="tile-label"><Layers size={14} aria-hidden="true" />Bench order</span>

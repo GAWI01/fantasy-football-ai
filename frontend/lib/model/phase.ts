@@ -24,7 +24,7 @@ export type GameState = {
   failedAreas: Set<string>;
 };
 
-export function deriveGameState(envelope: DashboardEnvelope | null): GameState {
+export function deriveGameState(envelope: DashboardEnvelope | null, now = Date.now()): GameState {
   if (!envelope) {
     return {
       phase: "settled",
@@ -45,7 +45,9 @@ export function deriveGameState(envelope: DashboardEnvelope | null): GameState {
   const live = data.live;
   const liveActive = live?.status === "LIVE" && live.finished !== true;
   // Missing planning metadata fails closed: a plan without a known deadline is never actionable.
-  const actionsOpen = meta.actions_locked === false;
+  const deadline = meta.target_deadline_time ?? live?.next_deadline_time ?? null;
+  const deadlineAt = deadline ? Date.parse(deadline) : Number.NaN;
+  const actionsOpen = meta.actions_locked === false && Number.isFinite(deadlineAt) && deadlineAt > now;
   const stale = Boolean(meta.stale ?? meta.official?.stale ?? false);
   return {
     phase: liveActive ? "live" : actionsOpen ? "decision" : "settled",
@@ -53,7 +55,7 @@ export function deriveGameState(envelope: DashboardEnvelope | null): GameState {
     actionsOpen,
     currentEvent: meta.current_event ?? live?.current_event ?? meta.event ?? data.team.event ?? null,
     targetEvent: meta.prediction_event ?? data.team.prediction_event ?? null,
-    deadline: meta.target_deadline_time ?? live?.next_deadline_time ?? null,
+    deadline,
     stale,
     degraded: Boolean(meta.degraded),
     generatedAt: meta.generated_at ?? null,

@@ -55,7 +55,7 @@ export function SettingsWorkspace() {
               </label>
             ))}
           </fieldset>
-          <p className="card-note">Saved in this browser. It frames the copy on the Overview; it never changes official facts or model numbers.</p>
+          <p className="card-note">Saved in this browser as a personal goal. It does not change the model or its recommendations.</p>
         </Card>
 
         <Card title="Data runtime" icon={<Server size={16} />}>
