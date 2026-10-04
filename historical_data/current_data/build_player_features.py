@@ -1,300 +1,133 @@
-"""
-Build current-season player features for the next Gameweek.
-
-Early-season handling:
-- If explicit GW1 history is available, it is treated as 1 completed match,
-  not as a 1/5 rolling sample.
-- Once broader rolling history is supplied, the canonical xMins engine can
-  use the rolling minute/start features normally.
-"""
-
+"""Build next-GW features from completed Gameweeks, without fetching data."""
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-
-from feature_contract import FEATURE_COLUMNS
-from historical_data.current_data.xmins import (
-    availability_multiplier,
-    availability_label,
-    calculate_xmins,
-)
-
+from feature_contract import FEATURE_CONTRACT_VERSION, XP_SOURCE
+from historical_data.current_data.xmins import build_xmins_columns, calculate_xmins
 
 BASE = Path(__file__).resolve().parent
-
 PLAYERS_FILE = BASE / "players_current.csv"
 GW1_FILE = BASE / "gw1_history.csv"
 OUTPUT_FILE = BASE / "players_features_current.csv"
 
 
-def rotation_risk(xmins: float, minutes_gw1: float) -> str:
-    if xmins <= 0:
-        return "OUT"
-    if minutes_gw1 >= 75 and xmins >= 70:
-        return "LOW"
-    if minutes_gw1 >= 60 and xmins >= 60:
-        return "MEDIUM"
-    if minutes_gw1 >= 30:
-        return "HIGH"
-    return "VERY_HIGH"
+def _read_history(path: Path, event: int) -> pd.DataFrame:
+    frame = pd.read_csv(path)
+    if "player_id" not in frame:
+        raise ValueError(f"History lacks player_id: {path.name}")
+    if "GW" in frame or "round" in frame:
+        frame["GW"] = pd.to_numeric(frame.get("GW", frame.get("round")), errors="raise")
+        return frame
+    # Legacy event files contain cumulative bootstrap metadata alongside event
+    # statistics. Only event suffixes are authoritative; cumulative metadata
+    # cannot prove when the bootstrap was collected and must not fill event ICT.
+    result = frame[["player_id"]].copy()
+    result["GW"] = event
+    aliases = {"goals_scored": "goals", "starts": "started"}
+    for column in ["minutes", "total_points", "goals_scored", "assists", "starts",
+                   "bps", "influence", "creativity", "threat", "ict_index"]:
+        source = f"{aliases.get(column, column)}_gw{event}"
+        if source in frame:
+            result[column] = frame[source]
+    return result
 
 
-def _build_early_season_xmins(row: pd.Series) -> float:
-    """
-    GW1-only xMins semantics.
-
-    One completed GW means:
-      - starter with 60-90 minutes -> strong starter expectation
-      - substitute/partial appearance -> reduced expectation
-      - no appearance -> 0
-    Availability is applied afterwards.
-    """
-    availability = availability_multiplier(row)
-
-    if availability <= 0:
-        return 0.0
-
-    minutes = float(
-        np.clip(
-            pd.to_numeric(
-                row.get("minutes_gw1", 0.0),
-                errors="coerce",
-            ),
-            0.0,
-            90.0,
-        )
-    )
-
-    started = float(
-        np.clip(
-            pd.to_numeric(
-                row.get("started_gw1", 0.0),
-                errors="coerce",
-            ),
-            0.0,
-            1.0,
-        )
-    )
-
-    played = float(
-        np.clip(
-            pd.to_numeric(
-                row.get("played_gw1", 0.0),
-                errors="coerce",
-            ),
-            0.0,
-            1.0,
-        )
-    )
-
-    if started >= 1.0:
-        base = max(minutes, 90.0 if minutes >= 75 else minutes)
-    elif played >= 1.0 and minutes > 0:
-        base = minutes * 0.75
-    else:
-        base = 0.0
-
-    return round(
-        float(np.clip(base * availability, 0.0, 90.0)),
-        1,
-    )
+def build_current_features(players: pd.DataFrame, history: pd.DataFrame,
+                           target_gw: int, *, available_events: set[int]) -> pd.DataFrame:
+    result = players.copy()
+    if result["player_id"].duplicated().any():
+        raise ValueError("Current player IDs must be unique")
+    history = history[pd.to_numeric(history["GW"], errors="raise") < target_gw].copy()
+    required = ["minutes", "total_points", "goals_scored", "assists", "bps",
+                "influence", "creativity", "threat", "ict_index"]
+    for column in required:
+        if column not in history:
+            raise ValueError(f"Completed history missing {column}; regenerate event history")
+        history[column] = pd.to_numeric(history[column], errors="raise")
+        if history[column].isna().any():
+            raise ValueError(f"Completed history contains missing {column}")
+    if "starts" not in history:
+        history["starts"] = (history["minutes"] >= 60).astype(int)
+    # Same historical semantics: sums per GW, ICT/BPS means per GW, then rolling
+    # across completed GWs. A DGW never consumes its own first leg.
+    level = history.groupby(["player_id", "GW"], as_index=False).agg(
+        **{column: (column, "sum") for column in
+           ["minutes", "total_points", "goals_scored", "assists", "starts"]},
+        **{column: (column, "mean") for column in
+           ["bps", "influence", "creativity", "threat", "ict_index"]})
+    first_window = max(1, target_gw - 5)
+    level = level[level["GW"] >= first_window].sort_values(["player_id", "GW"])
+    summaries = []
+    for player_id, group in level.groupby("player_id"):
+        summary = {"player_id": player_id, "history_gw_count": len(group),
+                   "history_cutoff_gw": int(group["GW"].max()),
+                   "points_last_3": group.loc[group["GW"] >= target_gw - 3, "total_points"].sum(),
+                   "points_last_5": group["total_points"].sum(),
+                   "points_avg_5": group["total_points"].mean(),
+                   "minutes_last_5": group["minutes"].sum(),
+                   "starts_last_5": group["starts"].sum(),
+                   "goals_last_5": group["goals_scored"].sum(),
+                   "assists_last_5": group["assists"].sum()}
+        summary.update({f"{column}_avg_5": group[column].mean() for column in
+                        ["bps", "influence", "creativity", "threat", "ict_index"]})
+        summaries.append(summary)
+    rolling_columns = ["history_gw_count", "history_cutoff_gw", "points_last_3", "points_last_5",
+                       "points_avg_5", "minutes_last_5", "starts_last_5", "goals_last_5",
+                       "assists_last_5", "bps_avg_5", "influence_avg_5", "creativity_avg_5",
+                       "threat_avg_5", "ict_index_avg_5"]
+    result = result.drop(columns=[c for c in rolling_columns if c in result])
+    summary_frame = pd.DataFrame(summaries, columns=["player_id", *rolling_columns])
+    result = result.merge(summary_frame, on="player_id", how="left", validate="one_to_one")
+    # Missing history is distinct from a recorded zero before the xMins fallback.
+    missing_history = result["history_gw_count"].isna()
+    result.loc[missing_history, ["history_gw_count", "history_cutoff_gw"]] = 0
+    result = build_xmins_columns(result)
+    result[rolling_columns] = result[rolling_columns].fillna(0)
+    result["form_5"] = result["points_avg_5"]
+    result["xP"] = result["points_avg_5"]
+    result["feature_contract_version"] = FEATURE_CONTRACT_VERSION
+    result["xp_source"] = XP_SOURCE
+    result["history_complete"] = set(range(first_window, target_gw)).issubset(available_events)
+    result["prediction_event"] = target_gw
+    result["reliable_starter"] = ((result.xmins >= 60) & (result.availability_multiplier >= .75)).astype(int)
+    if "web_name" in result:
+        result["name"] = result["web_name"].fillna(result.get("second_name", result.player_id.astype(str)))
+    elif "second_name" in result:
+        result["name"] = result["second_name"].fillna(result.player_id.astype(str))
+    result = result.drop(columns=["first_name"], errors="ignore")
+    return result
 
 
 def main() -> None:
-    print("=" * 70)
-    print("FPL AI - CURRENT PLAYER FEATURES V2.2")
-    print("=" * 70)
-
-    print("\nLoading current player data...")
-    players = pd.read_csv(PLAYERS_FILE)
-    print(f"Players: {len(players)}")
-
-    print("Loading GW1 history...")
-    gw1 = pd.read_csv(GW1_FILE)
-    print(f"GW1 rows: {len(gw1)}")
-
-    history_columns = [
-        "player_id",
-        "minutes_gw1",
-        "goals_gw1",
-        "assists_gw1",
-        "clean_sheets_gw1",
-        "bonus_gw1",
-        "bps_gw1",
-        "total_points_gw1",
-        "started_gw1",
-        "played_gw1",
-    ]
-
-    history_columns = [
-        column for column in history_columns
-        if column in gw1.columns
-    ]
-
-    gw1_small = (
-        gw1[history_columns]
-        .drop_duplicates("player_id")
-    )
-
-    df = players.merge(
-        gw1_small,
-        on="player_id",
-        how="left",
-    )
-
-    numeric_columns = [
-        column for column in history_columns
-        if column != "player_id"
-    ]
-
-    for column in numeric_columns:
-        df[column] = pd.to_numeric(
-            df[column],
-            errors="coerce",
-        ).fillna(0.0)
-
-    # GW1 is the previous completed Gameweek and is safe for next-GW input.
-    df["points_last_3"] = df["total_points_gw1"]
-    df["points_last_5"] = df["total_points_gw1"]
-    df["points_avg_5"] = df["total_points_gw1"]
-
-    df["minutes_last_5"] = df["minutes_gw1"]
-    df["starts_last_5"] = df["started_gw1"].clip(
-        lower=0,
-        upper=1,
-    )
-
-    df["goals_last_5"] = df["goals_gw1"]
-    df["assists_last_5"] = df["assists_gw1"]
-
-    for feature, source in [
-        ("bps_avg_5", "bps_gw1"),
-        ("influence_avg_5", "influence_gw1"),
-        ("creativity_avg_5", "creativity_gw1"),
-        ("threat_avg_5", "threat_gw1"),
-        ("ict_index_avg_5", "ict_index_gw1"),
-    ]:
-        if source in df.columns:
-            df[feature] = pd.to_numeric(
-                df[source],
-                errors="coerce",
-            ).fillna(0.0)
-        else:
-            df[feature] = 0.0
-
-    df["form_5"] = df["points_avg_5"]
-
-    if "xP" in df.columns:
-        df["xP"] = pd.to_numeric(
-            df["xP"],
-            errors="coerce",
-        ).fillna(0.0)
-    else:
-        df["xP"] = 0.0
-
-    # Canonical availability labels and multiplier.
-    df["availability"] = df.apply(
-        availability_label,
-        axis=1,
-    )
-
-    df["availability_multiplier"] = df.apply(
-        availability_multiplier,
-        axis=1,
-    )
-
-    # GW1-only data needs one-match semantics. Using minutes_last_5 as
-    # though it were five completed matches would divide a single GW1 start
-    # by five and produce artificially low xMins.
-    has_gw1_history = (
-        df["minutes_gw1"].notna()
-        | df["started_gw1"].notna()
-        | df["played_gw1"].notna()
-    )
-
-    df["xmins"] = 0.0
-
-    df.loc[has_gw1_history, "xmins"] = df.loc[
-        has_gw1_history
-    ].apply(
-        _build_early_season_xmins,
-        axis=1,
-    )
-
-    # For rows without GW1 history, retain the canonical engine's fallback.
-    no_gw1_history = ~has_gw1_history
-
-    if no_gw1_history.any():
-        df.loc[no_gw1_history, "xmins"] = df.loc[
-            no_gw1_history
-        ].apply(
-            calculate_xmins,
-            axis=1,
-        )
-
-    df["start_probability"] = np.clip(
-        df["xmins"] / 90.0,
-        0.0,
-        1.0,
-    ).round(3)
-
-    df["rotation_risk"] = df.apply(
-        lambda row: rotation_risk(
-            float(row["xmins"]),
-            float(row["minutes_gw1"]),
-        ),
-        axis=1,
-    )
-
-    df["reliable_starter"] = (
-        (df["minutes_gw1"] >= 60)
-        & (df["xmins"] >= 60)
-        & (df["availability_multiplier"] >= 0.75)
-    ).astype(int)
-
-    for column in FEATURE_COLUMNS:
-        if column not in df.columns:
-            if column == "opponent_team":
-                continue
-            df[column] = 0.0
-
-    df.to_csv(
-        OUTPUT_FILE,
-        index=False,
-    )
-
-    print("\n" + "=" * 70)
-    print("AVAILABILITY")
-    print("=" * 70)
-    print(df["availability"].value_counts().to_string())
-
-    print("\n" + "=" * 70)
-    print("ROTATION RISK")
-    print("=" * 70)
-    print(df["rotation_risk"].value_counts().to_string())
-
-    print("\n" + "=" * 70)
-    print("XMINS SUMMARY")
-    print("=" * 70)
-    print(df["xmins"].describe().to_string())
-
-    print("\n" + "=" * 70)
-    print("CURRENT PLAYER FEATURES V2.2 COMPLETE")
-    print("=" * 70)
-
-    print(f"\nSaved: {OUTPUT_FILE}")
-    print(f"Players processed: {len(df)}")
+    gameweeks = pd.read_csv(BASE / "gameweeks_current.csv")
+    next_events = gameweeks[gameweeks["is_next"].astype(str).str.lower().eq("true")]
+    if len(next_events) != 1:
+        raise ValueError("Exactly one next Gameweek is required")
+    target_gw = int(next_events.iloc[0]["id"])
+    frames, available = [], set()
+    for path in sorted(BASE.glob("gw*_history.csv")):
+        match = re.fullmatch(r"gw(\d+)_history\.csv", path.name)
+        if match and int(match[1]) < target_gw:
+            event = int(match[1])
+            frames.append(_read_history(path, event))
+            available.add(event)
+    if not frames:
+        raise ValueError("No completed event history is available; fetch it before building features")
+    result = build_current_features(pd.read_csv(PLAYERS_FILE), pd.concat(frames, ignore_index=True),
+                                    target_gw, available_events=available)
+    result.to_csv(OUTPUT_FILE, index=False)
+    print(f"Saved {len(result)} players for GW{target_gw}: {OUTPUT_FILE}")
+    if not result.history_complete.all():
+        print("History coverage is incomplete; prediction regeneration remains blocked.")
 
 
 if __name__ == "__main__":

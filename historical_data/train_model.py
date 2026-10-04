@@ -32,13 +32,15 @@ from feature_contract import (  # noqa: E402
     FEATURE_COLUMNS,
     NUMERIC_COLUMNS,
     build_feature_row,
+    feature_metadata,
+    validate_feature_provenance,
     validate_model_feature_names,
 )
 
 
 BASE_DIR = PROJECT_ROOT / "historical_data"
 MODEL_DIR = PROJECT_ROOT / "models"
-MODEL_OUTPUT = MODEL_DIR / "fpl_model_v1.pkl"
+MODEL_OUTPUT = MODEL_DIR / "fpl_model_v1_corrected.pkl"
 
 TRAIN_SEASONS = (
     "2020-21",
@@ -80,6 +82,8 @@ def load_season(season: str) -> pd.DataFrame:
 def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     """Build a leakage-safe same-fixture target and validate model inputs."""
     result = df.sort_values(["player_id", "GW"]).copy()
+    for _, row in result.iterrows():
+        validate_feature_provenance(row.to_dict(), int(row["GW"]))
 
     # The generated historical feature row is the prediction snapshot for
     # its own Gameweek: rolling player features are shifted to exclude the
@@ -105,15 +109,6 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
             errors="coerce",
         )
 
-    # The canonical builder converts missing numeric values to errors rather
-    # than silently inventing values, so historical feature rows are filled
-    # explicitly here. This matches the feature-engineering boundary.
-    result[list(NUMERIC_COLUMNS)] = (
-        result[list(NUMERIC_COLUMNS)]
-        .replace([np.inf, -np.inf], np.nan)
-        .fillna(0.0)
-    )
-
     result["position"] = result["position"].astype(str).str.strip()
 
     invalid_positions = result["position"].eq("").any()
@@ -125,8 +120,9 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     if result.empty:
         raise ValueError("No trainable rows remain after target preparation.")
 
-    # Validate the canonical contract against a real generated row.
-    build_feature_row(result.iloc[0].to_dict())
+    # Validate every input; an invalid historical value is not a recorded zero.
+    for _, row in result.iterrows():
+        build_feature_row(row.to_dict())
 
     return result
 
@@ -203,9 +199,14 @@ def evaluate_model(
     print(f"RMSE: {rmse:.3f}")
     print(f"R²:   {r2:.3f}")
 
-    results = test_rows[
-        ["name", "position", "GW", "total_points"]
-    ].copy()
+    results = test_rows[["position", "GW", "total_points"]].copy()
+    def display_name(row):
+        for column in ["web_name", "second_name"]:
+            value = row.get(column)
+            if pd.notna(value) and str(value).strip():
+                return str(value).strip()
+        return f"Player {row.get('player_id', 'Unknown')}"
+    results["name"] = test_rows.apply(display_name, axis=1)
 
     results["predicted"] = predictions
     results["error"] = results["predicted"] - results["total_points"]
@@ -283,6 +284,7 @@ def main() -> None:
 
     pipeline = build_model()
     pipeline.fit(X_train, y_train)
+    pipeline.feature_contract_metadata_ = {**feature_metadata(), "validation_state": "unverified"}
 
     # sklearn records feature_names_in_ on the pipeline from X_train.
     validate_model_feature_names(

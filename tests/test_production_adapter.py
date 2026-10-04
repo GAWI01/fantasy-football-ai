@@ -7,7 +7,7 @@ from backtesting.production_adapter import (
     FPLHistoricalPredictionAdapter,
     PredictionAdapterError,
 )
-from feature_contract import FEATURE_COLUMNS
+from feature_contract import FEATURE_COLUMNS, feature_metadata
 
 
 def source_row(price=5.0):
@@ -42,6 +42,7 @@ def make_model(path):
         ]
     )
     model.fit(X, [2.0, 3.0])
+    model.feature_contract_metadata_ = {**feature_metadata(), "validation_state": "unverified"}
     joblib.dump(model, path)
 
 
@@ -52,6 +53,8 @@ def target_row(player_id, gw, fixture, points):
         "fixture": fixture,
         "total_points": points,
         **source_row(),
+        **feature_metadata(),
+        "history_cutoff_gw": gw - 1,
     }
 
 

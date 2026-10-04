@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from feature_contract import FEATURE_COLUMNS, build_feature_row
+from feature_contract import FEATURE_COLUMNS, FEATURE_CONTRACT_VERSION, XP_SOURCE, build_feature_row
 
 
 SEASONS = [
@@ -156,6 +156,7 @@ def build_features(season):
     grouped = gw_level.groupby("player_id", sort=False)
 
     rolling = gw_level[["player_id", "GW"]].copy()
+    rolling["history_cutoff_gw"] = grouped["GW"].shift(1).fillna(0).astype(int)
     rolling["points_last_3"] = (
         grouped["total_points"]
         .transform(lambda x: x.shift(1).rolling(3, min_periods=1).sum())
@@ -207,6 +208,13 @@ def build_features(season):
     )
 
     gw["form_5"] = gw["points_avg_5"]
+    # The archived same-GW FPL xP field has no verified pre-deadline timing.
+    # Use the same causal recipe as live regeneration, rather than scraped xP
+    # or cumulative-season xG/xA. This changes semantics and requires retraining.
+    gw["xP"] = gw["points_avg_5"]
+    gw["feature_contract_version"] = FEATURE_CONTRACT_VERSION
+    gw["xp_source"] = XP_SOURCE
+    gw["history_complete"] = True
 
     if "value" in gw.columns:
         gw["price"] = gw["value"] / 10.0

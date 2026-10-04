@@ -10,6 +10,8 @@ from feature_contract import (
     FEATURE_COLUMNS,
     build_feature_row,
     validate_model_feature_names,
+    validate_model_metadata,
+    validate_feature_provenance,
 )
 from .engine import BacktestConfig, BacktestEngine
 from .leakage import LookaheadError
@@ -33,12 +35,16 @@ class FPLHistoricalPredictionAdapter:
         self.model_path = (
             Path(model_path).resolve()
             if model_path
-            else self.project_root / "models" / "fpl_model_v1.pkl"
+            else self.project_root / "models" / "fpl_model_v1_corrected.pkl"
         )
         if not self.model_path.exists():
             raise PredictionAdapterError(f"Model not found: {self.model_path}")
 
         self.model = joblib.load(self.model_path)
+        try:
+            validate_model_metadata(self.model)
+        except ValueError as exc:
+            raise PredictionAdapterError(str(exc)) from exc
         names = getattr(self.model, "feature_names_in_", None)
         if names is not None:
             try:
@@ -95,6 +101,10 @@ class FPLHistoricalPredictionAdapter:
             ["player_id", "fixture"] if "fixture" in target.columns else ["player_id"]
         ).iterrows():
             payload = row.to_dict()
+            try:
+                validate_feature_provenance(payload, target_gw)
+            except ValueError as exc:
+                raise PredictionAdapterError(str(exc)) from exc
             payload.pop("total_points", None)
             rows.append(build_feature_row(payload))
 
@@ -106,7 +116,10 @@ class FPLHistoricalPredictionAdapter:
                 "Model returned an unexpected prediction count."
             )
 
-        result = target[["player_id"]].copy()
+        ordered_target = target.sort_values(
+            ["player_id", "fixture"] if "fixture" in target.columns else ["player_id"]
+        )
+        result = ordered_target[["player_id"]].copy()
         result["predicted_points"] = predictions
         # If a player has multiple target fixtures (DGW), return one row per
         # fixture. The engine aggregates actuals separately at player/GW level.

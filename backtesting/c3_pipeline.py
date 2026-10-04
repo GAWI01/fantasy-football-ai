@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-from feature_contract import FEATURE_COLUMNS, validate_model_feature_names
+from feature_contract import FEATURE_COLUMNS, feature_metadata, validate_model_feature_names, validate_feature_provenance
 from historical_data.train_model import (
     TRAIN_SEASONS,
     TEST_SEASON,
@@ -80,6 +80,8 @@ def calculate_xp_baseline_metrics(
     feature_frame: pd.DataFrame,
 ) -> dict:
     """Evaluate the existing historical xP feature as a simple baseline."""
+    for _, row in feature_frame.iterrows():
+        validate_feature_provenance(row.to_dict(), int(row["GW"]))
     baseline = (
         feature_frame.groupby(["GW", "player_id"], as_index=False)["xP"]
         .sum()
@@ -155,6 +157,7 @@ def train_corrected_model(config: C3PipelineConfig) -> Path:
 
     pipeline = build_model()
     pipeline.fit(x_train, y_train)
+    pipeline.feature_contract_metadata_ = {**feature_metadata(), "validation_state": "unverified"}
 
     validate_model_feature_names(tuple(pipeline.feature_names_in_))
     config.corrected_model_path.parent.mkdir(parents=True, exist_ok=True)
