@@ -1,0 +1,7 @@
+# Digest-checked artifacts: their SHA256 is recorded at publication, so line
+# endings must never be converted on checkout.
+historical_data/current_data/gw*_predictions_v*.csv text eol=lf
+historical_data/current_data/*.manifest.json text eol=lf
+historical_data/current_data/manifest.json text eol=lf
+models/*.json text eol=lf
+models/*.pkl binary

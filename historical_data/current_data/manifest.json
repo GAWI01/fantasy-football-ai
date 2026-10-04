@@ -1,8 +1,37 @@
 {
   "season": "2026-27",
   "prediction_event": 6,
-  "prediction_file": "gw6_predictions_v11.csv",
-  "generated_at": "2026-10-03T16:49:49.526098+00:00",
+  "prediction_file": "gw6_predictions_v12.csv",
+  "generated_at": "2026-10-04T11:52:46.821980+00:00",
   "player_count": 667,
-  "schema_version": 1
+  "schema_version": 1,
+  "artifact_sha256": "ef894e81d02784407fb1cb670749b2bacfe2face66ee8276a03fb65b05df7a6f",
+  "model_provenance": {
+    "feature_contract_version": 3,
+    "xp_source": "previous_completed_gw_points_mean_v1",
+    "target": "same_fixture_total_points",
+    "validation_state": "validated",
+    "model_sha256": "0ed9d093d48be1c31bc1dcd184b9b652dae56ba8a2e3f15d01bb8f3dee06c1b0",
+    "sklearn_version": "1.5.2",
+    "validation_report_file": "fpl_model_v3.pkl.validation.json",
+    "validation_report_sha256": "1f9286e6bb2d49aa515fc9396b5c0e05cdddd00d716ad9a012856942bd955fb8",
+    "model_file": "fpl_model_v3.pkl",
+    "evaluation": {
+      "leakage_safe": true,
+      "production_parity": true,
+      "report_id": "fpl_model_v3.pkl.validation.json",
+      "report_sha256": "1f9286e6bb2d49aa515fc9396b5c0e05cdddd00d716ad9a012856942bd955fb8"
+    },
+    "prediction_season": "2026-27",
+    "target_schedule_sha256": "0cf804154227f3a3b6407c6896fee10623dae662ed11fe74266f2a5329f7c086",
+    "input_sha256": "250c6be5453ef8220f979ce84eb50379858e8536e5d56a607de160dd244b00a6",
+    "input_files": {
+      "players_raw.csv": "1ab926199fbb1225ed147e0d643dc272e04f2db4a4202aa69fd4e71e4717b5a2",
+      "teams_current.csv": "85a921503f0246ba70b434209ab1900ce83930c4cfd480366f536ad15b684e6a",
+      "gameweeks_current.csv": "28d2dd6e2be553b5fdc42e1ccd3ff22f6202d64761e89a60147fdb874e470cba",
+      "2026-27/merged_gw.csv": "cf5d8d5f4e9cdbcd4d795b334e0097311ad7eb164531a1e72f2725d53b944282",
+      "2026-27/fixtures.csv": "765dbc140aa2139065cf4e74b12b77871017ee99432ff565a12f3da2f2c2a4bc"
+    },
+    "code_revision": "sha256:8aa61d311bc241c098047870a0857fba9548949174832df04e20d17d2411db37"
+  }
 }

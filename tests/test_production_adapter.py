@@ -14,7 +14,7 @@ def source_row(price=5.0):
     row = {c: 0.0 for c in FEATURE_COLUMNS}
     row["price"] = price
     row["position"] = "MID"
-    row["opponent_team"] = 2.0
+    row["fixture_difficulty"] = 3.0
     row["was_home"] = 1.0
     return row
 
@@ -54,6 +54,7 @@ def target_row(player_id, gw, fixture, points):
         "total_points": points,
         **source_row(),
         **feature_metadata(),
+        "xP": 0.0,
         "history_cutoff_gw": gw - 1,
     }
 

@@ -8,10 +8,14 @@ from backend.runtime_artifacts import validate_runtime_artifacts
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "historical_data" / "current_data"
+# The served forecast changes every Gameweek; the manifest names it.
+PREDICTION = json.loads((SOURCE / "manifest.json").read_text(encoding="utf-8"))["prediction_file"]
+SIDECAR = f"{PREDICTION}.manifest.json"
+PLAYER_COUNT = json.loads((SOURCE / "manifest.json").read_text(encoding="utf-8"))["player_count"]
 FILES = (
     "players_current.csv", "players_raw.csv", "teams_current.csv",
     "fixtures_current.csv", "gameweeks_current.csv", "manifest.json",
-    "gw6_predictions_v11.csv", "gw6_predictions_v11.csv.manifest.json",
+    PREDICTION, SIDECAR,
 )
 
 
@@ -25,7 +29,7 @@ def bundle(tmp_path):
 def test_serving_bundle_is_self_contained(bundle):
     result = validate_runtime_artifacts(bundle)
     assert result["loaded"] is True
-    assert result["prediction_rows"] == 667
+    assert result["prediction_rows"] == PLAYER_COUNT
     assert set(result["files"]) == set(FILES)
 
 
@@ -37,17 +41,17 @@ def test_missing_runtime_file_fails_validation(bundle, name):
 
 
 def test_manifest_row_count_must_match_csv(bundle):
-    for name in ("manifest.json", "gw6_predictions_v11.csv.manifest.json"):
+    for name in ("manifest.json", SIDECAR):
         path = bundle / name
         payload = json.loads(path.read_text())
-        payload["player_count"] = 624
+        payload["player_count"] = PLAYER_COUNT - 1
         path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="row count"):
         validate_runtime_artifacts(bundle)
 
 
 def test_prediction_sidecar_must_match_manifest(bundle):
-    path = bundle / "gw6_predictions_v11.csv.manifest.json"
+    path = bundle / SIDECAR
     payload = json.loads(path.read_text())
     payload["prediction_event"] = 4
     path.write_text(json.dumps(payload))
@@ -55,7 +59,19 @@ def test_prediction_sidecar_must_match_manifest(bundle):
         validate_runtime_artifacts(bundle)
 
 
+def test_tampered_prediction_csv_fails_its_digest(bundle):
+    (bundle / PREDICTION).write_text("player_id,predicted_points\n1,2\n")
+    with pytest.raises(ValueError, match="digest"):
+        validate_runtime_artifacts(bundle)
+
+
 def test_prediction_csv_requires_serving_columns(bundle):
-    (bundle / "gw6_predictions_v11.csv").write_text("player_id,predicted_points\n1,2\n")
+    # A legacy manifest without a digest still has its columns checked.
+    for name in ("manifest.json", SIDECAR):
+        path = bundle / name
+        payload = json.loads(path.read_text())
+        payload.pop("artifact_sha256", None)
+        path.write_text(json.dumps(payload))
+    (bundle / PREDICTION).write_text("player_id,predicted_points\n1,2\n")
     with pytest.raises(ValueError, match="columns"):
         validate_runtime_artifacts(bundle)

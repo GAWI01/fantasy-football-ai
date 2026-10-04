@@ -1,5 +1,8 @@
 # FPL-AI baseline og helsesjekk
 
+> Historisk dokument (2026-08-28). `healthcheck.py` er fjernet; serveringspakken valideres nå med
+> `python -m backend.runtime_artifacts`, og modellen med `python -m historical_data.validate_model`.
+
 Dato: 2026-08-28
 
 ## Hva som er verifisert

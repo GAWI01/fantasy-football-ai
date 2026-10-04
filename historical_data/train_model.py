@@ -1,10 +1,13 @@
-"""Train the FPL-AI V1.1 prediction model.
+"""Train the FPL points model (feature contract v3).
 
-Training is strictly time-ordered:
-- Train: 2020-21 through 2023-24
-- Test: 2024-25
+Training is strictly time-ordered. Model choices were made with
+rolling-origin validation on completed seasons only (each season scored by a
+model trained on the seasons before it). The production model is trained on
+every completed season and certified by `historical_data.validate_model`,
+which scores it on the current season's completed Gameweeks: data the model
+never saw during training or model selection.
 
-The persisted model input is defined exclusively by feature_contract.py.
+Run `python -m historical_data.validate_model` to train, validate and certify.
 """
 
 from __future__ import annotations
@@ -12,11 +15,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import joblib
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
@@ -31,25 +33,27 @@ from feature_contract import (  # noqa: E402
     CATEGORICAL_COLUMNS,
     FEATURE_COLUMNS,
     NUMERIC_COLUMNS,
-    build_feature_row,
-    feature_metadata,
-    validate_feature_provenance,
-    validate_model_feature_names,
+    feature_matrix,
+    validate_frame_provenance,
 )
 
 
 BASE_DIR = PROJECT_ROOT / "historical_data"
 MODEL_DIR = PROJECT_ROOT / "models"
-MODEL_OUTPUT = MODEL_DIR / "fpl_model_v1_corrected.pkl"
+MODEL_OUTPUT = MODEL_DIR / "fpl_model_v3.pkl"
 
+# Every completed season. The current season is the held-out test.
 TRAIN_SEASONS = (
     "2020-21",
     "2021-22",
     "2022-23",
     "2023-24",
+    "2024-25",
+    "2025-26",
 )
 
-TEST_SEASON = "2024-25"
+# Kept for the historical backtest harness: the last completed season.
+TEST_SEASON = "2025-26"
 
 FEATURES = list(FEATURE_COLUMNS)
 
@@ -62,8 +66,6 @@ def load_season(season: str) -> pd.DataFrame:
         raise FileNotFoundError(
             f"Missing feature dataset for {season}: {file}"
         )
-
-    print(f"Leser {season}...")
 
     df = pd.read_csv(file)
 
@@ -80,55 +82,31 @@ def load_season(season: str) -> pd.DataFrame:
 
 
 def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Build a leakage-safe same-fixture target and validate model inputs."""
-    result = df.sort_values(["player_id", "GW"]).copy()
-    for _, row in result.iterrows():
-        validate_feature_provenance(row.to_dict(), int(row["GW"]))
+    """Validate feature provenance and attach the same-fixture target.
 
-    # The generated historical feature row is the prediction snapshot for
-    # its own Gameweek: rolling player features are shifted to exclude the
-    # current GW, while fixture context (opponent/home-away) belongs to this
-    # GW. Therefore the correct target for row GW G is total_points at G.
-    #
-    # The previous implementation shifted this target to G+1, which paired
-    # GW G fixture context with GW G+1 outcomes and therefore did not match
-    # the production prediction semantics.
-    result["target"] = pd.to_numeric(
-        result["total_points"],
-        errors="coerce",
-    )
-
+    A feature row for Gameweek G is the prediction snapshot for one fixture
+    in G: rolling player features exclude G itself, fixture context belongs
+    to G, and the target is the points from that fixture.
+    """
+    result = df.sort_values(["player_id", "GW"], kind="mergesort").copy()
+    validate_frame_provenance(result)
+    result["target"] = pd.to_numeric(result["total_points"], errors="coerce")
     result = result.dropna(subset=["target"]).copy()
-
-    # Normalize the target and every canonical numeric feature.
-    result["target"] = pd.to_numeric(result["target"], errors="coerce")
-
-    for column in NUMERIC_COLUMNS:
-        result[column] = pd.to_numeric(
-            result[column],
-            errors="coerce",
-        )
-
     result["position"] = result["position"].astype(str).str.strip()
 
-    invalid_positions = result["position"].eq("").any()
-    if invalid_positions:
+    if result["position"].eq("").any():
         raise ValueError("Historical data contains an empty position value.")
-
-    result = result.dropna(subset=["target"]).copy()
 
     if result.empty:
         raise ValueError("No trainable rows remain after target preparation.")
 
-    # Validate every input; an invalid historical value is not a recorded zero.
-    for _, row in result.iterrows():
-        build_feature_row(row.to_dict())
-
+    # Every input is validated; an invalid historical value is not a recorded zero.
+    feature_matrix(result)
     return result
 
 
 def build_model() -> Pipeline:
-    """Create the V1.1 preprocessing + Random Forest pipeline."""
+    """Position one-hot encoding + histogram gradient boosting."""
     preprocessor = ColumnTransformer(
         transformers=[
             (
@@ -144,12 +122,13 @@ def build_model() -> Pipeline:
         ]
     )
 
-    model = RandomForestRegressor(
-        n_estimators=300,
-        max_depth=12,
-        min_samples_leaf=10,
+    model = HistGradientBoostingRegressor(
+        max_iter=400,
+        learning_rate=0.05,
+        max_leaf_nodes=31,
+        min_samples_leaf=100,
+        l2_regularization=1.0,
         random_state=42,
-        n_jobs=-1,
     )
 
     return Pipeline(
@@ -162,19 +141,11 @@ def build_model() -> Pipeline:
 
 def make_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
     """Convert rows to the exact canonical model-input matrix."""
-    rows = [
-        build_feature_row(row)
-        for _, row in df.iterrows()
-    ]
-
-    matrix = pd.DataFrame(rows, columns=FEATURES)
-
-    # Keep the matrix in exactly the same order as the persisted contract.
+    matrix = feature_matrix(df)
     if tuple(matrix.columns) != FEATURE_COLUMNS:
         raise ValueError(
             "Generated feature matrix does not match FEATURE_COLUMNS."
         )
-
     return matrix
 
 
@@ -191,36 +162,26 @@ def evaluate_model(
     rmse = float(np.sqrt(mean_squared_error(y_test, predictions)))
     r2 = r2_score(y_test, predictions)
 
-    print()
-    print("=" * 70)
-    print("MODEL EVALUERING V1.1")
-    print("=" * 70)
     print(f"MAE:  {mae:.3f}")
     print(f"RMSE: {rmse:.3f}")
     print(f"R²:   {r2:.3f}")
 
     results = test_rows[["position", "GW", "total_points"]].copy()
+
     def display_name(row):
         for column in ["web_name", "second_name"]:
             value = row.get(column)
             if pd.notna(value) and str(value).strip():
                 return str(value).strip()
         return f"Player {row.get('player_id', 'Unknown')}"
+
     results["name"] = test_rows.apply(display_name, axis=1)
-
     results["predicted"] = predictions
-    results["error"] = results["predicted"] - results["total_points"]
-
     results = results.sort_values(
         ["predicted", "name"],
         ascending=[False, True],
         kind="mergesort",
     )
-
-    print()
-    print("=" * 70)
-    print("TOP 20 PREDIKSJONER")
-    print("=" * 70)
 
     for _, row in results.head(20).iterrows():
         print(
@@ -230,90 +191,11 @@ def evaluate_model(
             f"Pred {float(row['predicted']):5.2f}"
         )
 
-    # Store metrics on the function object is deliberately avoided; the
-    # persisted artifact remains only the trained pipeline for compatibility.
-    return None
-
 
 def main() -> None:
-    print("=" * 70)
-    print("FPL AI - ML TRAINING V1.1")
-    print("=" * 70)
+    from historical_data.validate_model import main as validate
 
-    print()
-    print("KANONISK FEATURE CONTRACT")
-    print("-" * 70)
-    print(f"Features: {len(FEATURES)}")
-    print(" | ".join(FEATURES))
-
-    print()
-    print("LASTER DATA")
-    print("-" * 70)
-
-    train_frames: list[pd.DataFrame] = []
-
-    for season in TRAIN_SEASONS:
-        frame = prepare_data(load_season(season))
-        train_frames.append(frame)
-        print(f"  {season}: {len(frame)} trainbare rader")
-
-    train = pd.concat(train_frames, ignore_index=True)
-
-    test = prepare_data(load_season(TEST_SEASON))
-
-    print()
-    print(f"TRAIN TOTAL: {len(train)} rader")
-    print(f"TEST TOTAL:  {len(test)} rader")
-
-    print()
-    print("BYGGER MODELLINPUT")
-    print("-" * 70)
-
-    X_train = make_feature_matrix(train)
-    y_train = train["target"].astype(float)
-
-    X_test = make_feature_matrix(test)
-    y_test = test["target"].astype(float)
-
-    print(f"X_train: {X_train.shape}")
-    print(f"X_test:  {X_test.shape}")
-
-    print()
-    print("TRENER RANDOM FOREST V1.1...")
-    print("-" * 70)
-
-    pipeline = build_model()
-    pipeline.fit(X_train, y_train)
-    pipeline.feature_contract_metadata_ = {**feature_metadata(), "validation_state": "unverified"}
-
-    # sklearn records feature_names_in_ on the pipeline from X_train.
-    validate_model_feature_names(
-        tuple(pipeline.feature_names_in_)
-    )
-
-    print("OK: Modell trent")
-    print("OK: Feature contract verifisert")
-
-    evaluate_model(
-        pipeline,
-        X_test,
-        y_test,
-        test,
-    )
-
-    MODEL_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(pipeline, MODEL_OUTPUT)
-
-    print()
-    print("=" * 70)
-    print("MODELL LAGRET")
-    print("=" * 70)
-    print(f"OK: {MODEL_OUTPUT}")
-    print("OK: Persisted input contract verified")
-    print()
-    print("=" * 70)
-    print("ML TRAINING V1.1 FERDIG")
-    print("=" * 70)
+    validate()
 
 
 if __name__ == "__main__":

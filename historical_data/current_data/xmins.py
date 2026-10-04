@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -272,52 +271,3 @@ def build_xmins_columns(df: pd.DataFrame) -> pd.DataFrame:
     result["availability_multiplier"] = result.apply(availability_multiplier, axis=1).round(3)
 
     return result
-
-
-def main() -> None:
-    base = Path(__file__).resolve().parents[2]
-
-    players_file = (
-        base
-        / "historical_data"
-        / "current_data"
-        / "players_current.csv"
-    )
-
-    output_file = (
-        base
-        / "historical_data"
-        / "current_data"
-        / "players_features_current.csv"
-    )
-
-    print("=" * 70)
-    print("FPL AI - PLAYER AVAILABILITY / XMINS V2.1")
-    print("=" * 70)
-
-    if not output_file.is_file():
-        raise FileNotFoundError("Build canonical player features before updating xMins.")
-    players_file = output_file
-    print(f"\nLoading: {players_file}")
-
-    df = pd.read_csv(players_file)
-
-    print(f"Players loaded: {len(df)}")
-
-    df = build_xmins_columns(df)
-
-    df.to_csv(output_file, index=False)
-
-    print("\nAVAILABILITY")
-    print("-" * 70)
-    print(df["availability"].value_counts().to_string())
-
-    print("\nROTATION RISK")
-    print("-" * 70)
-    print(df["rotation_risk"].value_counts().to_string())
-
-    print(f"\nSaved: {output_file}")
-
-
-if __name__ == "__main__":
-    main()

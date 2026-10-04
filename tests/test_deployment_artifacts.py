@@ -1,3 +1,4 @@
+import fnmatch
 from pathlib import Path
 import shutil
 import subprocess
@@ -97,10 +98,13 @@ def test_backend_allowlist_includes_only_the_serving_data_bundle():
     rules = (ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
     prefix = "!historical_data/"
     data_exceptions = {rule[len(prefix):] for rule in rules if rule.startswith(prefix)}
-    expected = {
-        f"current_data/{name}" for name in validate_runtime_artifacts()["files"]
-    }
-    assert data_exceptions == expected
+    served = {f"current_data/{name}" for name in validate_runtime_artifacts()["files"]}
+    # Every served file is allowed, and every data exception serves a runtime file:
+    # fixed current-data files, or the versioned forecast/sidecar patterns.
+    assert all(any(fnmatch.fnmatchcase(name, rule) for rule in data_exceptions) for name in served)
+    patterns = {rule for rule in data_exceptions if "*" in rule}
+    assert patterns == {"current_data/gw*_predictions_v*.csv", "current_data/gw*_predictions_v*.csv.manifest.json"}
+    assert data_exceptions - patterns <= served
 
 
 def test_staging_documentation_is_valid_utf8():

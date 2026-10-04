@@ -13,6 +13,8 @@ from feature_contract import (
     validate_model_metadata,
     validate_feature_provenance,
 )
+from historical_data.train_model import MODEL_OUTPUT
+
 from .engine import BacktestConfig, BacktestEngine
 from .leakage import LookaheadError
 
@@ -35,7 +37,7 @@ class FPLHistoricalPredictionAdapter:
         self.model_path = (
             Path(model_path).resolve()
             if model_path
-            else self.project_root / "models" / "fpl_model_v1_corrected.pkl"
+            else self.project_root / "models" / MODEL_OUTPUT.name
         )
         if not self.model_path.exists():
             raise PredictionAdapterError(f"Model not found: {self.model_path}")

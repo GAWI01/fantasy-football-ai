@@ -5,6 +5,7 @@ from backtesting.c3_pipeline import (
     calculate_backtest_metrics,
     validate_backtest_results,
 )
+from feature_contract import FEATURE_CONTRACT_VERSION
 
 
 def test_backtest_metrics_are_deterministic():
@@ -50,7 +51,7 @@ def test_xp_baseline_metrics_use_same_player_gw_keys():
         "player_id": [1, 2],
         "xP": [2.0, 4.0],
         "points_avg_5": [2.0, 4.0],
-        "feature_contract_version": [2, 2],
+        "feature_contract_version": [FEATURE_CONTRACT_VERSION] * 2,
         "xp_source": ["previous_completed_gw_points_mean_v1"] * 2,
         "history_cutoff_gw": [1, 1],
     })

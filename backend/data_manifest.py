@@ -11,6 +11,8 @@ import csv
 import io
 import math
 
+from feature_contract import feature_metadata
+
 
 @dataclass(frozen=True)
 class PredictionManifest:
@@ -42,9 +44,7 @@ def model_validation_state(manifest: PredictionManifest | None) -> str:
         return "unverified"
     evaluation = provenance.get("evaluation")
     if (provenance.get("validation_state") != "validated"
-            or provenance.get("feature_contract_version") != 2
-            or provenance.get("xp_source") != "previous_completed_gw_points_mean_v1"
-            or provenance.get("target") != "same_fixture_total_points"
+            or any(provenance.get(key) != value for key, value in feature_metadata().items())
             or not provenance.get("code_revision")
             or not isinstance(evaluation, dict)
             or evaluation.get("leakage_safe") is not True

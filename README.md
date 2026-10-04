@@ -138,11 +138,14 @@ The project has successfully built:
 - rotation-risk features
 - initial squad/Wildcard optimizer experiments
 
-The current serving manifest selects GW6/2026-27 with 667 players, published
-2026-10-03. The archived GW3 artifact remains historical. Publication metadata
-does not prove model quality: GW6 lacks verified model/input provenance, so the
-status API reports the model as unverified. The audited pipeline corrections
-require honest retraining and production-parity evaluation before validation.
+The served forecast is GW6/2026-27 (`gw6_predictions_v12.csv`, 667 players)
+from the certified model `models/fpl_model_v3.pkl`, retrained on 2020-21 to
+2025-26 and tested on the current season's completed Gameweeks.
+`python -m historical_data.refresh_predictions` publishes each next Gameweek
+once the previous one has final scores.
+See [docs/MODEL_PIPELINE.md](docs/MODEL_PIPELINE.md) for the features,
+validation evidence, limitations and commands. The earlier GW6 v11 and GW3
+artifacts remain archived and unverified.
 
 ## V1–V5: what we learned
 

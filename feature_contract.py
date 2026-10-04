@@ -6,7 +6,7 @@ from collections.abc import Mapping
 import math
 
 
-FEATURE_CONTRACT_VERSION = 2
+FEATURE_CONTRACT_VERSION = 3
 XP_SOURCE = "previous_completed_gw_points_mean_v1"
 MODEL_TARGET = "same_fixture_total_points"
 
@@ -17,8 +17,13 @@ def feature_metadata() -> dict[str, object]:
 
 
 # This must match the persisted model exactly.
+#
+# Version 3 removed `opponent_team` (a season-specific club ID used as a
+# number, which carries no meaning across seasons) and the `xP`/`form_5`
+# columns (exact copies of points_avg_5), and added the official fixture
+# difficulty. Rolling-origin validation over 2023-24, 2024-25 and 2025-26
+# preferred this set; see docs/MODEL_PIPELINE.md.
 FEATURE_COLUMNS = (
-    "xP",
     "price",
     "was_home",
     "points_last_3",
@@ -33,9 +38,8 @@ FEATURE_COLUMNS = (
     "creativity_avg_5",
     "threat_avg_5",
     "ict_index_avg_5",
-    "form_5",
+    "fixture_difficulty",
     "position",
-    "opponent_team",
 )
 
 CATEGORICAL_COLUMNS = (
@@ -59,19 +63,13 @@ def build_feature_row(
     """
     Normalize one source row into the canonical model-input contract.
 
-    xP is optional for backwards compatibility with older training/test
-    sources. When it is absent, it defaults to 0.0.
-
     The returned dictionary always follows FEATURE_COLUMNS order.
     """
 
-    # xP was added to the live/model contract later than some of the
-    # original training/test fixtures. Keep it optional at the boundary,
-    # while always emitting it in the canonical row.
     missing = [
         column
         for column in FEATURE_COLUMNS
-        if column != "xP" and column not in source
+        if column not in source
     ]
 
     if missing:
@@ -82,11 +80,6 @@ def build_feature_row(
     row: dict[str, object] = {}
 
     for column in FEATURE_COLUMNS:
-        # Backwards-compatible default for old training/test rows.
-        if column == "xP" and column not in source:
-            row[column] = 0.0
-            continue
-
         value = source[column]
 
         if column == "position":
@@ -112,6 +105,54 @@ def build_feature_row(
             raise FeatureContractError(f"{column} must be finite")
 
     return row
+
+
+def feature_matrix(frame) -> "pd.DataFrame":
+    """Vectorised build_feature_row(): the exact model input for many rows."""
+    import numpy as np
+    import pandas as pd
+
+    missing = [column for column in FEATURE_COLUMNS if column not in frame.columns]
+    if missing:
+        raise FeatureContractError(f"Missing required feature(s): {', '.join(missing)}")
+    matrix = frame.loc[:, list(FEATURE_COLUMNS)].copy()
+    position = matrix["position"]
+    if not position.map(lambda value: isinstance(value, str) and bool(value.strip())).all():
+        raise FeatureContractError("position must be a non-empty string")
+    matrix["position"] = position.str.strip()
+    for column in NUMERIC_COLUMNS:
+        try:
+            values = pd.to_numeric(matrix[column], errors="raise").astype(float)
+        except (TypeError, ValueError) as error:
+            raise FeatureContractError(f"{column} must be numeric") from error
+        if not np.isfinite(values.to_numpy()).all():
+            raise FeatureContractError(f"{column} must be finite")
+        matrix[column] = values
+    return matrix.reset_index(drop=True)
+
+
+def validate_frame_provenance(frame, gw_column: str = "GW") -> None:
+    """Vectorised validate_feature_provenance() for a whole feature frame."""
+    import numpy as np
+    import pandas as pd
+
+    for column in ("feature_contract_version", "xp_source", "history_cutoff_gw", "xP", "points_avg_5"):
+        if column not in frame.columns:
+            raise FeatureContractError(
+                "Feature provenance is missing or incompatible; regenerate features and retrain required.")
+    if (pd.to_numeric(frame["feature_contract_version"], errors="coerce") != FEATURE_CONTRACT_VERSION).any() \
+            or (frame["xp_source"] != XP_SOURCE).any():
+        raise FeatureContractError(
+            "Feature provenance is missing or incompatible; regenerate features and retrain required.")
+    cutoff = pd.to_numeric(frame["history_cutoff_gw"], errors="coerce").to_numpy(float)
+    target = pd.to_numeric(frame[gw_column], errors="coerce").to_numpy(float)
+    if not np.isfinite(cutoff).all() or (cutoff < 0).any() or (cutoff >= target).any() \
+            or (cutoff != np.round(cutoff)).any():
+        raise FeatureContractError("History cutoff must precede the target Gameweek")
+    xp = pd.to_numeric(frame["xP"], errors="coerce").to_numpy(float)
+    average = pd.to_numeric(frame["points_avg_5"], errors="coerce").to_numpy(float)
+    if not (np.isfinite(xp) & np.isfinite(average)).all() or not np.allclose(xp, average, rtol=0, atol=1e-8):
+        raise FeatureContractError("xP does not match its completed-history recipe")
 
 
 def validate_feature_provenance(source: Mapping[str, object], target_gw: int) -> None:

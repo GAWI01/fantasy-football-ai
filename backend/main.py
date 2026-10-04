@@ -138,6 +138,9 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
     # A player the official game no longer lists cannot be selected; drop the
     # row instead of failing every prediction consumer for one stale entry.
     result = predictions[predictions["player_id"].astype(int).isin(official)].copy()
+    # Artifacts from the v12 generator store the model's output if available;
+    # the latest official availability is applied here on every request.
+    if_available = {"ml_prediction", "xmins_available", "start_probability_available"}.issubset(result.columns)
     for index, row in result.iterrows():
         player = official[int(row["player_id"])]
         result.at[index, "name"] = str(player.get("web_name") or player.get("second_name") or f"Player {player['id']}")
@@ -151,6 +154,12 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
         status = player.get("status")
         chance = player.get("chance_of_playing_next_round")
         unavailable = status in {"s", "u", "n"} or chance == 0 or (status == "i" and chance is None)
+        if if_available:
+            multiplier = 0.0 if unavailable else min(1.0, max(0.0, float(chance) / 100)) if chance is not None else 1.0
+            result.at[index, "availability_multiplier"] = multiplier
+            result.at[index, "predicted_points"] = float(row["ml_prediction"]) * multiplier
+            result.at[index, "xmins"] = float(row["xmins_available"]) * multiplier
+            result.at[index, "start_probability"] = float(row["start_probability_available"]) * multiplier
         if unavailable:
             result.at[index, "availability"] = "UNAVAILABLE"
             result.at[index, "predicted_points"] = 0.0
@@ -160,7 +169,9 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
             result.at[index, "availability"] = "AVAILABLE"
         else:
             result.at[index, "availability"] = "RISK"
-        if row.get("xmins") is not None and pd.notna(row.get("xmins")) and float(row["xmins"]) <= 0:
+        # Legacy artifacts only: the validated v12 model scores low-minute
+        # players itself, so its output is not overridden by a minutes rule.
+        if not if_available and row.get("xmins") is not None and pd.notna(row.get("xmins")) and float(row["xmins"]) <= 0:
             result.at[index, "predicted_points"] = 0.0
             result.at[index, "start_probability"] = 0.0
         result.at[index, "status"] = status

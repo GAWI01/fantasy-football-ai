@@ -1,4 +1,16 @@
-"""Regenerate a full current player pool only with compatible, validated provenance."""
+"""Publish next-Gameweek forecasts from the certified model.
+
+The forecast for Gameweek G is produced by the shared forecasting path
+(`historical_data.forecast`): the season's completed history plus G's
+fixtures, through the same feature code as training and validation. It only
+runs when every Gameweek before G is finished and data-checked, which is the
+input the model was validated on.
+
+Each player's row stores the model's points if available (`ml_prediction`)
+and minutes if available (`xmins_available`). `predicted_points` applies the
+official availability at generation time; the API reapplies the latest
+official availability on every request.
+"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -16,39 +28,35 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from feature_contract import (FEATURE_COLUMNS, FeatureContractError, build_feature_row,
-                              feature_metadata, validate_feature_provenance, validate_model_metadata)
-from player_validation import filter_current_fpl_players
-from backend.data_manifest import publish_prediction_artifact, season_for_date
-from historical_data.current_data.xmins import availability_label, availability_multiplier
+import sklearn  # noqa: E402
+
+from backend.data_manifest import load_current_manifest, publish_prediction_artifact, season_for_date  # noqa: E402
+from feature_contract import FeatureContractError, feature_metadata, validate_model_metadata  # noqa: E402
+from historical_data.forecast import live_feature_rows, predict_fixture_points  # noqa: E402
+from historical_data.current_data.xmins import availability_label, availability_multiplier, calculate_xmins  # noqa: E402
+from historical_data.train_model import BASE_DIR as HISTORY_DIR, MODEL_OUTPUT  # noqa: E402
 
 CURRENT_DIR = Path(__file__).resolve().parent
-MODEL_PATH = PROJECT_ROOT / "models" / "fpl_model_v1_corrected.pkl"
-PLAYERS_PATH = CURRENT_DIR / "players_features_current.csv"
+MODEL_PATH = MODEL_OUTPUT
+PLAYERS_PATH = CURRENT_DIR / "players_raw.csv"
 TEAMS_PATH = CURRENT_DIR / "teams_current.csv"
-FIXTURES_PATH = CURRENT_DIR / "fixtures_current.csv"
 GAMEWEEKS_PATH = CURRENT_DIR / "gameweeks_current.csv"
+ARTIFACT_VERSION = "v12"
+DISPLAY_POSITIONS = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
 
 
-def num(value, default: float = 0.0) -> float:
-    value = pd.to_numeric(value, errors="coerce")
-    return default if pd.isna(value) else float(value)
-
-
-def calculate_xp(form, points_per_game, minutes, expected_goals, expected_assists) -> float:
-    """Legacy helper retained for callers; regeneration uses canonical row xP.
-
-    Season cumulative attacking totals are unsuitable for a fixture forecast.
-    The compatible recipe uses completed-GW rolling means instead.
-    """
-    return float(max(0, points_per_game) * np.clip(minutes / 90, 0, 1))
+class HistoryIncompleteError(RuntimeError):
+    """The next Gameweek cannot be forecast until earlier Gameweeks are final."""
 
 
 def load_prediction_model(model_path: Path | None = None):
     path = Path(model_path or MODEL_PATH)
-    model = joblib.load(path)
-    metadata = validate_model_metadata(model)
-    # Column names or the word "corrected" do not certify semantics or quality.
+    try:
+        model = joblib.load(path)
+        metadata = validate_model_metadata(model)
+    except (OSError, EOFError, ValueError) as exc:
+        raise FeatureContractError(f"Model provenance requires honest regeneration/revalidation: {exc}") from exc
+    # Column names or a file name do not certify semantics or quality.
     certificate_path = path.with_suffix(path.suffix + ".metadata.json")
     try:
         certificate = json.loads(certificate_path.read_text(encoding="utf-8"))
@@ -57,6 +65,10 @@ def load_prediction_model(model_path: Path | None = None):
                 or certificate.get("model_sha256") != digest
                 or any(certificate.get(k) != v for k, v in feature_metadata().items())):
             raise ValueError("model certificate is incompatible or unverified")
+        trained_with = certificate.get("sklearn_version")
+        if trained_with is not None and trained_with != sklearn.__version__:
+            raise ValueError(f"model was trained with scikit-learn {trained_with}, "
+                             f"this environment has {sklearn.__version__}")
         report_path = (path.parent / certificate["validation_report_file"]).resolve()
         report_path.relative_to(path.parent.resolve())
         report_bytes = report_path.read_bytes()
@@ -88,122 +100,192 @@ def load_prediction_model(model_path: Path | None = None):
                                   "report_sha256": certificate["validation_report_sha256"]}}
 
 
-def generate_predictions(players, teams, fixtures, gw, model):
-    players = filter_current_fpl_players(players, teams)
-    if players.empty or players.player_id.duplicated().any():
-        raise ValueError("A nonempty, unique current player pool is required")
-    names = dict(zip(teams.id.astype(int), teams.name))
-    name_to_id = {name: team_id for team_id, name in names.items()}
-    team_data = {int(team.id): team.to_dict() for _, team in teams.iterrows()}
-    fixture_lookup = {}
-    for _, f in fixtures[pd.to_numeric(fixtures.event, errors="raise").eq(gw)].iterrows():
-        for team_id, opponent_id, home, difficulty in [
-            (int(f.team_h), int(f.team_a), True, num(f.get("team_h_difficulty", 0))),
-            (int(f.team_a), int(f.team_h), False, num(f.get("team_a_difficulty", 0)))]:
-            fixture_lookup.setdefault(team_id, []).append(
-                {"opponent_id": opponent_id, "home": home, "difficulty": difficulty})
-    results = []
-    for _, player in players.iterrows():
-        validate_feature_provenance(player.to_dict(), gw)
-        if str(player.get("history_complete", False)).lower() != "true":
-            raise FeatureContractError("Completed history coverage is incomplete; regeneration required")
-        if "prediction_event" in player and num(player.prediction_event) != gw:
-            raise FeatureContractError("Features target a different prediction Gameweek")
-        if any(column not in player for column in ["xmins", "availability_multiplier", "start_probability"]):
-            raise FeatureContractError("Prediction inputs lack explicit availability/xMins")
-        team_id = name_to_id.get(str(player.team))
-        if team_id is None:
-            team_id = int(player.team)
-        team_fixtures = fixture_lookup.get(team_id, [])
-        available = min(availability_multiplier(player), np.clip(num(player.availability_multiplier), 0, 1))
-        per_fixture_minutes = np.clip(num(player.xmins), 0, 90 * available) if available > 0 else 0
-        probability = min(available, np.clip(num(player.start_probability), 0, 1)) if per_fixture_minutes > 0 else 0
-        predicted, raw, xp_total = 0.0, 0.0, 0.0
-        opponents, homes, difficulties = [], [], []
-        for f in team_fixtures:
-            payload = player.to_dict()
-            payload.update(was_home=f["home"], opponent_team=f["opponent_id"],
-                           position=str(player.position).upper().replace("GKP", "GK"))
-            matrix = pd.DataFrame([build_feature_row(payload)], columns=FEATURE_COLUMNS)
-            ml = float(model.predict(matrix)[0])
-            if not np.isfinite(ml):
-                raise FeatureContractError("Model returned nonfinite prediction")
-            own, opponent = team_data.get(team_id, {}), team_data.get(f["opponent_id"], {})
-            advantage = .015 * (num(own.get("strength_attack_home" if f["home"] else "strength_attack_away", 0))
-                               - num(opponent.get("strength_defence_away" if f["home"] else "strength_defence_home", 0)))
-            difficulty_factor = np.clip(1 - ((f["difficulty"] - 1) / 10), .70, 1.10)
-            adjusted = max(0, ml) * np.clip((1 + advantage) * difficulty_factor, .75, 1.25)
-            # Hard zero for absent/zero-minute players; retain established partial
-            # start scaling until this postprocessing is honestly revalidated.
-            adjusted = adjusted * (.75 + .25 * probability) if per_fixture_minutes > 0 and available > 0 else 0
-            predicted += float(np.clip(adjusted, 0, 15))
-            raw += ml if per_fixture_minutes > 0 and available > 0 else 0
-            xp_total += num(player.xP) if per_fixture_minutes > 0 and available > 0 else 0
-            opponents.append(names.get(f["opponent_id"], str(f["opponent_id"])))
-            homes.append(f["home"])
-            difficulties.append(f["difficulty"])
-        price = num(player.get("price", 0))
-        display = player.get("web_name") or player.get("second_name") or str(player.player_id)
-        results.append({"player_id": int(player.player_id), "name": str(display),
-                        "position": player.position, "team": names.get(team_id, str(player.team)),
-                        "price": price, "opponent": " / ".join(opponents),
-                        "home": homes[0] if len(homes) == 1 else None,
-                        "difficulty": np.mean(difficulties) if difficulties else 0,
-                        "fixture_count": len(team_fixtures), "form": num(player.get("form", 0)),
-                        "minutes": num(player.get("minutes", 0)), "xP": round(xp_total, 3),
-                        "xmins": round(per_fixture_minutes * len(team_fixtures), 1),
-                        "start_probability": round(probability if team_fixtures else 0, 3),
-                        "availability_multiplier": round(available, 3),
-                        "availability": availability_label(player), "status": player.get("status", "a"),
-                        "chance_of_playing_next_round": player.get("chance_of_playing_next_round"),
-                        "ml_prediction": round(raw, 3), "predicted_points": round(predicted, 3),
-                        "value": round(predicted / price, 3) if price > 0 else 0,
-                        "feature_contract_version": player.feature_contract_version,
-                        "xp_source": player.xp_source, "history_cutoff_gw": player.history_cutoff_gw,
-                        "history_complete": player.history_complete, "prediction_event": gw})
-    return pd.DataFrame(results).sort_values("predicted_points", ascending=False, kind="mergesort")
+def _is_true(value) -> bool:
+    return value is True or str(value).strip().lower() in {"true", "1", "1.0"}
 
 
-def main() -> None:
-    model, provenance = load_prediction_model()
-    players, teams = pd.read_csv(PLAYERS_PATH), pd.read_csv(TEAMS_PATH)
-    fixtures, gameweeks = pd.read_csv(FIXTURES_PATH), pd.read_csv(GAMEWEEKS_PATH)
-    upcoming = gameweeks[gameweeks.is_next.astype(str).str.lower().eq("true")]
+def target_gameweek(gameweeks: pd.DataFrame) -> tuple[int, str]:
+    """The next Gameweek and its season; every earlier Gameweek must be final."""
+    upcoming = gameweeks[gameweeks["is_next"].map(_is_true)]
     if len(upcoming) != 1:
         raise RuntimeError("Exactly one next Gameweek is required")
-    gw = int(upcoming.iloc[0].id)
-    first_gw = gameweeks[pd.to_numeric(gameweeks.id, errors="raise").eq(1)]
-    if len(first_gw) != 1 or "deadline_time" not in gameweeks:
+    gw = int(upcoming.iloc[0]["id"])
+    first = gameweeks[pd.to_numeric(gameweeks["id"], errors="raise") == 1]
+    if len(first) != 1 or "deadline_time" not in gameweeks:
         raise FeatureContractError("Source season requires the GW1 deadline")
     try:
-        first_deadline = datetime.fromisoformat(str(first_gw.iloc[0].deadline_time))
-        next_deadline = datetime.fromisoformat(str(upcoming.iloc[0].deadline_time))
+        first_deadline = datetime.fromisoformat(str(first.iloc[0]["deadline_time"]).replace("Z", "+00:00"))
+        next_deadline = datetime.fromisoformat(str(upcoming.iloc[0]["deadline_time"]).replace("Z", "+00:00"))
     except ValueError as exc:
         raise FeatureContractError("Source Gameweek deadlines are invalid") from exc
     if first_deadline.tzinfo is None or next_deadline.tzinfo is None:
         raise FeatureContractError("Source Gameweek deadlines must be timezone-aware")
-    source_season = season_for_date(first_deadline)
-    if season_for_date(next_deadline) != source_season:
+    season = season_for_date(first_deadline)
+    if season_for_date(next_deadline) != season:
         raise FeatureContractError("Source Gameweeks span incompatible seasons")
-    result = generate_predictions(players, teams, fixtures, gw, model)
-    result["prediction_season"] = source_season
-    provenance["prediction_season"] = source_season
-    input_paths = [PLAYERS_PATH, TEAMS_PATH, FIXTURES_PATH, GAMEWEEKS_PATH]
-    provenance["input_sha256"] = hashlib.sha256(b"".join(path.read_bytes() for path in input_paths)).hexdigest()
-    provenance["input_files"] = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in input_paths}
-    source_directory = Path(__file__).resolve().parent
-    source_paths = [Path(__file__), PROJECT_ROOT / "feature_contract.py",
-                    source_directory / "xmins.py", source_directory / "build_player_features.py"]
+    earlier = gameweeks[pd.to_numeric(gameweeks["id"], errors="raise") < gw]
+    pending = [int(row["id"]) for _, row in earlier.iterrows()
+               if not (_is_true(row.get("finished")) and _is_true(row.get("data_checked")))]
+    if pending:
+        raise HistoryIncompleteError(
+            f"GW{gw} forecasts wait for final scores in GW{', GW'.join(map(str, pending))}")
+    return gw, season
+
+
+def _rounded(value: float, digits: int = 3) -> float:
+    return float(round(float(value), digits))
+
+
+def generate_predictions(players: pd.DataFrame, teams: pd.DataFrame, fixtures: pd.DataFrame,
+                         history: pd.DataFrame, gw: int, model) -> pd.DataFrame:
+    """One row per current player: fixtures in `gw` summed, blanks scored zero."""
+    if players.empty or players["id"].duplicated().any():
+        raise ValueError("A nonempty, unique current player pool is required")
+    missing = set(range(1, gw)) - set(pd.to_numeric(history["GW"], errors="raise")) if gw > 1 else set()
+    if missing:
+        raise HistoryIncompleteError(f"Season history lacks GW{sorted(missing)}")
+    fixture_rows, blank_rows = live_feature_rows(history, players, fixtures, gw)
+    fixture_rows = fixture_rows.assign(fixture_points=predict_fixture_points(model, fixture_rows))
+    team_names = dict(zip(pd.to_numeric(teams["id"]).astype(int), teams["name"]))
+    summaries = pd.concat([fixture_rows, blank_rows], ignore_index=True).drop_duplicates("player_id")
+    summaries = summaries.set_index("player_id")
+    by_player = {pid: group for pid, group in fixture_rows.groupby("player_id")}
+
+    rows = []
+    for player in players.to_dict("records"):
+        player_id = int(player["id"])
+        matches = by_player.get(player_id)
+        summary = summaries.loc[player_id]
+        count = 0 if matches is None else len(matches)
+        ml = 0.0 if matches is None else float(matches["fixture_points"].sum())
+        official = pd.Series({"status": player.get("status", "a"),
+                              "chance_of_playing_next_round": player.get("chance_of_playing_next_round"),
+                              "news": player.get("news", "")})
+        multiplier = float(availability_multiplier(official))
+        minutes_input = pd.Series({"minutes_last_5": summary["minutes_last_5"],
+                                   "starts_last_5": summary["starts_last_5"],
+                                   "history_gw_count": summary["history_gw_count"],
+                                   "status": "a", "chance_of_playing_next_round": np.nan})
+        per_fixture_minutes = float(calculate_xmins(minutes_input)) if count else 0.0
+        xmins_available = per_fixture_minutes * count
+        start_available = min(1.0, per_fixture_minutes / 90.0)
+        price = float(player["now_cost"]) / 10.0
+        predicted = ml * multiplier
+        rows.append({
+            "player_id": player_id,
+            "name": str(player.get("web_name") or player.get("second_name") or f"Player {player_id}"),
+            "position": DISPLAY_POSITIONS[int(player["element_type"])],
+            "team": team_names.get(int(player["team"]), str(player["team"])),
+            "price": price,
+            "opponent": " / ".join(team_names.get(int(o), str(o)) for o in matches["opponent_team"]) if count else "",
+            "home": bool(matches["was_home"].iloc[0]) if count == 1 else None,
+            "difficulty": _rounded(matches["fixture_difficulty"].mean(), 2) if count else None,
+            "fixture_count": count,
+            "xmins": _rounded(xmins_available * multiplier, 1),
+            "xmins_available": _rounded(xmins_available, 1),
+            "start_probability": _rounded(start_available * multiplier),
+            "start_probability_available": _rounded(start_available),
+            "availability_multiplier": _rounded(multiplier),
+            "availability": availability_label(official),
+            "status": official["status"],
+            "chance_of_playing_next_round": official["chance_of_playing_next_round"],
+            "ml_prediction": _rounded(ml),
+            "predicted_points": _rounded(predicted),
+            "value": _rounded(predicted / price) if price > 0 else 0.0,
+            "history_gw_count": int(summary["history_gw_count"]),
+            "history_cutoff_gw": int(summary["history_cutoff_gw"]),
+            "feature_contract_version": int(summary["feature_contract_version"]),
+            "xp_source": summary["xp_source"],
+            "history_complete": True,
+            "prediction_event": gw,
+        })
+    result = pd.DataFrame(rows)
+    return result.sort_values(["predicted_points", "player_id"], ascending=[False, True],
+                              kind="mergesort").reset_index(drop=True)
+
+
+def artifact_path(directory: Path, gw: int, content: bytes) -> Path:
+    """Immutable file name: reuse an identical artifact, otherwise add a revision."""
+    revision = 1
+    while True:
+        suffix = "" if revision == 1 else f"_r{revision}"
+        path = directory / f"gw{gw}_predictions_{ARTIFACT_VERSION}{suffix}.csv"
+        if not path.exists() or path.read_bytes() == content:
+            return path
+        revision += 1
+
+
+def _digest(paths: list[Path]) -> str:
+    return hashlib.sha256(b"".join(path.read_bytes() for path in paths)).hexdigest()
+
+
+def target_schedule_digest(fixtures: pd.DataFrame, gw: int) -> str:
+    """What the forecast depends on in the target Gameweek's schedule: its fixtures and clubs."""
+    events = pd.to_numeric(fixtures["event"], errors="coerce")
+    table = fixtures.loc[events == gw, ["id", "team_h", "team_a"]].astype(int).sort_values("id")
+    return hashlib.sha256(table.to_csv(index=False).encode("utf-8")).hexdigest()
+
+
+def published_forecast(gw: int, model_sha256: str | None, schedule: str) -> Path | None:
+    """The served artifact if it already forecasts `gw` with this model and schedule."""
+    try:
+        manifest = load_current_manifest(CURRENT_DIR / "manifest.json")
+    except ValueError:
+        return None
+    provenance = manifest.model_provenance or {}
+    if (manifest.prediction_event == gw and provenance.get("model_sha256") == model_sha256
+            and provenance.get("target_schedule_sha256") == schedule):
+        return manifest.prediction_path
+    return None
+
+
+def main(force: bool = False) -> Path:
+    """Publish the next forecast once per Gameweek (again only if its fixtures change).
+
+    Prices and ownership move daily; the API reapplies current prices and
+    availability, so they alone never cause a new artifact.
+    """
+    model, provenance = load_prediction_model()
+    gameweeks = pd.read_csv(GAMEWEEKS_PATH)
+    gw, season = target_gameweek(gameweeks)
+    season_dir = HISTORY_DIR / season
+    history_path, fixtures_path = season_dir / "merged_gw.csv", season_dir / "fixtures.csv"
+    if history_path.is_file():
+        history = pd.read_csv(history_path)
+    elif gw == 1:
+        history = pd.DataFrame(columns=["element", "fixture", "GW", "value", "position", "was_home",
+                                        "opponent_team", "minutes", "total_points"])
+    else:
+        raise HistoryIncompleteError(f"Fetch {season} history before forecasting GW{gw}")
+    players, teams = pd.read_csv(PLAYERS_PATH), pd.read_csv(TEAMS_PATH)
+    fixtures = pd.read_csv(fixtures_path)
+    schedule = target_schedule_digest(fixtures, gw)
+    existing = None if force else published_forecast(gw, provenance.get("model_sha256"), schedule)
+    if existing is not None:
+        print(f"GW{gw}: already published as {existing.name}")
+        return existing
+    result = generate_predictions(players, teams, fixtures, history, gw, model)
+    result["prediction_season"] = season
+    inputs = [path for path in (PLAYERS_PATH, TEAMS_PATH, GAMEWEEKS_PATH, history_path, fixtures_path)
+              if path.is_file()]
+    provenance["prediction_season"] = season
+    provenance["target_schedule_sha256"] = schedule
+    provenance["input_sha256"] = _digest(inputs)
+    provenance["input_files"] = {path.name if path.parent == CURRENT_DIR else f"{season}/{path.name}":
+                                 hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs}
+    sources = [Path(__file__), PROJECT_ROOT / "feature_contract.py",
+               PROJECT_ROOT / "historical_data" / "build_features.py",
+               PROJECT_ROOT / "historical_data" / "forecast.py", CURRENT_DIR / "xmins.py"]
     # Content-address the actual generator sources, including local changes.
-    provenance["code_revision"] = "sha256:" + hashlib.sha256(
-        b"".join(path.read_bytes() for path in source_paths if path.is_file())).hexdigest()
-    output_path = CURRENT_DIR / f"gw{gw}_predictions_v11.csv"
+    provenance["code_revision"] = "sha256:" + _digest([path for path in sources if path.is_file()])
+    content = result.to_csv(index=False, lineterminator="\n").encode("utf-8")
+    output_path = artifact_path(CURRENT_DIR, gw, content)
     manifest = publish_prediction_artifact(
-        output_path, result.to_csv(index=False, lineterminator="\n").encode("utf-8"),
-        season=source_season, prediction_event=gw,
+        output_path, content, season=season, prediction_event=gw,
         player_count=len(result), model_provenance=provenance)
-    print(f"GW{gw}: {len(result)} players published to {output_path}; manifest: {manifest}")
+    print(f"GW{gw}: {len(result)} players published to {output_path.name}; manifest: {manifest}")
+    return output_path
 
 
 if __name__ == "__main__":
-    main()
+    main(force="--force" in sys.argv[1:])

@@ -1,9 +1,9 @@
 # FPL-AI handoff
 
 Updated: 2026-10-04
-Current correction branch: `fix/audit-corrections`, based on `master` at `13bf200`.
-Milestone: four audited correction groups; preserve Next.js + FastAPI + CSV serving.
-No push or deployment is performed as part of these corrections.
+Branch: `fix/audit-corrections`, based on `master` at `13bf200`.
+Milestone: four audited correction groups, then a retrained and certified model
+with automatic Gameweek refresh; Next.js + FastAPI + CSV serving is preserved.
 
 ## Current audit corrections
 
@@ -17,19 +17,20 @@ No push or deployment is performed as part of these corrections.
    plan shows, not the previous Gameweek's picks) and the manager's budget. Unknown
    selling prices remain explicitly estimated. Opening-GW and consecutive Free
    Hit restrictions are enforced.
-3. Pipeline: versioned causal feature inputs, preserved rolling history, safe
-   publication and blank/double fixtures. Existing serving artifacts are unchanged.
-   Old persisted models and historical accuracy metrics require retraining and
-   leakage-safe production-parity evaluation before they can be validated.
+3. Pipeline: one shared feature implementation for training, validation and
+   live forecasts; safe publication; blank/double fixtures. The model was then
+   retrained (contract v3, gradient boosting), tested on 2026-27 GW1-5 and
+   certified with causality and production-parity checks (docs/MODEL_PIPELINE.md).
 4. Frontend/build: event-aligned projections, correct multipliers and missing
    coverage, resource refresh, team-scoped history/overrides and honest freshness.
    Frontend Docker no longer copies a nonexistent public directory.
 
-The selected artifact is GW6/2026-27, 667 rows, published
-`2026-10-03T16:49:49.526098+00:00`. Its publication metadata lacks verified model
-provenance. Status must remain degraded/unverified even when its GW matches.
-Archived GW3/August 31 data is historical. Docker is unavailable locally, so a
-new Linux/container build of these corrections remains unverified.
+The served artifact is `gw6_predictions_v12.csv` (GW6/2026-27, 667 rows) from
+the certified `models/fpl_model_v3.pkl`; `/api/v1/status` reports it as
+validated. `python -m historical_data.refresh_predictions` publishes each next
+Gameweek after the previous one is final; no scheduler runs it yet. The v11 GW6 and GW3 artifacts are
+archived and unverified. Docker is unavailable locally; the backend allowlist
+is exercised by tests/test_deployment_artifacts.py, not by a container build.
 
 The data-use gate was changed by the owner on 2026-10-03 to conditionally accept
 a free non-commercial public beta as a known risk. Commercial release remains
