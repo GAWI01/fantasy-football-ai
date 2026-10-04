@@ -40,7 +40,7 @@ from feature_contract import (  # noqa: E402
 
 BASE_DIR = PROJECT_ROOT / "historical_data"
 MODEL_DIR = PROJECT_ROOT / "models"
-MODEL_OUTPUT = MODEL_DIR / "fpl_model_v3.pkl"
+MODEL_OUTPUT = MODEL_DIR / "fpl_model_v4.pkl"
 
 # Every completed season. The current season is the held-out test.
 TRAIN_SEASONS = (

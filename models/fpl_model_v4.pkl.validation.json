@@ -1,11 +1,11 @@
 {
-  "feature_contract_version": 3,
+  "feature_contract_version": 4,
   "xp_source": "previous_completed_gw_points_mean_v1",
   "target": "same_fixture_total_points",
   "validation_state": "validated",
-  "created_at": "2026-10-04T11:40:18.153362+00:00",
-  "model_file": "fpl_model_v3.pkl",
-  "model_sha256": "0ed9d093d48be1c31bc1dcd184b9b652dae56ba8a2e3f15d01bb8f3dee06c1b0",
+  "created_at": "2026-10-04T19:24:59.278648+00:00",
+  "model_file": "fpl_model_v4.pkl",
+  "model_sha256": "b5c02560306f7d90acf17ffbff9cfe4f900f212d262ddafe3d17f06e25a37a3a",
   "model_type": "HistGradientBoostingRegressor",
   "feature_columns": [
     "price",
@@ -22,6 +22,7 @@
     "creativity_avg_5",
     "threat_avg_5",
     "ict_index_avg_5",
+    "history_gw_count",
     "fixture_difficulty",
     "position"
   ],
@@ -45,11 +46,11 @@
   ],
   "metrics": {
     "rows": 3216,
-    "mae": 1.228616181321702,
-    "rmse": 2.292909497238774,
-    "bias": -0.3428819404993308,
-    "spearman_by_gw": 0.6140762457663695,
-    "top10_actual_points": 6.2
+    "mae": 1.2555275577524234,
+    "rmse": 2.2295694351769124,
+    "bias": -0.13592305204843197,
+    "spearman_by_gw": 0.6182793958204187,
+    "top10_actual_points": 6.0600000000000005
   },
   "baseline": {
     "name": "points_avg_5",
@@ -75,11 +76,11 @@
         ],
         "model": {
           "rows": 29725,
-          "mae": 0.976740785599281,
-          "rmse": 1.939990447725681,
-          "bias": -0.018925926317961566,
-          "spearman_by_gw": 0.6636681347492984,
-          "top10_actual_points": 5.38421052631579
+          "mae": 0.9553789295323567,
+          "rmse": 1.9273715228638206,
+          "bias": -0.02583385718224647,
+          "spearman_by_gw": 0.6700972223787274,
+          "top10_actual_points": 5.257894736842106
         },
         "baseline": {
           "rows": 29725,
@@ -101,11 +102,11 @@
         ],
         "model": {
           "rows": 27283,
-          "mae": 1.0021569472120242,
-          "rmse": 1.9383327631515526,
-          "bias": -0.0638135745802383,
-          "spearman_by_gw": 0.6869264233458082,
-          "top10_actual_points": 5.523684210526316
+          "mae": 0.9918816346605662,
+          "rmse": 1.9290952702920399,
+          "bias": -0.05711486540176269,
+          "spearman_by_gw": 0.6896293622369004,
+          "top10_actual_points": 5.697368421052633
         },
         "baseline": {
           "rows": 27283,
@@ -128,11 +129,11 @@
         ],
         "model": {
           "rows": 29757,
-          "mae": 1.0058853153404923,
-          "rmse": 1.9685641771536746,
-          "bias": -0.09423447736658735,
-          "spearman_by_gw": 0.6960694195458099,
-          "top10_actual_points": 4.8
+          "mae": 0.9898155503021157,
+          "rmse": 1.9542503093952814,
+          "bias": -0.09618813754173747,
+          "spearman_by_gw": 0.7022741314201716,
+          "top10_actual_points": 4.878947368421053
         },
         "baseline": {
           "rows": 29757,
@@ -182,10 +183,10 @@
     "2023-24/fixtures.csv": "d8521bdbb80edb5141bc17df71bf6026275f2e56fd6a6dc6041b3ae23a39ce6a",
     "2024-25/merged_gw.csv": "5bbbcba6353b4c72ad273adcc8e3aa451946a826564679788f45b1cb3325b84e",
     "2024-25/fixtures.csv": "ce696e187569ca7c45da2562811d3c38f525b58e65575531be37bebd0769ee28",
-    "2025-26/merged_gw.csv": "0d09f1f1cb1b5520ec8e2f25238aa652efe2a263d8ca7cb2b6538b27bf86727d",
-    "2025-26/fixtures.csv": "2d7e3950d346df14ca486cb09e9b9ba406d37d943775244eed06cdc021ffb3a9",
-    "2026-27/merged_gw.csv": "cf5d8d5f4e9cdbcd4d795b334e0097311ad7eb164531a1e72f2725d53b944282",
-    "2026-27/fixtures.csv": "765dbc140aa2139065cf4e74b12b77871017ee99432ff565a12f3da2f2c2a4bc"
+    "2025-26/merged_gw.csv": "f65817fbf2909838a9a0d7e1702302fe35a015f6ea9562d22aede61e0f6ccb12",
+    "2025-26/fixtures.csv": "dc1211e814b99326c3c2fdf6d34899682d82e9ce54cc24bace353d7eed43dc32",
+    "2026-27/merged_gw.csv": "813adb9d134f0e8fcb9ec75f61012044c106eb45f46a9062b2237fdafb0eaa59",
+    "2026-27/fixtures.csv": "03ca20a0b3a8066897fc8233f58853a723962774ab19c8c24ad384c53325987e"
   },
   "known_limitations": [
     "Historical fixture difficulty comes from end-of-season snapshots of the official FDR; the current season uses the official values at prediction time.",

@@ -12,6 +12,10 @@ const COMPONENT_COPY: Record<string, { label: string; hint: string }> = {
   signal_agreement: { label: "Signal agreement", hint: "Whether next-GW and multi-GW signals point the same way." },
 };
 
+function signalStrength(value: number): string {
+  return value >= 0.75 ? "Strong" : value >= 0.5 ? "Moderate" : "Weak";
+}
+
 export function ExplainPlan({ plan, modelVersion }: { plan: GameweekPlan; modelVersion: string | null }) {
   const confidence = plan.confidence;
   return (
@@ -31,11 +35,12 @@ export function ExplainPlan({ plan, modelVersion }: { plan: GameweekPlan; modelV
       </section>
       {confidence ? (
         <section>
-          <h3 className="why-title">Confidence {Math.round(confidence.score * 100)}% · {sentenceCase(confidence.label)}</h3>
+          <h3 className="why-title">Confidence: {sentenceCase(confidence.label)}</h3>
+          <p className="faint">A rule-based summary of the four signals below, not a probability that the move pays off.</p>
           <div className="why-meters">
             {Object.entries(confidence.components).map(([key, value]) => (
               <div key={key} className="why-meter">
-                <div className="row"><strong>{COMPONENT_COPY[key]?.label ?? sentenceCase(key)}</strong><span className="spacer" /><span className="num">{Math.round(value * 100)}%</span></div>
+                <div className="row"><strong>{COMPONENT_COPY[key]?.label ?? sentenceCase(key)}</strong><span className="spacer" /><span>{signalStrength(value)}</span></div>
                 <Meter value={value} label={COMPONENT_COPY[key]?.label ?? key} tone={value >= 0.75 ? "pos" : value >= 0.5 ? "accent" : "warn"} />
                 <small className="faint">{COMPONENT_COPY[key]?.hint}</small>
               </div>
@@ -47,7 +52,7 @@ export function ExplainPlan({ plan, modelVersion }: { plan: GameweekPlan; modelV
         <h3 className="why-title">How to read the numbers</h3>
         <ul>
           <li><b>Next GW</b> is the native model projection for the coming Gameweek. Projections are forecasts, never results.</li>
-          <li><b>5-GW gain</b> adds four further Gameweeks scaled by official fixture difficulty and home/away, with uncertainty widening the further out it looks.</li>
+          <li><b>5-GW gain</b> adds four further Gameweeks by scaling next GW&rsquo;s forecast to each later fixture&rsquo;s official difficulty and home/away. It is a planning guide, not four separate model forecasts.</li>
           <li><b>Hits</b> cost 4 points per transfer beyond your free transfers. The engine only proposes a hit when the multi-GW edge clearly exceeds it.</li>
           <li>Captain and vice-captain are always chosen from players you own.</li>
         </ul>

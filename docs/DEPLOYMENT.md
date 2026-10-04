@@ -39,7 +39,7 @@ these files. Training histories, features, pickle models, SQLite, backups,
 frontend files, tests, secrets and development environments are excluded.
 
 The served forecast is named by `manifest.json` (currently
-`gw6_predictions_v12.csv`, GW6/2026-27, 667 rows) and carries the certified
+`gw6_predictions_v13.csv`, GW6/2026-27, 667 rows) and carries the certified
 model's provenance, so `/api/v1/status` reports it as validated. Each next
 Gameweek's forecast is produced by `python -m historical_data.refresh_predictions`
 once the previous Gameweek is final; committing its output redeploys the image.

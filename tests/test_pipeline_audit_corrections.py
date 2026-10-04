@@ -234,7 +234,7 @@ def certified_model(tmp_path, *, train_seasons=None, metrics=None, sklearn_versi
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import OneHotEncoder
 
-    path = tmp_path / "fpl_model_v3.pkl"
+    path = tmp_path / "fpl_model_v4.pkl"
     sklearn_version = sklearn_version or sklearn.__version__
     model = Pipeline([("pre", ColumnTransformer([
         ("position", OneHotEncoder(handle_unknown="ignore"), ["position"]),
@@ -275,7 +275,7 @@ def test_default_prediction_model_is_certified_and_hash_linked(tmp_path, monkeyp
     monkeypatch.setattr(predict_gw, "MODEL_PATH", path)
     model, provenance = predict_gw.load_prediction_model()
     assert model.predict(pd.DataFrame([feature_row()], columns=FEATURE_COLUMNS)).tolist() == [4]
-    assert provenance["model_file"] == "fpl_model_v3.pkl"
+    assert provenance["model_file"] == "fpl_model_v4.pkl"
     assert provenance["evaluation"]["production_parity"] is True
 
 
@@ -298,4 +298,4 @@ def test_model_without_feature_provenance_is_rejected(tmp_path, monkeypatch):
     model.feature_contract_metadata_ = None
     monkeypatch.setattr(predict_gw.joblib, "load", lambda path: model)
     with pytest.raises(FeatureContractError, match="provenance"):
-        predict_gw.load_prediction_model(tmp_path / "fpl_model_v3.pkl")
+        predict_gw.load_prediction_model(tmp_path / "fpl_model_v4.pkl")

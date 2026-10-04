@@ -1,6 +1,6 @@
 # Forecast model and pipeline
 
-The served forecasts come from one certified model, `models/fpl_model_v3.pkl`,
+The served forecasts come from one certified model, `models/fpl_model_v4.pkl`,
 and one code path from raw fixture rows to published CSV. Training,
 validation and live forecasting call the same functions, so features cannot
 drift between them.
@@ -17,12 +17,12 @@ build_features.build_feature_frame()        the only feature implementation
 validate_model (train + certify)   forecast.live_feature_rows (history + next GW fixtures)
    │                               │
    ▼                               ▼
-models/fpl_model_v3.pkl            current_data/predict_gw → gw{N}_predictions_v12.csv
+models/fpl_model_v4.pkl            current_data/predict_gw → gw{N}_predictions_v13.csv
  + .validation.json                 + sidecar + manifest.json (served by the API)
  + .metadata.json (certificate)
 ```
 
-## Features (contract v3)
+## Features (contract v4)
 
 One row per player and fixture. Every rolling value for Gameweek G uses only
 the player's completed Gameweeks before G (Double Gameweeks are aggregated to
@@ -37,6 +37,7 @@ Gameweeks first, so one fixture never sees the other).
 | `points_last_3`, `points_last_5`, `points_avg_5` | Points over the last 3/5 completed Gameweeks |
 | `minutes_last_5`, `starts_last_5` | Minutes and 60-minute appearances |
 | `goals_last_5`, `assists_last_5` | Goals and assists |
+| `history_gw_count` | Completed Gameweeks in the window (0-5) |
 | `bps_avg_5`, `influence_avg_5`, `creativity_avg_5`, `threat_avg_5`, `ict_index_avg_5` | Per-fixture averages |
 
 Version 3 removed `opponent_team` (a club ID used as a number; IDs are
@@ -45,6 +46,14 @@ columns (exact copies of `points_avg_5`). The archived same-Gameweek FPL `xP`
 field is never used: it has no verified pre-deadline timing. The feature
 frame still records `xP = points_avg_5`, `history_cutoff_gw` and the contract
 version so provenance can be checked row by row.
+
+Version 4 added `history_gw_count`. Without it, "no history yet" and "five
+Gameweeks without minutes" were the same all-zero row, so at the start of a
+season regular starters were forecast like benched players: v3 under-forecast
+GW1 by about one point per fixture in every validation season (-1.14 in
+2026-27) and GW1-5 by 0.22-0.35. With the count, GW1 bias is -0.16 to -0.25
+and GW1-5 bias -0.04 to -0.17. With a full five-Gameweek window the two
+versions forecast almost identically (GW6 2026-27: rank correlation 0.999).
 
 ## Model and validation
 
@@ -64,11 +73,17 @@ used neither for training nor for model selection.
 
 | | MAE | RMSE | Spearman per GW (all players) | Actual points of the model's top 10 per GW |
 |---|---|---|---|---|
-| Model, 2026-27 GW1-5 | **1.229** | **2.293** | 0.614 | **6.20** |
+| Model v4, 2026-27 GW1-5 | **1.256** | **2.230** | 0.618 | **6.06** |
 | Baseline `points_avg_5` | 1.350 | 2.650 | 0.667 | 3.46 |
 
-Rolling-origin folds (model vs baseline MAE): 2023-24 0.977 vs 1.006,
-2024-25 1.002 vs 1.055, 2025-26 1.006 vs 1.054.
+Rolling-origin folds (model vs baseline MAE): 2023-24 0.955 vs 1.006,
+2024-25 0.992 vs 1.055, 2025-26 0.990 vs 1.054. Against v3, v4 lowers MAE and
+RMSE on all three folds and RMSE on 2026-27 (2.293 to 2.230); its 2026-27 MAE
+is slightly higher (1.229 to 1.256) because MAE rewards forecasting low when
+most results are zero, which is what v3's bias did. Held-out bias is -0.14
+points per fixture (v3: -0.35). The feature was chosen on the three
+historical folds; the 2026-27 figures were also inspected before
+recertification, so they are a confirmation rather than an untouched test.
 
 The baseline ranks the *whole* player pool slightly better (Spearman), while
 the model is clearly better on error and at the top of the ranking, which is
@@ -131,14 +146,26 @@ still compares live points with Gameweek N's own pre-deadline forecast
 `python -m historical_data.refresh_predictions` (pinned by
 `requirements-pipeline.txt`) is the single refresh command: it refreshes
 official data and the season history, publishes a due forecast and validates
-the serving bundle. It reports `changed=true` only for a new forecast or a
-fixture-schedule change; prices and ownership alone are not worth a commit.
+the serving bundle. It reports `changed=true` only for a new forecast, a new
+forecast check or a fixture-schedule change; prices and ownership alone are
+not worth a commit.
 
-No scheduler runs it yet. Until one is enabled, run it after each Gameweek's
-scores are final (normally a day after the last match), commit the changed
-`historical_data/current_data` and season files, and push; the deploy then
-serves the new Gameweek. Without that step the API keeps serving the previous
-forecast and reports the plan as unavailable once its Gameweek has started.
+`.github/workflows/refresh-predictions.yml` runs it in GitHub Actions every
+three hours and commits any change to `master`, which deploys the API and the
+app automatically. If a run fails, the failure is an error annotation on the
+run and the API keeps serving the previous forecast; the plan then shows as
+unavailable once that forecast's Gameweek has started.
+
+## Forecast checks
+
+After each Gameweek has final scores, the refresh scores its pre-deadline
+forecast (the artifact Review uses) against official points for every
+current player and appends the result to
+`historical_data/current_data/forecast_checks.csv`: mean forecast vs mean
+actual, bias, MAE, RMSE, rank correlation and the points scored by the
+forecast's top 10. Under GitHub Actions each check is also a notice
+annotation on the run. The first entry scores the archived, unverified v11
+GW3 forecast: 0.82 forecast vs 1.43 actual points per player.
 
 ## Commands
 

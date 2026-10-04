@@ -19,14 +19,14 @@ with automatic Gameweek refresh; Next.js + FastAPI + CSV serving is preserved.
    Hit restrictions are enforced.
 3. Pipeline: one shared feature implementation for training, validation and
    live forecasts; safe publication; blank/double fixtures. The model was then
-   retrained (contract v3, gradient boosting), tested on 2026-27 GW1-5 and
+   retrained (now contract v4, gradient boosting), tested on 2026-27 GW1-5 and
    certified with causality and production-parity checks (docs/MODEL_PIPELINE.md).
 4. Frontend/build: event-aligned projections, correct multipliers and missing
    coverage, resource refresh, team-scoped history/overrides and honest freshness.
    Frontend Docker no longer copies a nonexistent public directory.
 
-The served artifact is `gw6_predictions_v12.csv` (GW6/2026-27, 667 rows) from
-the certified `models/fpl_model_v3.pkl`; `/api/v1/status` reports it as
+The served artifact is `gw6_predictions_v13.csv` (GW6/2026-27, 667 rows) from
+the certified `models/fpl_model_v4.pkl`; `/api/v1/status` reports it as
 validated. `python -m historical_data.refresh_predictions` publishes each next
 Gameweek after the previous one is final; no scheduler runs it yet. The v11 GW6 and GW3 artifacts are
 archived and unverified. Docker is unavailable locally; the backend allowlist

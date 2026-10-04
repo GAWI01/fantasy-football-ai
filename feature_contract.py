@@ -6,7 +6,7 @@ from collections.abc import Mapping
 import math
 
 
-FEATURE_CONTRACT_VERSION = 3
+FEATURE_CONTRACT_VERSION = 4
 XP_SOURCE = "previous_completed_gw_points_mean_v1"
 MODEL_TARGET = "same_fixture_total_points"
 
@@ -23,6 +23,11 @@ def feature_metadata() -> dict[str, object]:
 # columns (exact copies of points_avg_5), and added the official fixture
 # difficulty. Rolling-origin validation over 2023-24, 2024-25 and 2025-26
 # preferred this set; see docs/MODEL_PIPELINE.md.
+#
+# Version 4 added `history_gw_count` (completed Gameweeks in the window,
+# 0-5). Without it "no history yet" and "five Gameweeks without minutes"
+# were the same all-zero row, so regular starters were forecast like
+# benched players at the start of a season (GW1 bias about -1 point).
 FEATURE_COLUMNS = (
     "price",
     "was_home",
@@ -38,6 +43,7 @@ FEATURE_COLUMNS = (
     "creativity_avg_5",
     "threat_avg_5",
     "ict_index_avg_5",
+    "history_gw_count",
     "fixture_difficulty",
     "position",
 )

@@ -1,0 +1,2 @@
+season,gameweek,artifact,model_file,validation_state,players,mean_predicted,mean_actual,bias,mae,rmse,spearman,top10_actual
+2026-27,3,gw3_predictions_v11.csv,legacy,unverified,623,0.822,1.425,-0.603,1.091,2.16,0.68,5.7

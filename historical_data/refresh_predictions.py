@@ -4,7 +4,8 @@
 suitable for a scheduled job. It:
 
 1. refreshes the official current-data snapshot (players, teams, fixtures, Gameweeks);
-2. refreshes the current season's completed fixture history;
+2. refreshes the current season's completed fixture history and scores each
+   newly finished Gameweek's pre-deadline forecast (historical_data.forecast_check);
 3. publishes the next Gameweek's forecast once every earlier Gameweek is
    finished and data-checked (otherwise it reports that the forecast is not due);
 4. validates the serving bundle.
@@ -29,7 +30,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.runtime_artifacts import validate_runtime_artifacts  # noqa: E402
-from historical_data import fetch_season_history  # noqa: E402
+from historical_data import fetch_season_history, forecast_check  # noqa: E402
 from historical_data.current_data import fetch_current_fpl, predict_gw  # noqa: E402
 
 CURRENT_DIR = PROJECT_ROOT / "historical_data" / "current_data"
@@ -63,6 +64,13 @@ def refresh() -> dict:
             raise
         print(f"Season history: {exc}")
 
+    checks = []
+    if season:
+        history_path = PROJECT_ROOT / "historical_data" / season / "merged_gw.csv"
+        checks = forecast_check.check_finished_gameweeks(
+            season, pd.read_csv(history_path), pd.read_csv(CURRENT_DIR / "gameweeks_current.csv"))
+        forecast_check.announce(checks)
+
     forecast = None
     try:
         forecast = predict_gw.main()
@@ -74,6 +82,8 @@ def refresh() -> dict:
     schedule_changed = schedule_signature(CURRENT_DIR / "fixtures_current.csv") != schedule_before
     if new_forecast and forecast is not None:
         message = f"Publish {forecast.stem.split('_')[0].upper()} forecasts from the certified model"
+    elif checks:
+        message = f"Check the GW{checks[-1]['gameweek']} forecast against final scores"
     elif schedule_changed:
         message = "Refresh the official fixture schedule"
     else:

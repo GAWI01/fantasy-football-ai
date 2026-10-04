@@ -41,7 +41,7 @@ MODEL_PATH = MODEL_OUTPUT
 PLAYERS_PATH = CURRENT_DIR / "players_raw.csv"
 TEAMS_PATH = CURRENT_DIR / "teams_current.csv"
 GAMEWEEKS_PATH = CURRENT_DIR / "gameweeks_current.csv"
-ARTIFACT_VERSION = "v12"
+ARTIFACT_VERSION = "v13"
 DISPLAY_POSITIONS = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
 
 

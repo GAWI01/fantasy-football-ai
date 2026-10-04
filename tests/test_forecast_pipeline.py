@@ -181,7 +181,7 @@ def test_a_gameweek_is_published_once_and_again_only_when_its_fixtures_change(tm
     fixtures.to_csv(tmp_path / "history" / "2026-27" / "fixtures.csv", index=False)
     second = predict_gw.main()
     assert first.read_bytes() == original
-    assert second.name == "gw3_predictions_v12_r2.csv"
+    assert second.name == f"gw3_predictions_{predict_gw.ARTIFACT_VERSION}_r2.csv"
     assert pd.read_csv(second)["predicted_points"].eq(0).all()
     assert load_current_manifest(current / "manifest.json").prediction_file == second.name
     assert predict_gw.main() == second
