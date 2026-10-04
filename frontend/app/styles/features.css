@@ -27,7 +27,8 @@
 .check input { width: 16px; height: 16px; accent-color: var(--violet); }
 .select-label { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--text-2); }
 .select-label select { height: 36px; padding: 0 10px; border-radius: var(--r-sm); background: var(--surface-1); border: 1px solid var(--line-2); }
-.table-scroll { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
+/* position: relative keeps absolutely positioned children (e.g. .sr-only labels) inside the scroll clip. */
+.table-scroll { position: relative; overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
 .row-link { display: block; width: 100%; text-align: left; border-radius: 8px; }
 .row-link:hover .pchip strong { color: var(--violet-text); }
 .cell-name { display: inline-flex; align-items: center; gap: 6px; font-weight: 650; color: var(--text); font-size: var(--fs-sm); }
@@ -490,7 +491,7 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 .chip-available { border-color: var(--green-line); }
 .chip-available small { color: var(--green-text); }
 .chip-used { opacity: 0.55; }
-.heat-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
+.heat-wrap { position: relative; overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
 .heat { width: 100%; min-width: 560px; border-collapse: separate; border-spacing: 3px; font-size: var(--fs-sm); }
 .heat thead th { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); font-weight: 650; padding: 4px 6px; }
 .heat tbody th { text-align: left; font-weight: 500; padding-right: 8px; }
