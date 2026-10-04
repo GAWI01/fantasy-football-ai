@@ -127,7 +127,7 @@ export function projectLineup(lineup: Lineup, squad: SquadPlayer[]): { points: n
     if (xp == null) { missing += 1; continue; }
     total += xp * (id === lineup.captain ? 2 : 1);
   }
-  return { points: missing === lineup.starters.length ? null : total, missing };
+  return { points: missing > 0 || !lineup.starters.length ? null : total, missing };
 }
 
 export function sameLineup(left: Lineup, right: Lineup): boolean {

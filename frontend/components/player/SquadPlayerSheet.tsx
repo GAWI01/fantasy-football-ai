@@ -13,12 +13,13 @@ import type { SquadPlayer } from "@/lib/model/squad";
 export function modelRead(player: SquadPlayer): string {
   const status = String(player.status ?? "a").toLowerCase();
   if (["i", "s", "u", "n"].includes(status)) return "Officially unavailable. Unless news improves, plan around a bench route or a transfer.";
-  if (status === "d") return "Flagged as doubtful. The projection already discounts the chance of missing out, but the downside is real.";
+  if (status === "d") return "Flagged as doubtful. Check the latest team news before relying on the projection.";
   if (player.risk && (player.risk.label === "HIGH" || player.risk.label === "VERY_HIGH")) return "Minutes risk is high in the model. Treat the projection as fragile and keep a playable bench option.";
   if (player.startProbability != null && player.startProbability < 0.7) return "Start probability is below 70%, so much of the value depends on being picked.";
+  if (player.xmins == null || player.startProbability == null) return "Minutes forecast unavailable. The points projection alone does not establish minutes security.";
   if (player.difficulty != null && player.difficulty >= 4) return "A difficult next fixture. The five-Gameweek view matters more than this week's number.";
-  if (player.xp != null && player.xp >= 6) return "A strong projection with stable minutes. A core asset this week.";
-  return "Minutes, availability and fixture signals are aligned. A stable slot unless a clearly better move appears.";
+  if (player.xp != null && player.xp >= 6) return "A strong points projection. Check the minutes forecast and latest team news alongside it.";
+  return "Compare the points and minutes forecasts with the fixture and latest team news.";
 }
 
 function Fact({ label, value, source, children }: { label: string; value: ReactNode; source?: Parameters<typeof SourceBadge>[0]["kind"]; children?: ReactNode }) {

@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
+import numpy as np
+from scipy.optimize import Bounds, LinearConstraint, milp
 
 from fpl_rules import detect_club_changes, validate_transfer_squad
 
@@ -18,6 +20,24 @@ class TransferInAnalysisError(TransferAnalysisError):
 REQUIRED_PREDICTION_COLUMNS = {
     "player_id", "name", "position", "price", "predicted_points",
 }
+
+
+def selling_value(pick: dict[str, Any], market_price: float) -> tuple[float, str, bool]:
+    """Use a supplied selling value, otherwise return an explicitly labelled estimate."""
+    supplied = pick.get("selling_price")
+    supplied_source = pick.get("selling_price_source")
+    source = supplied_source if isinstance(supplied_source, str) and supplied_source else "provided_selling_price"
+    estimated_sources = {"market_price", "market_price_estimate", "estimate", "estimated", "unknown", "purchase_price_estimate"}
+    if supplied is not None and source not in estimated_sources:
+        value = float(supplied)
+        if np.isfinite(value) and value > 0:
+            return value, source, True
+    purchase = pick.get("purchase_price")
+    if purchase is not None and pd.notna(purchase):
+        purchase = float(purchase)
+        profit_tenths = max(0, round((market_price - purchase) * 10))
+        return min(market_price, purchase + (profit_tenths // 2) / 10), "purchase_price_estimate", False
+    return float(market_price), "market_price_estimate", False
 
 
 def _validate_inputs(team: dict[str, Any], predictions: pd.DataFrame) -> list[dict[str, Any]]:
@@ -373,7 +393,8 @@ def analyze_transfer_decision(
         )
 
     outgoing = outgoing_rows.iloc[0]
-    outgoing_price = float(outgoing["price"])
+    outgoing_pick = next(pick for pick in picks if pick["player_id"] == transfer_out_id)
+    outgoing_price, selling_price_source, selling_price_known = selling_value(outgoing_pick, float(outgoing["price"]))
     outgoing_points = float(outgoing["predicted_points"])
     outgoing_position = str(outgoing["position"]).upper()
     outgoing_team = str(outgoing["team"])
@@ -407,8 +428,7 @@ def analyze_transfer_decision(
         & (data["player_id"] != transfer_out_id)
     ].copy()
 
-    # Selling the outgoing player releases their purchase-price slot. The
-    # immediate affordability condition is therefore IN price <= OUT price + bank.
+    # Use the supplied selling value where available, and label any estimate.
     max_price = outgoing_price + bank
     candidates = candidates[candidates["price"] <= max_price + 1e-9].copy()
 
@@ -461,9 +481,13 @@ def analyze_transfer_decision(
             "position": recommended["position"],
             "price": float(recommended["price"]),
             "predicted_points": float(recommended["predicted_points"]),
+            "selling_price": outgoing_price,
+            "selling_price_source": selling_price_source,
         },
         "free_transfers": free_transfers,
         "transfers_used": transfer_count,
+        "selling_prices_known": selling_price_known,
+        "budget_is_estimate": not selling_price_known,
         "hit_cost": transfer_hit_cost,
         "gross_gain": gross_gain,
         "net_gain": net_gain,
@@ -600,17 +624,17 @@ def optimize_transfer_plan(
 ) -> dict[str, Any]:
     """Find the best feasible one- or multi-transfer plan.
 
-    The implementation deliberately reuses the validated transfer-decision
-    primitives. It enumerates feasible same-position replacements and
-    evaluates complete replacement sets, rather than selecting each transfer
-    independently. The current scope is a single gameweek; multi-GW value is
-    a later decision-engine layer.
+    The existing SciPy MILP backend evaluates complete replacement sets with
+    shared budget, position and club constraints. Multi-GW values can be
+    supplied through the existing transfer-optimizer wrapper.
     """
     if not isinstance(max_transfers, int) or max_transfers < 0:
         raise TransferAnalysisError("max_transfers must be a non-negative integer")
     if not isinstance(free_transfers, int) or free_transfers < 0:
         raise TransferAnalysisError("free_transfers must be a non-negative integer")
     if max_transfers == 0:
+        supplied_picks = team.get("picks", []) if isinstance(team, dict) else []
+        known_sales = len(supplied_picks) == 15 and all(selling_value(pick, 0.0)[2] for pick in supplied_picks)
         return {
             "recommended": None,
             "recommended_transfers": [],
@@ -620,6 +644,10 @@ def optimize_transfer_plan(
             "gross_gain": 0.0,
             "net_gain": 0.0,
             "alternatives": [],
+            "selling_prices_known": known_sales,
+            "budget_is_estimate": not known_sales,
+            "solver_status": "not_required",
+            "optimality_known": True,
         }
 
     picks = _validate_inputs(team, predictions)
@@ -675,111 +703,89 @@ def optimize_transfer_plan(
         raise TransferAnalysisError("bank cannot be negative")
 
     base_points = float(owned["predicted_points"].sum())
-    owned_club_by_id = dict(zip(
-        owned["player_id"].astype(int),
-        owned["team"].astype(str),
-        strict=True,
-    ))
-    player_club_by_id = dict(zip(
-        data["player_id"].astype(int),
-        data["team"].astype(str),
-        strict=True,
-    ))
     pick_by_id = {int(pick["player_id"]): pick for pick in picks}
-    current_clubs = owned["team"].astype(str).value_counts().to_dict()
+    sales = {
+        int(row["player_id"]): selling_value(pick_by_id[int(row["player_id"])], float(row["price"]))
+        for _, row in owned.iterrows()
+    }
+    selling_prices_known = all(value[2] for value in sales.values())
+    data = data.sort_values("player_id", kind="stable").reset_index(drop=True)
+    if data["player_id"].duplicated().any():
+        raise TransferAnalysisError("predictions must contain unique player IDs")
+    expected_positions = {"GK": 2, "DEF": 5, "MID": 5, "FWD": 3}
+    if owned["position"].value_counts().to_dict() != expected_positions:
+        raise TransferAnalysisError("team must contain 2 GK, 5 DEF, 5 MID and 3 FWD")
+    n = len(data)
+    # Selected owned players cost their sale value: retaining them is not a
+    # repurchase. New players cost the current market price. This is equivalent
+    # to bank + proceeds from only those players actually sold.
+    costs = np.array([
+        sales[int(row["player_id"])][0] if int(row["player_id"]) in owned_ids else float(row["price"])
+        for _, row in data.iterrows()
+    ])
+    newcomers = (~data["player_id"].isin(owned_ids)).astype(float).to_numpy()
+    points = data["predicted_points"].to_numpy(dtype=float)
+    constraints = [
+        LinearConstraint(np.r_[np.ones(n), 0.0], 15, 15),
+        LinearConstraint(np.r_[costs, 0.0], -np.inf, bank + sum(sale[0] for sale in sales.values())),
+        LinearConstraint(np.r_[newcomers, 0.0], 0, min(max_transfers, 15)),
+        LinearConstraint(np.r_[newcomers, -1.0], -np.inf, free_transfers),
+    ]
+    for position, count in expected_positions.items():
+        constraints.append(LinearConstraint(np.r_[(data["position"] == position).astype(float), 0.0], count, count))
+    for club in data["team"].astype(str).unique():
+        constraints.append(LinearConstraint(np.r_[(data["team"].astype(str) == club).astype(float), 0.0], 0, 3))
 
-    # Build feasible one-for-one replacements. A replacement is feasible if
-    # the resulting squad remains within budget and max-three-per-club.
-    candidates_by_out: dict[int, list[dict]] = {}
-    for _, out in owned.iterrows():
-        out_id = int(out["player_id"])
-        position = str(out["position"])
-        official_selling_price = pick_by_id[out_id].get("selling_price")
-        out_price = (
-            float(official_selling_price)
-            if official_selling_price is not None
-            else float(out["price"])
-        )
-        out_club = str(out["team"])
-        candidates = data[
-            (data["position"] == position)
-            & (~data["player_id"].isin(owned_ids))
-        ].copy()
-
-        rows = []
-        for _, inc in candidates.iterrows():
-            inc_club = str(inc["team"])
-            available = out_price + bank
-            if float(inc["price"]) > available + 1e-9:
-                continue
-
-            club_count = int(current_clubs.get(inc_club, 0))
-            if inc_club == out_club:
-                club_count -= 1
-            if club_count >= 3:
-                continue
-
-            gain = float(inc["predicted_points"]) - float(out["predicted_points"])
-            rows.append({
-                "player_out_id": out_id,
-                "player_out": out["name"],
-                "player_in_id": int(inc["player_id"]),
-                "player_in": inc["name"],
-                "position": position,
-                "price": float(inc["price"]),
-                "predicted_points": float(inc["predicted_points"]),
-                "gain": gain,
-                "selling_price": out_price,
-            })
-
-        rows.sort(key=lambda r: (-r["gain"], -r["predicted_points"], r["price"], r["player_in_id"]))
-        candidates_by_out[out_id] = rows
-
+    # The extra integer variable represents paid transfers. A small secondary
+    # preference retains the existing rule that a positive gross gain wins a
+    # tie in net gain; transfer count and player IDs make further ties stable.
+    objective = np.r_[-points * (1.0 + 1e-7) + newcomers * 1e-9, hit_cost]
     all_plans = []
-
-    # Enumerate combinations up to max_transfers. Limit each outgoing player's
-    # candidate list to the strongest feasible candidates to keep the search
-    # bounded on the full FPL dataset.
-    import itertools
-
-    out_ids = list(candidates_by_out)
-    for count in range(1, min(max_transfers, len(out_ids)) + 1):
-        for outs in itertools.combinations(out_ids, count):
-            pools = [candidates_by_out[o][:12] for o in outs]
-            if any(not pool for pool in pools):
-                continue
-            for combo in itertools.product(*pools):
-                in_ids = [int(x["player_in_id"]) for x in combo]
-                if len(set(in_ids)) != len(in_ids):
-                    continue
-
-                # Apply all swaps simultaneously to the club counts and budget.
-                final_clubs = dict(current_clubs)
-                total_price_delta = 0.0
-                for x in combo:
-                    out_club = owned_club_by_id[int(x["player_out_id"])]
-                    in_club = player_club_by_id[int(x["player_in_id"])]
-                    final_clubs[out_club] = final_clubs.get(out_club, 0) - 1
-                    final_clubs[in_club] = final_clubs.get(in_club, 0) + 1
-                    total_price_delta += float(x["price"]) - float(x["selling_price"])
-
-                if max(final_clubs.values()) > 3:
-                    continue
-                if total_price_delta > bank + 1e-9:
-                    continue
-
-                gross = float(sum(x["gain"] for x in combo))
-                hits = max(0, count - free_transfers)
-                cost = float(hits * hit_cost)
-                net = gross - cost
-
-                all_plans.append({
-                    "count": count,
-                    "transfers": list(combo),
-                    "gross": gross,
-                    "hit_cost": cost,
-                    "net": net,
+    solver_status = "optimal"
+    optimality_known = False
+    alternatives_complete = True
+    by_id = data.set_index("player_id")
+    # Only six ranked solutions are consumed by callers. Exclusion constraints
+    # find those alternatives without enumerating outgoing subsets or products.
+    for _ in range(6):
+        solution = milp(
+            c=objective,
+            integrality=np.ones(n + 1),
+            bounds=Bounds(np.zeros(n + 1), np.r_[np.ones(n), 15.0]),
+            constraints=constraints,
+            options={"disp": False, "time_limit": 2.0},
+        )
+        if not solution.success:
+            status = {1: "time_limit", 2: "infeasible", 3: "unbounded"}.get(solution.status, "solver_error")
+            alternatives_complete = solution.status == 2
+            if not all_plans:
+                solver_status = status
+                optimality_known = solution.status == 2
+            break
+        optimality_known = True
+        selected_mask = solution.x[:n] >= 0.5
+        selected_ids = set(data.loc[selected_mask, "player_id"].astype(int))
+        out_ids = owned_ids - selected_ids
+        in_ids = selected_ids - owned_ids
+        transfers = []
+        for position in expected_positions:
+            outs = sorted(pid for pid in out_ids if by_id.loc[pid, "position"] == position)
+            ins = sorted(pid for pid in in_ids if by_id.loc[pid, "position"] == position)
+            for out_id, in_id in zip(outs, ins, strict=True):
+                outgoing, incoming = by_id.loc[out_id], by_id.loc[in_id]
+                sale, sale_source, _ = sales[out_id]
+                transfers.append({
+                    "player_out_id": out_id, "player_out": outgoing["name"],
+                    "player_in_id": in_id, "player_in": incoming["name"],
+                    "position": position, "price": float(incoming["price"]),
+                    "predicted_points": float(incoming["predicted_points"]),
+                    "gain": float(incoming["predicted_points"] - outgoing["predicted_points"]),
+                    "selling_price": sale, "selling_price_source": sale_source,
                 })
+        gross = float(sum(transfer["gain"] for transfer in transfers))
+        cost = float(max(0, len(transfers) - free_transfers) * hit_cost)
+        all_plans.append({"count": len(transfers), "transfers": transfers, "gross": gross, "hit_cost": cost, "net": gross - cost})
+        constraints.append(LinearConstraint(np.r_[selected_mask.astype(float), 0.0], 0, 14))
 
     # No feasible positive/neutral move is still a valid "roll" decision.
     roll = {
@@ -806,7 +812,7 @@ def optimize_transfer_plan(
     best = all_plans[0]
 
     alternatives = []
-    seen = set()
+    seen = {tuple(sorted((x["player_out_id"], x["player_in_id"]) for x in best["transfers"]))}
     for plan in all_plans[1:]:
         key = tuple(
             sorted((x["player_out_id"], x["player_in_id"]) for x in plan["transfers"])
@@ -831,6 +837,12 @@ def optimize_transfer_plan(
         "recommended_transfers": transfers,
         "transfers_used": best["count"],
         "free_transfers": free_transfers,
+        "selling_prices_known": selling_prices_known,
+        "budget_is_estimate": not selling_prices_known,
+        "solver_status": solver_status,
+        "optimality_known": optimality_known,
+        "alternatives_complete": alternatives_complete,
+        "optimization_warning": None if optimality_known else "Transfer search did not finish; the best plan is unknown.",
         "hit_cost": best["hit_cost"],
         "gross_gain": best["gross"],
         "net_gain": best["net"],

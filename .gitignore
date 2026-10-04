@@ -56,12 +56,17 @@ frontend/node_modules/
 # Local model/data artifacts
 models/*.joblib
 models/*.pkl
+# The certified production model is small and versioned with its evidence.
+!models/fpl_model_v3.pkl
 
 # Generated prediction outputs
 historical_data/current_data/*_predictions*.csv
 
 # Generated current-data CSVs
 historical_data/current_data/*_current.csv
+
+# Derived training features: rebuilt from merged_gw.csv by build_features/validate_model.
+historical_data/*/features.csv
 
 # Generated GW history
 historical_data/current_data/gw*_history.csv
@@ -73,3 +78,5 @@ historical_data/current_data/gw*_history.csv
 !historical_data/current_data/gameweeks_current.csv
 !historical_data/current_data/gw3_predictions_v11.csv
 !historical_data/current_data/gw6_predictions_v11.csv
+# Published by historical_data.current_data.predict_gw (v12 onwards).
+!historical_data/current_data/gw*_predictions_v1[2-9]*.csv

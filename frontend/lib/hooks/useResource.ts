@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 type Entry<T> = { data?: T; error?: string; at: number; promise?: Promise<T> };
 
 const cache = new Map<string, Entry<unknown>>();
+const refreshers = new Set<() => void>();
 const DEFAULT_TTL_MS = 60_000;
 
 export type Resource<T> = {
@@ -28,16 +29,38 @@ export function useResource<T>(key: string | null, fetcher: (signal: AbortSignal
   useEffect(() => {
     if (!key) return;
     let active = true;
+    let timer: number | undefined;
+    const schedule = (at: number) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (active && document.visibilityState === "visible") setNonce((value) => value + 1);
+      }, Math.max(1, at + ttl - Date.now()));
+    };
+    const refresh = () => setNonce((value) => value + 1);
+    const refreshExpired = () => {
+      if (document.visibilityState === "visible" && Date.now() - (cache.get(key)?.at ?? 0) >= ttl) refresh();
+    };
+    refreshers.add(refresh);
+    window.addEventListener("focus", refreshExpired);
+    document.addEventListener("visibilitychange", refreshExpired);
+    const cleanup = () => {
+      active = false;
+      window.clearTimeout(timer);
+      refreshers.delete(refresh);
+      window.removeEventListener("focus", refreshExpired);
+      document.removeEventListener("visibilitychange", refreshExpired);
+    };
     const entry = cache.get(key) as Entry<T> | undefined;
     const fresh = entry?.data !== undefined && Date.now() - entry.at < ttl && nonce === 0;
     if (fresh) {
       queueMicrotask(() => {
-        if (active) setState({ key, data: entry!.data ?? null, error: null, loading: false });
+        if (active) setState({ key, data: entry!.data ?? null, error: entry!.error ?? null, loading: false });
       });
-      return () => { active = false; };
+      schedule(entry.at);
+      return cleanup;
     }
     const controller = new AbortController();
-    const promise = entry?.promise && nonce === 0 ? entry.promise : fetcher(controller.signal);
+    const promise = entry?.promise ?? fetcher(controller.signal);
     cache.set(key, { ...entry, at: entry?.at ?? 0, promise });
     queueMicrotask(() => {
       if (active) setState((current) => ({ key, data: current.key === key ? current.data : null, error: null, loading: true }));
@@ -45,17 +68,21 @@ export function useResource<T>(key: string | null, fetcher: (signal: AbortSignal
     promise
       .then((data) => {
         cache.set(key, { data, at: Date.now() });
-        if (active) setState({ key, data, error: null, loading: false });
+        if (active) {
+          setState({ key, data, error: null, loading: false });
+          schedule(Date.now());
+        }
       })
       .catch((caught: unknown) => {
         if (controller.signal.aborted && !active) return;
         const message = caught instanceof Error ? caught.message : "Request failed";
-        cache.set(key, { ...(cache.get(key) as Entry<T>), error: message, promise: undefined });
-        if (active) setState((current) => ({ key, data: current.key === key ? current.data : null, error: message, loading: false }));
+        cache.set(key, { ...(cache.get(key) as Entry<T>), at: Date.now(), error: message, promise: undefined });
+        if (active) {
+          setState((current) => ({ key, data: current.key === key ? current.data : null, error: message, loading: false }));
+          schedule(Date.now());
+        }
       });
-    return () => {
-      active = false;
-    };
+    return cleanup;
     // The fetcher is intentionally keyed by `key`; callers pass inline functions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, nonce, ttl]);
@@ -68,6 +95,12 @@ export function useResource<T>(key: string | null, fetcher: (signal: AbortSignal
     loading: matches ? state.loading : Boolean(key),
     reload,
   };
+}
+
+/** The shared refresh control also refreshes currently mounted page resources. */
+export function refreshResources() {
+  for (const entry of cache.values()) entry.at = 0;
+  for (const refresh of refreshers) refresh();
 }
 
 /** Test helper. */

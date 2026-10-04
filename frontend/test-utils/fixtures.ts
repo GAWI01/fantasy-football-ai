@@ -355,7 +355,7 @@ export function makeDashboard({ phase = "decision", verdict = "TRANSFER", stale 
       event: currentEvent,
       current_event: currentEvent,
       prediction_event: TARGET_EVENT,
-      target_deadline_time: phase === "decision" ? "2026-10-04T10:00:00Z" : "2026-09-27T10:00:00Z",
+      target_deadline_time: phase === "decision" ? "2099-10-04T10:00:00Z" : "2026-09-27T10:00:00Z",
       actions_locked: phase !== "decision",
       official: { source: "official", fetched_at: now, stale, version: null },
       stale,

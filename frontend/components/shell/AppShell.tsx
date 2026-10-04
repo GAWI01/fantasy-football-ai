@@ -21,7 +21,9 @@ import { BrandMark } from "@/components/shell/BrandMark";
 import { DeadlineCountdown } from "@/components/shell/DeadlineCountdown";
 import { Sheet } from "@/components/ui/Sheet";
 import { compact, relativeAge } from "@/lib/format";
-import { deriveGameState, type GameState } from "@/lib/model/phase";
+import { useGameState } from "@/lib/hooks/useGameState";
+import { refreshResources } from "@/lib/hooks/useResource";
+import type { GameState } from "@/lib/model/phase";
 import { isActive, MOBILE_PRIMARY, NAV_ITEMS, type NavKey } from "@/lib/navigation";
 
 
@@ -48,17 +50,17 @@ function PhaseChip({ state, connected }: { state: GameState; connected: boolean 
 }
 
 
-function Freshness({ generatedAt, stale }: { generatedAt: string | null; stale: boolean }) {
+function Freshness({ fetchedAt, stale }: { fetchedAt: string | null; stale: boolean }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     const first = window.setTimeout(() => setNow(Date.now()), 0);
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => { window.clearTimeout(first); window.clearInterval(timer); };
   }, []);
-  if (!generatedAt || now == null) return null;
+  if (!fetchedAt || now == null) return null;
   return (
-    <span className={`freshness${stale ? " freshness-stale" : ""}`} title={new Date(generatedAt).toLocaleString()}>
-      {stale ? "Cached data · " : "Updated "}{relativeAge(generatedAt, now)}
+    <span className={`freshness${stale ? " freshness-stale" : ""}`} title={new Date(fetchedAt).toLocaleString()}>
+      {stale ? "Cached data · " : "Updated "}{relativeAge(fetchedAt, now)}
     </span>
   );
 }
@@ -68,9 +70,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { dashboard, teamId, loading, refresh } = useTeam();
   const [moreOpen, setMoreOpen] = useState(false);
-  const state = deriveGameState(dashboard);
+  const state = useGameState(dashboard);
   const team = dashboard?.data.team;
   const connected = Boolean(dashboard);
+  const unverifiedModel = dashboard?.meta.model_validation_state === "unverified";
   // While a Gameweek is live the useful countdown is the next deadline, not the one that just passed.
   const liveNext = state.liveActive ? dashboard?.data.live : null;
   const deadlineEvent = liveNext?.next_deadline_time ? liveNext.next_event ?? null : state.targetEvent ?? dashboard?.data.live?.next_event ?? null;
@@ -119,9 +122,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <PhaseChip state={state} connected={connected} />
           {showDeadline ? <DeadlineCountdown deadline={showDeadline} event={deadlineEvent} /> : null}
           <div className="statusbar-end">
-            {connected ? <Freshness generatedAt={state.generatedAt} stale={state.stale} /> : null}
+            {connected ? <Freshness fetchedAt={state.officialFetchedAt} stale={state.stale} /> : null}
             {connected ? (
-              <button type="button" className="icon-btn" onClick={() => void refresh()} disabled={loading} aria-label={loading ? "Refreshing data" : "Refresh data"} title="Refresh data">
+              <button type="button" className="icon-btn" onClick={() => { refreshResources(); void refresh(); }} disabled={loading} aria-label={loading ? "Refreshing data" : "Refresh data"} title="Refresh data">
                 <RefreshCw size={16} aria-hidden="true" className={loading ? "spin" : undefined} />
               </button>
             ) : null}
@@ -129,11 +132,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {dashboard?.meta.degraded ? (
+      {dashboard?.meta.degraded || unverifiedModel ? (
         <div className={`banner ${state.stale ? "banner-stale" : "banner-warn"}`} role="status">
           {state.stale
             ? "The official FPL service is not responding. You are looking at the last cached data."
+            : unverifiedModel ? "Unverified model forecasts are shown for evaluation only. Official team data is still shown."
             : `Some analysis is unavailable (${[...state.failedAreas].join(", ") || "partial data"}). Official team data is still shown.`}
+          {state.stale && unverifiedModel ? " Unverified model forecasts are shown for evaluation only." : null}
         </div>
       ) : null}
 

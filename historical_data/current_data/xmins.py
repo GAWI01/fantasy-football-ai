@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -29,7 +28,9 @@ def _chance_multiplier(row: pd.Series) -> float:
 def _availability_multiplier(row: pd.Series) -> float:
     status = str(row.get("status", "a")).strip().lower()
 
-    if status in {"i", "s", "u"}:
+    if status in {"s", "u", "n"}:
+        return 0.0
+    if status == "i" and pd.isna(row.get("chance_of_playing_next_round", np.nan)):
         return 0.0
 
     return _chance_multiplier(row)
@@ -110,17 +111,19 @@ def calculate_xmins(row: pd.Series) -> float:
 
     recent_minutes = _recent_minutes(row)
     recent_starts = _recent_starts(row)
+    history_count = _numeric(row.get("history_gw_count", 5), 5)
+    window = max(1.0, min(5.0, history_count))
 
     if recent_starts > 0:
         recent_start_rate = np.clip(
-            recent_starts / 5.0,
+            recent_starts / window,
             0.0,
             1.0,
         )
 
         if recent_minutes > 0:
             recent_avg = np.clip(
-                recent_minutes / 5.0,
+                recent_minutes / window,
                 0.0,
                 90.0,
             )
@@ -140,7 +143,7 @@ def calculate_xmins(row: pd.Series) -> float:
     if recent_minutes > 0:
         base = (
             np.clip(
-                recent_minutes / 5.0,
+                recent_minutes / window,
                 0.0,
                 90.0,
             )
@@ -151,6 +154,9 @@ def calculate_xmins(row: pd.Series) -> float:
             float(np.clip(base * availability, 0.0, 90.0)),
             1,
         )
+
+    if "history_gw_count" in row and history_count > 0:
+        return 0.0
 
     if _has_explicit_gw1_history(row):
         gw1_minutes = _gw1_minutes(row)
@@ -200,7 +206,7 @@ def availability_label(row: pd.Series) -> str:
     )
     news = str(row.get("news", "")).strip()
 
-    if status in {"i", "s", "u"}:
+    if _availability_multiplier(row) <= 0:
         return "UNAVAILABLE"
 
     if pd.notna(chance):
@@ -262,59 +268,6 @@ def build_xmins_columns(df: pd.DataFrame) -> pd.DataFrame:
         default="OUT",
     )
 
-    result["availability_multiplier"] = (
-        np.clip(
-            result["xmins"] / 90.0,
-            0.0,
-            1.0,
-        )
-        .round(3)
-    )
+    result["availability_multiplier"] = result.apply(availability_multiplier, axis=1).round(3)
 
     return result
-
-
-def main() -> None:
-    base = Path(__file__).resolve().parents[2]
-
-    players_file = (
-        base
-        / "historical_data"
-        / "current_data"
-        / "players_current.csv"
-    )
-
-    output_file = (
-        base
-        / "historical_data"
-        / "current_data"
-        / "players_features_current.csv"
-    )
-
-    print("=" * 70)
-    print("FPL AI - PLAYER AVAILABILITY / XMINS V2.1")
-    print("=" * 70)
-
-    print(f"\nLoading: {players_file}")
-
-    df = pd.read_csv(players_file)
-
-    print(f"Players loaded: {len(df)}")
-
-    df = build_xmins_columns(df)
-
-    df.to_csv(output_file, index=False)
-
-    print("\nAVAILABILITY")
-    print("-" * 70)
-    print(df["availability"].value_counts().to_string())
-
-    print("\nROTATION RISK")
-    print("-" * 70)
-    print(df["rotation_risk"].value_counts().to_string())
-
-    print(f"\nSaved: {output_file}")
-
-
-if __name__ == "__main__":
-    main()

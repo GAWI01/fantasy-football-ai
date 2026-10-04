@@ -79,6 +79,8 @@ export type DashboardTeam = {
 
 export type LivePick = TeamPick & {
   multiplied_points?: number | null;
+  /** Pre-deadline model forecast for this live Gameweek, only when the served forecast targets it. */
+  expected_points?: number | null;
   goals?: number | null;
   assists?: number | null;
   bonus?: number | null;
@@ -208,6 +210,8 @@ export type PlayerMarketEnvelope = {
     next_event?: number | null;
     next_deadline_time?: string | null;
     model_version?: string | null;
+    prediction_event?: number | null;
+    model_validation_state?: string | null;
     model_error?: string;
     players: PlayerSummary[];
   };
@@ -313,6 +317,7 @@ export type ChipState = {
 };
 
 export type DecisionIntelligence = {
+  chip_scenarios?: { budget_is_estimate?: boolean };
   action: string;
   confidence: Confidence;
   captain_decision: {
@@ -399,6 +404,8 @@ export type DashboardDecision = {
     hit_cost?: number;
     gross_gain?: number;
     net_gain?: number;
+    budget_is_estimate?: boolean;
+    selling_prices_known?: boolean;
     alternatives?: TransferPlanAlternative[];
     base_projected_points?: number;
     projected_points_after_transfers?: number;
@@ -420,6 +427,7 @@ export type DashboardEnvelope = {
   meta: {
     event: number | null;
     current_event?: number | null;
+    next_event?: number | null;
     prediction_event?: number | null;
     target_deadline_time?: string | null;
     actions_locked?: boolean;
@@ -428,6 +436,7 @@ export type DashboardEnvelope = {
     generated_at: string;
     degraded: boolean;
     prediction_version?: string | null;
+    model_validation_state?: string | null;
   };
   errors: AreaError[];
 };

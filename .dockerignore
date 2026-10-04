@@ -12,14 +12,15 @@
 !decision_strategy.py
 !transfer_analysis.py
 !fpl_rules.py
+!feature_contract.py
 !historical_data/current_data/players_current.csv
 !historical_data/current_data/players_raw.csv
 !historical_data/current_data/teams_current.csv
 !historical_data/current_data/fixtures_current.csv
 !historical_data/current_data/gameweeks_current.csv
 !historical_data/current_data/manifest.json
-!historical_data/current_data/gw6_predictions_v11.csv
-!historical_data/current_data/gw6_predictions_v11.csv.manifest.json
+!historical_data/current_data/gw*_predictions_v*.csv
+!historical_data/current_data/gw*_predictions_v*.csv.manifest.json
 
 # Defense in depth: never send local secrets or caches, even after allowlist edits.
 **/.env

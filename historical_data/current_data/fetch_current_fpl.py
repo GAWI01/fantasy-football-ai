@@ -4,8 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 
-BASE_DIR = Path("historical_data/current_data")
-BASE_DIR.mkdir(parents=True, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
 
 API_URL = "https://fantasy.premierleague.com/api/bootstrap-static/"
 

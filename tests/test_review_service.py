@@ -82,6 +82,37 @@ def _live_payload():
     }
 
 
+def test_review_projection_uses_selected_captain_before_vice_fallback():
+    picks = _picks_payload()
+    picks['picks'][0]['multiplier'] = 0
+    picks['picks'][1]['multiplier'] = 2
+    result = build_post_gameweek_review(
+        team_id=123, event=2, picks_payload=picks, transfers=[],
+        bootstrap=_bootstrap(), live_payload=_live_payload(),
+        predictions=_predictions(), prediction_version='gw2.csv',
+    )
+    # Chosen captain Alpha 6x2 plus starter Beta 5, unaffected by realized DNP.
+    assert result['summary']['projected_points'] == 17.0
+    assert result['captain']['projected_contribution'] == 12.0
+    assert result['captain']['actual_contribution'] == 0
+
+
+def test_review_projection_reverses_actual_automatic_substitution():
+    picks = _picks_payload()
+    # Final scoring order, after Gamma entered for Alpha.
+    picks['picks'][0].update(position=12, multiplier=0)
+    picks['picks'][1]['multiplier'] = 2
+    picks['picks'][2].update(position=1, multiplier=1)
+    picks['automatic_subs'] = [{'element_out': 1, 'element_in': 3, 'event': 2}]
+    result = build_post_gameweek_review(
+        team_id=123, event=2, picks_payload=picks, transfers=[],
+        bootstrap=_bootstrap(), live_payload=_live_payload(),
+        predictions=_predictions(), prediction_version='gw2.csv',
+    )
+    assert result['summary']['projected_points'] == 17.0
+    assert result['bench']['projected_points'] == 4.0
+
+
 def test_build_review_explains_points_captain_bench_transfers_and_model_miss():
     result = build_post_gameweek_review(
         team_id=123,

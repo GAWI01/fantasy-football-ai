@@ -12,7 +12,12 @@ class LiveDataServiceError(RuntimeError):
     """Raised when live FPL data cannot be loaded or normalized."""
 
 
-def normalize_manager_chip_state(current_event: int, payload: dict[str, Any]) -> dict[str, Any]:
+def normalize_manager_chip_state(
+    current_event: int,
+    payload: dict[str, Any],
+    *,
+    started_event: int | None = None,
+) -> dict[str, Any]:
     if not isinstance(current_event, int) or not 1 <= current_event <= 38:
         raise ValueError("current_event must be between 1 and 38")
     period = 1 if current_event <= 19 else 2
@@ -41,6 +46,8 @@ def normalize_manager_chip_state(current_event: int, payload: dict[str, Any]) ->
 
     used = []
     used_names = set()
+    previous_free_hit = False
+    active_chip = False
     for chip in chips:
         if not isinstance(chip, dict):
             continue
@@ -49,25 +56,42 @@ def normalize_manager_chip_state(current_event: int, payload: dict[str, Any]) ->
             event = int(chip.get("event"))
         except (TypeError, ValueError):
             continue
+        if name == "freehit" and event == current_event - 1:
+            previous_free_hit = True
+        if name in availability_keys and event == current_event:
+            active_chip = True
         if name in availability_keys and start <= event <= end:
             used_names.add(name)
             used.append({"chip": display_names[name], "event": event})
     used.sort(key=lambda item: (item["event"], item["chip"]))
+    opening_event = started_event if started_event is not None else payload.get("started_event", 1)
+    opening_gameweek = current_event == opening_event
+    available = {key: name not in used_names for name, key in availability_keys.items()}
+    if opening_gameweek:
+        available["wildcard_available"] = False
+        available["free_hit_available"] = False
+    if previous_free_hit:
+        available["free_hit_available"] = False
+    if active_chip:
+        available = {key: False for key in available}
     return {
         "known": True,
         "period": period,
         "period_events": [start, end],
         "used_in_period": used,
-        **{key: name not in used_names for name, key in availability_keys.items()},
+        **available,
     }
 
 
-def get_manager_chip_state(team_id: int, current_event: int) -> dict[str, Any]:
+def get_manager_chip_state(
+    team_id: int, current_event: int, *, started_event: int | None = None,
+) -> dict[str, Any]:
     if not isinstance(team_id, int) or team_id <= 0:
         raise ValueError("team_id must be a positive integer")
     return normalize_manager_chip_state(
         current_event,
         _get_json(f"entry/{team_id}/history/"),
+        started_event=started_event,
     )
 
 
@@ -308,7 +332,7 @@ def normalize_live_players(
         rows.append({
             "player_id": player_id,
             "team_id": int(player["team"]),
-            "name": player.get("web_name", player.get("first_name", "Unknown")),
+            "name": player.get("web_name") or player.get("second_name") or f"Player {player_id}",
             "team": team.get("name", "Unknown"),
             "team_short": team.get("short_name", "UNK"),
             "position": _position_name(int(player.get("element_type", 0))),

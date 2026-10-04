@@ -30,8 +30,8 @@ Requirements:
 Clone and start the complete stack:
 
 ```powershell
-git clone https://github.com/GAWI01/FPL-AI.git
-cd FPL-AI
+git clone https://github.com/GAWI01/fantasy-football-ai.git
+cd fantasy-football-ai
 docker compose up --build
 ```
 
@@ -54,8 +54,8 @@ Requirements:
 Clone the repository and prepare the backend from PowerShell:
 
 ```powershell
-git clone https://github.com/GAWI01/FPL-AI.git
-cd FPL-AI
+git clone https://github.com/GAWI01/fantasy-football-ai.git
+cd fantasy-football-ai
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
@@ -66,7 +66,7 @@ python -m uvicorn backend.main:app --reload --port 8000
 Leave that terminal running. In a second PowerShell terminal:
 
 ```powershell
-cd FPL-AI\frontend
+cd fantasy-football-ai\frontend
 corepack enable
 pnpm install --frozen-lockfile
 Copy-Item ..\.env.example .env.local
@@ -138,8 +138,14 @@ The project has successfully built:
 - rotation-risk features
 - initial squad/Wildcard optimizer experiments
 
-The current certified GW3 model artifact contains 623 players; the live official
-2026/27 bootstrap smoke on 2026-09-01 returned 629 players.
+The served forecast is GW6/2026-27 (`gw6_predictions_v12.csv`, 667 players)
+from the certified model `models/fpl_model_v3.pkl`, retrained on 2020-21 to
+2025-26 and tested on the current season's completed Gameweeks.
+`python -m historical_data.refresh_predictions` publishes each next Gameweek
+once the previous one has final scores.
+See [docs/MODEL_PIPELINE.md](docs/MODEL_PIPELINE.md) for the features,
+validation evidence, limitations and commands. The earlier GW6 v11 and GW3
+artifacts remain archived and unverified.
 
 ## V1–V5: what we learned
 

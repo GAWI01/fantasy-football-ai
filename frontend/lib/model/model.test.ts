@@ -134,3 +134,62 @@ test("live view counts only your clubs' matches and flags auto-sub candidates", 
   expect(live.fixtures[0].started && !live.fixtures[0].finished).toBe(true);
   expect(live.projectedXI).toBeCloseTo(SQUAD_XI_POINTS + 8.1);
 });
+
+test("a next-Gameweek forecast is unavailable for the live Gameweek", () => {
+  const data = makeDashboard({ phase: "live" }).data;
+  data.team.prediction_event = 8;
+  expect(buildLiveView(data, buildSquad(data))?.projectedXI).toBeNull();
+});
+
+test("live forecasts use the official triple-captain multiplier", () => {
+  const data = makeDashboard({ phase: "live" }).data;
+  data.live!.picks.find((pick) => pick.is_captain)!.multiplier = 3;
+  expect(buildLiveView(data, buildSquad(data))?.projectedXI).toBeCloseTo(73.4);
+});
+
+test("live forecasts include bench-boost picks that contribute to the official total", () => {
+  const data = makeDashboard({ phase: "live" }).data;
+  for (const pick of data.live!.picks.filter((pick) => pick.position > 11)) pick.multiplier = 1;
+  expect(buildLiveView(data, buildSquad(data))?.projectedXI).toBeCloseTo(75.1);
+});
+
+test("the live captain follows the official vice-captain substitution multiplier", () => {
+  const data = makeDashboard({ phase: "live" }).data;
+  Object.assign(data.live!.picks.find((pick) => pick.is_captain)!, { multiplier: 0, multiplied_points: 0 });
+  Object.assign(data.live!.picks.find((pick) => pick.is_vice_captain)!, { multiplier: 3, multiplied_points: 18 });
+  data.live!.summary = undefined;
+  const view = buildLiveView(data, buildSquad(data))!;
+  expect(view.captain?.name).toBe("Kovač");
+  expect(view.captainContribution).toBe(18);
+  expect(view.projectedXI).toBeCloseTo(64.3);
+});
+
+test("one missing starter forecast makes the whole lineup projection unavailable", () => {
+  const squad = buildSquad(makeDashboard().data);
+  squad[0].xp = null;
+  expect(projectLineup(officialLineup(squad), squad)).toEqual({ points: null, missing: 1 });
+});
+
+test("an unknown active-pick multiplier cannot become a partial live total", () => {
+  const data = makeDashboard({ phase: "live" }).data;
+  data.live!.summary = undefined;
+  delete data.live!.picks[0].multiplier;
+  delete data.team.picks[0].multiplier;
+  expect(buildLiveView(data, buildSquad(data))?.points).toBeNull();
+});
+
+test("actions close when the known target deadline passes without another API response", () => {
+  const envelope = makeDashboard();
+  envelope.meta.target_deadline_time = "2026-10-04T10:00:00Z";
+  expect(deriveGameState(envelope, Date.parse("2026-10-04T09:59:59Z")).actionsOpen).toBe(true);
+  expect(deriveGameState(envelope, Date.parse("2026-10-04T10:00:00Z")).actionsOpen).toBe(false);
+});
+
+test("the live Gameweek's own forecast from the live endpoint drives the expectation", () => {
+  const data = makeDashboard({ phase: "live" }).data;
+  data.team.prediction_event = 8;
+  for (const pick of data.live!.picks) pick.expected_points = 2;
+  const active = data.live!.picks.filter((pick) => (pick.multiplier ?? 0) > 0);
+  const expected = active.reduce((total, pick) => total + 2 * (pick.multiplier ?? 0), 0);
+  expect(buildLiveView(data, buildSquad(data))?.projectedXI).toBeCloseTo(expected);
+});

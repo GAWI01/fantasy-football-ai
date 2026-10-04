@@ -72,6 +72,8 @@ export type GameweekPlan = {
   /** "user" when the manager set the count; otherwise an estimate from public data. */
   freeTransfersSource: "user" | "derived" | "unknown";
   bank: number | null;
+  budgetIsEstimate: boolean;
+  chipBudgetIsEstimate: boolean;
   captain: SquadPlayer | null;
   vice: SquadPlayer | null;
   captainOptions: Array<{ player: SquadPlayer; captainScore: number | null }>;
@@ -159,10 +161,10 @@ export function mainRiskFor(squad: SquadPlayer[], captain: SquadPlayer | null): 
   const flagged = starters.filter(isFlagged).sort((left, right) => riskRank(right) - riskRank(left));
   const top = flagged[0];
   if (!top) {
-    if (!squad.some((player) => player.risk)) {
+    if (!starters.length || !starters.every((player) => player.risk && player.xmins != null && player.startProbability != null)) {
       return { tone: "calm", title: "Risk model unavailable", detail: "Official availability shows no flagged starters.", playerId: null };
     }
-    return { tone: "calm", title: "No major starter risk", detail: "Every starter is available with a stable minutes outlook.", playerId: null };
+    return { tone: "calm", title: "No major starter risk", detail: "No flagged starters in the available risk and minutes data.", playerId: null };
   }
   const status = String(top.status ?? "a").toLowerCase();
   const reasons: string[] = [];
@@ -252,6 +254,8 @@ export function buildPlan(
     alternatives,
     freeTransfers,
     freeTransfersSource: decision.transfers?.free_transfers_source ?? "derived",
+    budgetIsEstimate: decision.transfers?.budget_is_estimate === true,
+    chipBudgetIsEstimate: intelligence?.chip_scenarios?.budget_is_estimate === true,
     bank: num(data.team.bank) ?? num(decision.current_team?.bank),
     captain,
     vice,

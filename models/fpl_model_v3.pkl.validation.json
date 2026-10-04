@@ -1,0 +1,195 @@
+{
+  "feature_contract_version": 3,
+  "xp_source": "previous_completed_gw_points_mean_v1",
+  "target": "same_fixture_total_points",
+  "validation_state": "validated",
+  "created_at": "2026-10-04T11:40:18.153362+00:00",
+  "model_file": "fpl_model_v3.pkl",
+  "model_sha256": "0ed9d093d48be1c31bc1dcd184b9b652dae56ba8a2e3f15d01bb8f3dee06c1b0",
+  "model_type": "HistGradientBoostingRegressor",
+  "feature_columns": [
+    "price",
+    "was_home",
+    "points_last_3",
+    "points_last_5",
+    "points_avg_5",
+    "minutes_last_5",
+    "starts_last_5",
+    "goals_last_5",
+    "assists_last_5",
+    "bps_avg_5",
+    "influence_avg_5",
+    "creativity_avg_5",
+    "threat_avg_5",
+    "ict_index_avg_5",
+    "fixture_difficulty",
+    "position"
+  ],
+  "sklearn_version": "1.5.2",
+  "python_version": "3.13.15",
+  "train_seasons": [
+    "2020-21",
+    "2021-22",
+    "2022-23",
+    "2023-24",
+    "2024-25",
+    "2025-26"
+  ],
+  "held_out_season": "2026-27",
+  "held_out_gameweeks": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "metrics": {
+    "rows": 3216,
+    "mae": 1.228616181321702,
+    "rmse": 2.292909497238774,
+    "bias": -0.3428819404993308,
+    "spearman_by_gw": 0.6140762457663695,
+    "top10_actual_points": 6.2
+  },
+  "baseline": {
+    "name": "points_avg_5",
+    "metrics": {
+      "rows": 3216,
+      "mae": 1.3503834991708128,
+      "rmse": 2.6496374338683264,
+      "bias": -0.27860696517412936,
+      "spearman_by_gw": 0.6671924595862694,
+      "top10_actual_points": 3.46
+    }
+  },
+  "model_beats_baseline": true,
+  "selection": {
+    "method": "rolling-origin over completed seasons",
+    "folds": [
+      {
+        "validation_season": "2023-24",
+        "train_seasons": [
+          "2020-21",
+          "2021-22",
+          "2022-23"
+        ],
+        "model": {
+          "rows": 29725,
+          "mae": 0.976740785599281,
+          "rmse": 1.939990447725681,
+          "bias": -0.018925926317961566,
+          "spearman_by_gw": 0.6636681347492984,
+          "top10_actual_points": 5.38421052631579
+        },
+        "baseline": {
+          "rows": 29725,
+          "mae": 1.0058996355480796,
+          "rmse": 2.0937499518457607,
+          "bias": -0.003950658816932996,
+          "spearman_by_gw": 0.6857833028364045,
+          "top10_actual_points": 4.552631578947368
+        },
+        "beats_baseline": true
+      },
+      {
+        "validation_season": "2024-25",
+        "train_seasons": [
+          "2020-21",
+          "2021-22",
+          "2022-23",
+          "2023-24"
+        ],
+        "model": {
+          "rows": 27283,
+          "mae": 1.0021569472120242,
+          "rmse": 1.9383327631515526,
+          "bias": -0.0638135745802383,
+          "spearman_by_gw": 0.6869264233458082,
+          "top10_actual_points": 5.523684210526316
+        },
+        "baseline": {
+          "rows": 27283,
+          "mae": 1.055193710369094,
+          "rmse": 2.09777442594303,
+          "bias": -0.011757626849442265,
+          "spearman_by_gw": 0.6982313216907887,
+          "top10_actual_points": 4.96842105263158
+        },
+        "beats_baseline": true
+      },
+      {
+        "validation_season": "2025-26",
+        "train_seasons": [
+          "2020-21",
+          "2021-22",
+          "2022-23",
+          "2023-24",
+          "2024-25"
+        ],
+        "model": {
+          "rows": 29757,
+          "mae": 1.0058853153404923,
+          "rmse": 1.9685641771536746,
+          "bias": -0.09423447736658735,
+          "spearman_by_gw": 0.6960694195458099,
+          "top10_actual_points": 4.8
+        },
+        "baseline": {
+          "rows": 29757,
+          "mae": 1.0542342978122794,
+          "rmse": 2.1343565100658046,
+          "bias": -0.007474431786358387,
+          "spearman_by_gw": 0.719950418030345,
+          "top10_actual_points": 4.031578947368422
+        },
+        "beats_baseline": true
+      }
+    ]
+  },
+  "xp_timing_verified": true,
+  "causality": {
+    "passed": true,
+    "gameweeks": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "max_abs_difference": 0.0
+  },
+  "production_parity_verified": true,
+  "parity": {
+    "passed": true,
+    "gameweeks": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "max_abs_feature_difference": 0.0,
+    "max_abs_prediction_difference": 0.0
+  },
+  "input_sha256": {
+    "2020-21/merged_gw.csv": "fb2a2bc54b6cfbe835a39183b096b382f7961e3828e7845e9288671cccca3ad8",
+    "2020-21/fixtures.csv": "75ca4859c7898bff9c73055337651893c041e596462d08935f2a6964c437f65d",
+    "2021-22/merged_gw.csv": "29770bbe305feee681f7122c0bd08451783366e0a3a9604194f528a0880f23de",
+    "2021-22/fixtures.csv": "9fc11cc675ff49dd5b8858211aa5cbe08375e064810536931e0ac38c060dee64",
+    "2022-23/merged_gw.csv": "b78a6d0456141f9033c32fc4122931baae780ac4a4938683451b1fce7a4fdd15",
+    "2022-23/fixtures.csv": "e783060da73700d4ec6fd12acec4568524eac8bb3ba3ccd8ce68a374dadba8f8",
+    "2023-24/merged_gw.csv": "e9c09c8856f1c86b4f920f46ddd5033af83409439dfda53be925df2a3e7c8a9e",
+    "2023-24/fixtures.csv": "d8521bdbb80edb5141bc17df71bf6026275f2e56fd6a6dc6041b3ae23a39ce6a",
+    "2024-25/merged_gw.csv": "5bbbcba6353b4c72ad273adcc8e3aa451946a826564679788f45b1cb3325b84e",
+    "2024-25/fixtures.csv": "ce696e187569ca7c45da2562811d3c38f525b58e65575531be37bebd0769ee28",
+    "2025-26/merged_gw.csv": "0d09f1f1cb1b5520ec8e2f25238aa652efe2a263d8ca7cb2b6538b27bf86727d",
+    "2025-26/fixtures.csv": "2d7e3950d346df14ca486cb09e9b9ba406d37d943775244eed06cdc021ffb3a9",
+    "2026-27/merged_gw.csv": "cf5d8d5f4e9cdbcd4d795b334e0097311ad7eb164531a1e72f2725d53b944282",
+    "2026-27/fixtures.csv": "765dbc140aa2139065cf4e74b12b77871017ee99432ff565a12f3da2f2c2a4bc"
+  },
+  "known_limitations": [
+    "Historical fixture difficulty comes from end-of-season snapshots of the official FDR; the current season uses the official values at prediction time.",
+    "The official availability multiplier (injury/suspension chance) is a rule applied after the model and cannot be validated historically: past availability flags are not archived.",
+    "Players with no completed history this season (new signings) are scored from price, position and fixture only."
+  ]
+}

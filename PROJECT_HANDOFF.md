@@ -1,9 +1,45 @@
 # FPL-AI handoff
 
-Updated: 2026-10-03
-Branch: `deploy/staging-readiness`
-Milestone: first hosted **private/internal staging/demo** on Vercel + Railway.
-No push or deployment performed. Changes remain uncommitted for review.
+Updated: 2026-10-04
+Branch: `fix/audit-corrections`, based on `master` at `13bf200`.
+Milestone: four audited correction groups, then a retrained and certified model
+with automatic Gameweek refresh; Next.js + FastAPI + CSV serving is preserved.
+
+## Current audit corrections
+
+1. Backend contracts: official minutes/form survive model enrichment; wrong target
+   GW/season is rejected; fresh availability overlays decision inputs; review
+   projections retain the selected captain/XI; double-GW live classification is
+   based on all fixtures. Manager display uses surname only; player display uses
+   official web-name/surname and never first-name fallback.
+2. Transfer/chip calculations: complete-plan budget/club constraints use MILP;
+   chip comparisons use the recommended owned XI/bench/captain (the lineup the
+   plan shows, not the previous Gameweek's picks) and the manager's budget. Unknown
+   selling prices remain explicitly estimated. Opening-GW and consecutive Free
+   Hit restrictions are enforced.
+3. Pipeline: one shared feature implementation for training, validation and
+   live forecasts; safe publication; blank/double fixtures. The model was then
+   retrained (contract v3, gradient boosting), tested on 2026-27 GW1-5 and
+   certified with causality and production-parity checks (docs/MODEL_PIPELINE.md).
+4. Frontend/build: event-aligned projections, correct multipliers and missing
+   coverage, resource refresh, team-scoped history/overrides and honest freshness.
+   Frontend Docker no longer copies a nonexistent public directory.
+
+The served artifact is `gw6_predictions_v12.csv` (GW6/2026-27, 667 rows) from
+the certified `models/fpl_model_v3.pkl`; `/api/v1/status` reports it as
+validated. `python -m historical_data.refresh_predictions` publishes each next
+Gameweek after the previous one is final; no scheduler runs it yet. The v11 GW6 and GW3 artifacts are
+archived and unverified. Docker is unavailable locally; the backend allowlist
+is exercised by tests/test_deployment_artifacts.py, not by a container build.
+
+The data-use gate was changed by the owner on 2026-10-03 to conditionally accept
+a free non-commercial public beta as a known risk. Commercial release remains
+blocked. These fixes do not change that decision or establish a data licence.
+
+## Historical staging record (superseded where it conflicts with the audit above)
+
+The sections below preserve the earlier staging implementation and verification
+record. Their GW3 counts, branch and deployment state are historical.
 
 ## Architecture
 

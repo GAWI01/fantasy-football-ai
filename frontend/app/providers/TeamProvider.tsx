@@ -12,7 +12,7 @@ import {
 
 import { fetchDashboard } from "@/lib/api";
 import type { DashboardEnvelope } from "@/lib/contracts";
-import { overrideApplies, readFreeTransferOverride, writeFreeTransferOverride } from "@/lib/freeTransfers";
+import { overrideApplies, readFreeTransferOverride, writeFreeTransferOverride, type FreeTransferOverride } from "@/lib/freeTransfers";
 
 
 export const TEAM_STORAGE_KEY = "fpl-ai-team-id";
@@ -55,6 +55,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [lastLoadedAt, setLastLoadedAt] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const overridesRef = useRef(new Map<string, FreeTransferOverride | null>());
 
   const load = useCallback(async (value: string, persist: boolean) => {
     abortRef.current?.abort();
@@ -63,13 +64,22 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const override = readFreeTransferOverride(value);
+      const override = overridesRef.current.has(value) ? overridesRef.current.get(value) : readFreeTransferOverride(value);
+      overridesRef.current.set(value, override ?? null);
       let result = await fetchDashboard(value, controller.signal, override?.value);
-      if (override && !overrideApplies(override, result.meta.prediction_event)) {
+      if (controller.signal.aborted) return;
+      const targetEvent = result.meta.prediction_event ?? result.meta.next_event ?? result.data.team.prediction_event;
+      if (override && !overrideApplies(override, targetEvent)) {
         // The count was set for an earlier Gameweek: fall back to the estimate.
         writeFreeTransferOverride(null);
+        overridesRef.current.set(value, null);
         result = await fetchDashboard(value, controller.signal);
+      } else if (override?.event == null && override && targetEvent != null) {
+        const bound = { ...override, event: targetEvent };
+        overridesRef.current.set(value, bound);
+        writeFreeTransferOverride(bound);
       }
+      if (controller.signal.aborted) return;
       setTeamId(value);
       setDashboard(result);
       setLastLoadedAt(Date.now());
@@ -100,11 +110,13 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   const setFreeTransfers = useCallback(async (value: number | null) => {
     if (!teamId) return;
-    writeFreeTransferOverride(value == null ? null : {
+    const override = value == null ? null : {
       teamId,
-      event: dashboard?.meta.prediction_event ?? null,
+      event: dashboard?.meta.prediction_event ?? dashboard?.meta.next_event ?? dashboard?.data.team.prediction_event ?? null,
       value,
-    });
+    };
+    overridesRef.current.set(teamId, override);
+    writeFreeTransferOverride(override);
     try {
       await load(teamId, false);
     } catch {
@@ -116,6 +128,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     abortRef.current?.abort();
     try { window.localStorage.removeItem(TEAM_STORAGE_KEY); } catch { /* ignore */ }
     writeFreeTransferOverride(null);
+    overridesRef.current.clear();
     setTeamId(null);
     setDashboard(null);
     setError(null);

@@ -41,7 +41,7 @@ def test_normalize_team_response_extracts_team_and_squad():
 
     assert result["team_id"] == 1234567
     assert result["name"] == "Test Team"
-    assert result["manager_name"] == "Gabri Manager"
+    assert result["manager_name"] == "Manager"
     assert result["bank"] == 1.5
     assert result["event"] == 3
     assert result["transfers"] == 1

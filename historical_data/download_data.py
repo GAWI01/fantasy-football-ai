@@ -1,3 +1,5 @@
+import sys
+
 import requests
 from pathlib import Path
 
@@ -9,6 +11,7 @@ SEASONS = [
     "2022-23",
     "2023-24",
     "2024-25",
+    "2025-26",
 ]
 
 OUTPUT_DIR = Path("historical_data")
@@ -34,7 +37,8 @@ def main():
     print("FPL AI — HISTORICAL DATA DOWNLOADER V2")
     print("=" * 65)
 
-    for season in SEASONS:
+    seasons = sys.argv[1:] or SEASONS
+    for season in seasons:
 
         print()
         print(f"--- Sesong {season} ---")

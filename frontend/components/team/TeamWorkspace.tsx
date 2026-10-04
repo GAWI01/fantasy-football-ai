@@ -149,6 +149,8 @@ export function TeamWorkspace() {
         </div>
       </header>
 
+      {error ? <DataState tone="error" compact title="Refresh failed" action={<button className="btn btn-sm" onClick={() => void refresh()}>Try again</button>}>{error} Showing the last loaded team.</DataState> : null}
+      {plan?.budgetIsEstimate || plan?.chipBudgetIsEstimate ? <DataState tone="warning" compact title="Affordability is estimated">Squad budgets use market prices. Check your actual selling prices in FPL before making a move.</DataState> : null}
       <div className="team-summary card">
         <Stat size="md" label={<>{simulated ? "Simulated XI" : "Your XI"}</>} value={fixed(projection.points)} unit="xP" source={simulated ? "derived" : "model"} sub={`${formationLabel(starters)} · incl. captain`} />
         <Stat size="md" label="vs official" value={<Delta value={projection.points != null && officialProjection.points != null ? projection.points - officialProjection.points : null} />} sub={simulated ? "Your edits" : "No edits yet"} />
@@ -218,7 +220,7 @@ export function TeamWorkspace() {
                   </button>
                 ))}
               </div>
-            ) : <p className="muted">No flagged players. Everyone is available with a stable minutes outlook.</p>}
+            ) : <p className="muted">No flagged players in the available data.</p>}
           </Card>
         </aside>
       </div>

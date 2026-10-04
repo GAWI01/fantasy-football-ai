@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { TeamProvider } from "@/app/providers/TeamProvider";
+import { TeamProvider, useTeam } from "@/app/providers/TeamProvider";
 import { expectNoA11yViolations } from "@/test-utils/accessibility";
 import { mockApi } from "@/test-utils/mockApi";
 import { TeamWorkspace } from "./TeamWorkspace";
@@ -48,4 +48,18 @@ test("illegal swaps are not offered: the goalkeeper only swaps with the other go
   await userEvent.click(player("Moreau"));
   expect(player("Okafor")).toHaveAttribute("aria-pressed", "false");
   expect(player("Moreau")).toHaveAttribute("aria-pressed", "true");
+});
+
+test("a failed refresh remains visible alongside the last good team", async () => {
+  const fetchSpy = mockApi();
+  function Refresh() {
+    const { refresh } = useTeam();
+    return <button onClick={() => void refresh()}>Refresh test data</button>;
+  }
+  render(<TeamProvider><Refresh /><TeamWorkspace /></TeamProvider>);
+  await screen.findByRole("heading", { name: "My Team" });
+  fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ detail: "Official service unavailable" }), { status: 502 }));
+  await userEvent.click(screen.getByRole("button", { name: "Refresh test data" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Official service unavailable");
+  expect(player("Okafor")).toBeInTheDocument();
 });

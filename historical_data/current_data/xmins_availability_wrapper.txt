@@ -1,6 +1,0 @@
-# REQUIRED ADDITION TO xmins.py
-
-Add this public wrapper directly below _availability_multiplier():
-
-def availability_multiplier(row: pd.Series) -> float:
-    return _availability_multiplier(row)

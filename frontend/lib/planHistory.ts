@@ -40,9 +40,9 @@ function isMeaningfulChange(previous: PlanSnapshot, next: PlanSnapshot) {
     || numericDelta(previous.confidenceScore, next.confidenceScore) >= 0.05;
 }
 
-export function readPlanHistory(storage: StorageLike): PlanSnapshot[] {
+export function readPlanHistory(storage: StorageLike, teamId: string): PlanSnapshot[] {
   try {
-    const parsed = JSON.parse(storage.getItem(PLAN_HISTORY_KEY) ?? "[]") as unknown;
+    const parsed = JSON.parse(storage.getItem(`${PLAN_HISTORY_KEY}:${teamId}`) ?? "[]") as unknown;
     return Array.isArray(parsed) ? parsed.filter(validSnapshot).slice(0, 6) : [];
   } catch {
     return [];
@@ -52,10 +52,11 @@ export function readPlanHistory(storage: StorageLike): PlanSnapshot[] {
 export function recordPlanSnapshot(
   storage: StorageLike,
   snapshot: PlanSnapshot,
+  teamId: string,
 ): PlanSnapshot[] {
-  const current = readPlanHistory(storage);
+  const current = readPlanHistory(storage, teamId);
   if (current[0] && !isMeaningfulChange(current[0], snapshot)) return current;
   const next = [snapshot, ...current].slice(0, 6);
-  storage.setItem(PLAN_HISTORY_KEY, JSON.stringify(next));
+  storage.setItem(`${PLAN_HISTORY_KEY}:${teamId}`, JSON.stringify(next));
   return next;
 }

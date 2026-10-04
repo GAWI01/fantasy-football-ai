@@ -1,9 +1,10 @@
 # Vercel + Railway: private staging/demo
 
 This runbook prepares the existing Next.js + FastAPI application for internal
-staging. It is **not public-release approval**. The unchanged
-[DATA_USE_RELEASE_GATE.md](DATA_USE_RELEASE_GATE.md) blocks public free beta and
-commercial release until the documented permissions are resolved.
+staging. It is **not public-release approval**. Follow
+[DATA_USE_RELEASE_GATE.md](DATA_USE_RELEASE_GATE.md): the owner's 2026-10-03
+decision accepts a free, non-commercial public beta only under its stated
+conditions; commercial use remains blocked. That decision is not a data licence.
 
 ## Access boundary
 
@@ -26,8 +27,8 @@ The backend image includes exactly these data files under
 - `fixtures_current.csv`
 - `gameweeks_current.csv`
 - `manifest.json`
-- `gw3_predictions_v11.csv`
-- `gw3_predictions_v11.csv.manifest.json`
+- `gw6_predictions_v11.csv`
+- `gw6_predictions_v11.csv.manifest.json`
 
 The current manifest, its certified sidecar and the raw player snapshot were
 already tracked. Five narrow .gitignore exceptions make the remaining serving
@@ -37,17 +38,19 @@ is used. The root .dockerignore is an allowlist for backend serving code and
 these files. Training histories, features, pickle models, SQLite, backups,
 frontend files, tests, secrets and development environments are excluded.
 
-The versioned snapshot is GW3, season 2026-27, 623 prediction rows, generated
-2026-08-31T18:12:10+02:00. It has NOT been regenerated or relabeled as current.
-Current CSVs have no trustworthy publication timestamp; do not infer one from
-Git or filesystem modification times. A frozen snapshot permits staging
-inspection but does not establish current recommendation readiness.
+The served forecast is named by `manifest.json` (currently
+`gw6_predictions_v12.csv`, GW6/2026-27, 667 rows) and carries the certified
+model's provenance, so `/api/v1/status` reports it as validated. Each next
+Gameweek's forecast is produced by `python -m historical_data.refresh_predictions`
+once the previous Gameweek is final; committing its output redeploys the image.
+Older artifacts (GW3 v11, GW6 v11) remain archived and are reported as
+unverified if ever selected. See docs/MODEL_PIPELINE.md.
 
 The API needs predictions and local team/fixture context for decisions; legacy
 player routes use the player snapshot. Raw players and gameweeks are included
-for complete structural/relationship validation. Review uses the certified
+for complete structural/relationship validation. Review uses the published
 prediction sidecar and may honestly be unavailable for other Gameweeks.
-`fpl.db`, training features and `models/fpl_model_v1.pkl` are not serving inputs.
+`fpl.db`, training features and the model files in `models/` are not serving inputs.
 No persistent database or volume is necessary for this immutable-image strategy.
 
 The Docker build runs `python -m backend.runtime_artifacts` and imports the API.

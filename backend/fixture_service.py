@@ -150,7 +150,7 @@ def _get_current_picks(
         result.append(
             {
                 "player_id": player_id,
-                "name": player.get("web_name", player.get("first_name", "Unknown")),
+                "name": player.get("web_name") or player.get("second_name") or f"Player {player_id}",
                 "team_id": int(player["team"]),
                 "position": int(player["element_type"]),
                 "position_name": {

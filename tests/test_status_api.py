@@ -40,6 +40,7 @@ def test_status_v1_reports_official_and_model_freshness(monkeypatch):
             generated_at=datetime(2026, 8, 31, 17, tzinfo=timezone.utc),
             player_count=623,
             schema_version=1,
+            model_provenance=None,
         ),
         raising=False,
     )
@@ -52,7 +53,8 @@ def test_status_v1_reports_official_and_model_freshness(monkeypatch):
     assert body["data"]["official"]["next_event"] == 3
     assert body["data"]["official"]["player_count"] == 2
     assert body["data"]["model"]["prediction_event"] == 3
-    assert body["data"]["service_state"] == "ready"
+    assert body["data"]["service_state"] == "degraded"
+    assert body["data"]["model"]["validation_state"] == "unverified"
     assert body["meta"]["official"]["source"] == "official"
     assert body["meta"]["model"]["source"] == "model"
     assert body["data"]["model"]["generated_at"] == "2026-08-31T17:00:00+00:00"
