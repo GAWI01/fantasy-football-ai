@@ -1,7 +1,15 @@
-import requests
-import pandas as pd
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
+import requests
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from backend.fpl_gateway import USER_AGENT  # noqa: E402
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -18,8 +26,11 @@ def main():
     print()
     print("Henter FPL-data...")
 
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+
     response = requests.get(
         API_URL,
+        headers=headers,
         timeout=30
     )
 
@@ -195,6 +206,7 @@ def main():
 
     fixtures_response = requests.get(
         "https://fantasy.premierleague.com/api/fixtures/",
+        headers=headers,
         timeout=30
     )
 

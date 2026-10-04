@@ -81,8 +81,19 @@ def refresh() -> dict:
     return {"changed": bool(message), "message": message, "season": season or ""}
 
 
+def _report_failure(exc: BaseException) -> None:
+    """Surface the failure as a GitHub annotation, which is visible without log access."""
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        message = f"{type(exc).__name__}: {exc}".replace("%", "%25").replace(chr(13), "%0D").replace(chr(10), "%0A")
+        print(f"::error title=Forecast refresh failed::{message[:2000]}", flush=True)
+
+
 def main() -> None:
-    result = refresh()
+    try:
+        result = refresh()
+    except Exception as exc:
+        _report_failure(exc)
+        raise
     print(f"changed={str(result['changed']).lower()} {result['message']}".rstrip())
     output = os.environ.get("GITHUB_OUTPUT")
     if output:

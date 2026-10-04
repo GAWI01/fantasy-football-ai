@@ -24,6 +24,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.data_manifest import season_for_date  # noqa: E402
+from backend.fpl_gateway import USER_AGENT  # noqa: E402
 
 API = "https://fantasy.premierleague.com/api"
 POSITIONS = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
@@ -45,7 +46,7 @@ class SeasonHistoryError(RuntimeError):
 
 def _session() -> requests.Session:
     session = requests.Session()
-    session.headers["User-Agent"] = "fantasy-football-ai/season-history"
+    session.headers.update({"User-Agent": USER_AGENT, "Accept": "application/json"})
     return session
 
 
