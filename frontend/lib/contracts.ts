@@ -79,6 +79,8 @@ export type DashboardTeam = {
 
 export type LivePick = TeamPick & {
   multiplied_points?: number | null;
+  /** Pre-deadline model forecast for this live Gameweek, only when the served forecast targets it. */
+  expected_points?: number | null;
   goals?: number | null;
   assists?: number | null;
   bonus?: number | null;

@@ -182,6 +182,23 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
     return result
 
 
+def _live_event_expectations(event: int) -> dict[int, float] | None:
+    """Pre-deadline forecasts for the Gameweek being played, if that is the served artifact.
+
+    While a Gameweek is live the next forecast is not published yet, so the
+    manifest still names the live Gameweek's artifact. Any other event (or any
+    unreadable artifact) gives no expectation rather than a mismatched one.
+    """
+    try:
+        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+        if manifest.prediction_event != event:
+            return None
+        predictions = _apply_official_player_state(load_predictions(), get_bootstrap_data())
+    except Exception:  # Optional context: live points must never fail because of it.
+        return None
+    return {int(row.player_id): float(row.predicted_points) for row in predictions.itertuples(index=False)}
+
+
 @app.get("/api/v1/status", response_model=StatusEnvelopeModel)
 def get_status_v1():
     errors: list[dict[str, str]] = []
@@ -473,6 +490,10 @@ def get_live_team(team_id: int):
                 "red_cards": int(live_player.get("red_cards", 0) or 0),
                 "own_goals": int(live_player.get("own_goals", 0) or 0),
             })
+        expected = _live_event_expectations(int(live["current_event"]))
+        if expected is not None:
+            for pick in picks:
+                pick["expected_points"] = expected.get(int(pick["player_id"]))
         owned_team_ids = {
             int(pick["team_id"])
             for pick in picks

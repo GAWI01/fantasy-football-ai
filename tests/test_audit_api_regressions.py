@@ -266,3 +266,20 @@ def test_legacy_forecast_routes_apply_official_availability(monkeypatch, path):
     body = TestClient(main.app).get(path).json()
     prediction = body['picks'][0]['prediction'] if 'picks' in body else body['players'][0]
     assert prediction['predicted_points'] == 0.0
+
+
+def test_live_picks_carry_the_live_gameweeks_own_forecast(monkeypatch):
+    monkeypatch.setattr(main, 'get_team_data', lambda _: {'name': 'XI', 'picks': [{'player_id': 10, 'multiplier': 2}]})
+    monkeypatch.setattr(main, 'get_live_players', lambda **_: {
+        'current_event': 6, 'gameweek_name': 'Gameweek 6', 'status': 'LIVE', 'finished': False,
+        'players': [{'player_id': 10, 'team_id': 1, 'event_points': 5}],
+    })
+    monkeypatch.setattr(main, 'get_event_fixtures', lambda _: {'fixtures': []})
+    monkeypatch.setattr(main, 'get_bootstrap_data', _bootstrap)
+    monkeypatch.setattr(main, 'load_current_manifest', lambda _: _manifest(event=6))
+    monkeypatch.setattr(main, 'load_predictions', lambda: pd.DataFrame([{'player_id': 10, 'predicted_points': 4.5}]))
+    body = TestClient(main.app).get('/team/123/live').json()
+    assert body['picks'][0]['expected_points'] == 4.5
+    monkeypatch.setattr(main, 'load_current_manifest', lambda _: _manifest(event=7))
+    body = TestClient(main.app).get('/team/123/live').json()
+    assert 'expected_points' not in body['picks'][0]

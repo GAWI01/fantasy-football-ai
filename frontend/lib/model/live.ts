@@ -36,10 +36,14 @@ export function buildLiveView(data: DashboardData, squad: SquadPlayer[], predict
     : null;
   const captain = activePicks.find((player) => (player.multiplier ?? 0) > 1) ?? squad.find((player) => player.isCaptain) ?? null;
   const benchValues = bench.map((player) => player.livePoints);
-  const projected = predictionEvent === live.current_event && activePicks.length > 0
+  // The live endpoint supplies the live Gameweek's own forecast; otherwise the
+  // squad forecast counts only when it targets the Gameweek being played.
+  const liveForecast = activePicks.length > 0 && activePicks.every((player) => player.liveExpected != null);
+  const expectedFor = (player: SquadPlayer) => (liveForecast ? player.liveExpected : player.xp);
+  const projected = (liveForecast || predictionEvent === live.current_event) && activePicks.length > 0
     && multipliersKnown
-    && activePicks.every((player) => player.xp != null)
-    ? activePicks.reduce((total, player) => total + (player.xp ?? 0) * (player.multiplier ?? 0), 0)
+    && activePicks.every((player) => expectedFor(player) != null)
+    ? activePicks.reduce((total, player) => total + (expectedFor(player) ?? 0) * (player.multiplier ?? 0), 0)
     : null;
 
   const ownedTeams = new Set(squad.map((player) => player.teamId).filter((id): id is number => id != null));

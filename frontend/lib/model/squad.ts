@@ -61,6 +61,8 @@ export type SquadPlayer = {
   livePoints: number | null;
   liveContribution: number | null;
   liveMinutes: number | null;
+  /** Model forecast for the Gameweek being played (from the live endpoint). */
+  liveExpected: number | null;
   liveBps: number | null;
   fixtureState: FixtureState;
   liveFixture: LiveFixture | null;
@@ -143,6 +145,7 @@ export function buildSquad(data: DashboardData): SquadPlayer[] {
         livePoints,
         liveContribution: num(live?.multiplied_points) ?? (livePoints != null && multiplier != null ? livePoints * multiplier : null),
         liveMinutes: live ? num(live.live_minutes) : null,
+        liveExpected: live ? num(live.expected_points) : null,
         liveBps: live ? num(live.live_bps) : null,
         fixtureState: fixture.state,
         liveFixture: fixture.fixture,

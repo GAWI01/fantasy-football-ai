@@ -184,3 +184,12 @@ test("actions close when the known target deadline passes without another API re
   expect(deriveGameState(envelope, Date.parse("2026-10-04T09:59:59Z")).actionsOpen).toBe(true);
   expect(deriveGameState(envelope, Date.parse("2026-10-04T10:00:00Z")).actionsOpen).toBe(false);
 });
+
+test("the live Gameweek's own forecast from the live endpoint drives the expectation", () => {
+  const data = makeDashboard({ phase: "live" }).data;
+  data.team.prediction_event = 8;
+  for (const pick of data.live!.picks) pick.expected_points = 2;
+  const active = data.live!.picks.filter((pick) => (pick.multiplier ?? 0) > 0);
+  const expected = active.reduce((total, pick) => total + 2 * (pick.multiplier ?? 0), 0);
+  expect(buildLiveView(data, buildSquad(data))?.projectedXI).toBeCloseTo(expected);
+});
