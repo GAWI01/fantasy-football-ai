@@ -1,17 +1,30 @@
+import json
+
 import pandas as pd
 
 from app import (
+    PREDICTIONS_DIR,
     get_prediction_file,
     prepare_predictions,
     get_fixture_label,
 )
 
 
-def test_get_prediction_file_prefers_v5():
+def test_get_prediction_file_uses_the_served_forecast():
+    manifest = json.loads((PREDICTIONS_DIR / "manifest.json").read_text(encoding="utf-8"))
     path = get_prediction_file()
 
     assert path.exists()
-    assert path.name == "gw2_predictions_v5.csv"
+    assert path.name == manifest["prediction_file"]
+
+
+def test_get_prediction_file_falls_back_to_legacy_files(tmp_path, monkeypatch):
+    import app
+
+    (tmp_path / "gw2_predictions_v5.csv").write_text("player_id\n1\n", encoding="utf-8")
+    monkeypatch.setattr(app, "PREDICTIONS_DIR", tmp_path)
+
+    assert app.get_prediction_file().name == "gw2_predictions_v5.csv"
 
 
 def test_prepare_predictions_contains_required_display_columns():
