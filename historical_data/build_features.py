@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from feature_contract import FEATURE_CONTRACT_VERSION, XP_SOURCE
+from engine.feature_contract import FEATURE_CONTRACT_VERSION, XP_SOURCE
 
 
 SEASONS = [

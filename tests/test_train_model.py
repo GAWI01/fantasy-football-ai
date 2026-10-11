@@ -1,6 +1,6 @@
 import pandas as pd
 
-from feature_contract import FEATURE_COLUMNS, feature_metadata
+from engine.feature_contract import FEATURE_COLUMNS, feature_metadata
 from historical_data.train_model import prepare_data
 
 

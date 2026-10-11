@@ -1,6 +1,6 @@
 import pandas as pd
 
-from transfer_analysis import analyze_transfer_out
+from engine.transfer_analysis import analyze_transfer_out
 
 
 def make_team():

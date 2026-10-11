@@ -1,0 +1,35 @@
+name: Bug report
+description: Something in the app or the API does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please do not paste other people's names or private data.
+        Security problems go to the Security tab, not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected and what you saw instead.
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      placeholder: e.g. Plan, Mini-leagues, Live pitch
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - Phone (browser)
+        - Phone (added to home screen)
+        - Tablet
+        - Desktop
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Optional. Crop out anything personal.

@@ -6,7 +6,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from feature_contract import (
+from engine.feature_contract import (
     FEATURE_COLUMNS,
     build_feature_row,
     validate_model_feature_names,

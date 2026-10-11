@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from transfer_analysis import _apply_transfer_plan, TransferAnalysisError
+from engine.transfer_analysis import _apply_transfer_plan, TransferAnalysisError
 
 
 def _valid_squad() -> pd.DataFrame:

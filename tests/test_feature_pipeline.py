@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from feature_contract import FEATURE_COLUMNS, FeatureContractError, build_feature_row, feature_matrix
+from engine.feature_contract import FEATURE_COLUMNS, FeatureContractError, build_feature_row, feature_matrix
 from historical_data.build_features import build_feature_frame
 
 

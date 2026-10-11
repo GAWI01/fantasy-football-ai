@@ -5,7 +5,7 @@ import pandas as pd
 
 from .squad_optimizer import optimize_squad
 from .starting_xi import select_starting_xi
-from transfer_analysis import selling_value
+from engine.transfer_analysis import selling_value
 
 CHIPS=("WILDCARD","FREE_HIT","BENCH_BOOST","TRIPLE_CAPTAIN")
 

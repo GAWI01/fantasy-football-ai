@@ -1,0 +1,26 @@
+name: Data, privacy or takedown request
+description: Ask about data the app shows or uses, or request removal of content.
+labels: [data-request]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The app keeps no user database; see the [Privacy and terms](https://fantasyfootball-ai.vercel.app/privacy) page.
+        Do not post private information here. Describe the content and where it appears.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Request
+      options:
+        - Remove content (rights holder or takedown)
+        - Question about personal data
+        - Data source or attribution
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What content, where it appears, and what you would like done.
+    validations:
+      required: true

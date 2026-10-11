@@ -106,7 +106,7 @@ def test_backend_allowlist_includes_only_the_serving_data_bundle():
 
 
 def test_staging_documentation_is_valid_utf8():
-    for name in ("PROJECT_HANDOFF.md", "docs/PRD_IMPLEMENTATION_STATUS.md"):
+    for name in ("docs/PROJECT_HANDOFF.md", "docs/PRD_IMPLEMENTATION_STATUS.md"):
         (ROOT / name).read_text(encoding="utf-8")
 
 

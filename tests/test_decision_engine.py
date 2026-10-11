@@ -2,7 +2,7 @@
 import pandas as pd
 import pytest
 
-from decision_engine import build_decision
+from engine.decision_engine import build_decision
 
 
 def make_predictions():

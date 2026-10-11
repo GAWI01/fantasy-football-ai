@@ -131,6 +131,8 @@ cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit
 | [Data sources](docs/DATA_SOURCES.md) | Where the data comes from, the conditions and personal data |
 | [Data notice](DATA_NOTICE.md) | Who owns the data, and how to ask for removal |
 | [Privacy and terms](https://fantasyfootball-ai.vercel.app/privacy) | The public privacy notice and terms of use |
+| [Contributing](.github/CONTRIBUTING.md) | How to propose a change, and the data and privacy rules |
+| [Security](.github/SECURITY.md) | How to report a vulnerability privately |
 
 ## Data and credits
 

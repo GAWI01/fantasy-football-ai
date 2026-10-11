@@ -1,4 +1,4 @@
-from fpl_rules import validate_transfer_squad
+from engine.fpl_rules import validate_transfer_squad
 
 
 def make_player(player_id, team):
@@ -112,7 +112,7 @@ def test_normal_transfer_plan_cannot_create_four_from_same_club():
     ) is False
 
 def test_detect_club_changes_finds_owned_player_who_changed_club():
-    from fpl_rules import detect_club_changes
+    from engine.fpl_rules import detect_club_changes
 
     current_squad = [
         {"player_id": 4},

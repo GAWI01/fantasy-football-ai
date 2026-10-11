@@ -1,6 +1,6 @@
 import unittest
 
-from feature_contract import (
+from engine.feature_contract import (
     FEATURE_COLUMNS,
     FeatureContractError,
     build_feature_row,

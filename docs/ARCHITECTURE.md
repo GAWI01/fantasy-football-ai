@@ -24,8 +24,8 @@ flowchart LR
     request takes about 0.5 s.
 
   No FPL login or API key is needed.
-- **Decision engine** (`optimizer/action_planner.py`, `transfer_analysis.py`,
-  `decision_engine.py`, `decision_intelligence.py`, `decision_strategy.py`):
+- **Decision engine** (`optimizer/action_planner.py`, `engine/transfer_analysis.py`,
+  `engine/decision_engine.py`, `engine/decision_intelligence.py`, `engine/decision_strategy.py`):
   one canonical action per Gameweek. See below.
 - **Frontend** (`frontend/`, Next.js 16, React 19): the responsive app shown
   above.
@@ -115,9 +115,12 @@ forecast each week separately. The method, limitations and commands are in
 | `frontend/` | Next.js app: pages in `app/`, features in `components/`, view models in `lib/model/` |
 | `backend/` | FastAPI API, FPL gateway, live, league, selling-price, availability and review services |
 | `optimizer/` | Action planner (MILP), lineup and chip optimisation |
-| `decision_*.py`, `transfer_analysis.py` | Decision engine: plan, captain, confidence, chips, horizon and risk |
+| `engine/` | Decision engine: plan, captain, confidence, chips, horizon and risk; the feature contract shared with the model pipeline |
 | `historical_data/` | Season data, feature building, training, validation and forecast publishing |
 | `models/` | The certified model with its validation report and certificate |
-| `benchmark/` | Replay harness and decision benchmark on recorded real teams |
+| `benchmark/` | Replay harness and decision benchmark on recorded real teams (pseudonymised) |
+| `backtesting/` | Historical backtests and production-parity checks for the model and decisions |
+| `scripts/` | Maintenance scripts, e.g. `generate_icons.py` |
+| `.github/` | CI, the forecast refresh, the uptime check, and issue / pull request templates |
 | `tests/`, `backend/tests/` | Python test suites |
 | `docs/` | Model pipeline, deployment, data sources, audits and screenshots |

@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 import pandas as pd
-from transfer_analysis import optimize_transfer_plan
+from engine.transfer_analysis import optimize_transfer_plan
 from .action_planner import DecisionPolicy
 from .multi_gw import MultiGWConfig
 

@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-from feature_contract import FEATURE_COLUMNS, feature_metadata, validate_model_feature_names, validate_feature_provenance
+from engine.feature_contract import FEATURE_COLUMNS, feature_metadata, validate_model_feature_names, validate_feature_provenance
 from historical_data.train_model import (
     TRAIN_SEASONS,
     TEST_SEASON,

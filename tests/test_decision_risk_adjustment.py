@@ -1,4 +1,4 @@
-from decision_risk import risk_adjusted_points
+from engine.decision_risk import risk_adjusted_points
 
 def test_risk_adjustment_preserves_raw_points():
     out=risk_adjusted_points({"predicted_points":10,"xmins":90,"availability":"AVAILABLE","rotation_risk":"LOW"})

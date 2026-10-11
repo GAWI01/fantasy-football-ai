@@ -39,7 +39,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from feature_contract import FEATURE_COLUMNS, feature_metadata  # noqa: E402
+from engine.feature_contract import FEATURE_COLUMNS, feature_metadata  # noqa: E402
 from historical_data.build_features import OUTCOME_COLUMNS, ROLLING_COLUMNS, build_feature_frame  # noqa: E402
 from historical_data.forecast import live_feature_rows, players_snapshot_from_history, predict_fixture_points  # noqa: E402
 from historical_data.train_model import (  # noqa: E402

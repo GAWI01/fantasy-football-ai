@@ -1,4 +1,4 @@
-from decision_strategy import chip_outlook
+from engine.decision_strategy import chip_outlook
 
 
 def _player(player_id, weeks):

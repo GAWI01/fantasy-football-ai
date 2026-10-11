@@ -4,15 +4,7 @@
 !backend/*.py
 !backend/runtime-requirements.txt
 !optimizer/*.py
-!decision_contract.py
-!decision_engine.py
-!decision_horizon.py
-!decision_intelligence.py
-!decision_risk.py
-!decision_strategy.py
-!transfer_analysis.py
-!fpl_rules.py
-!feature_contract.py
+!engine/*.py
 !historical_data/current_data/players_current.csv
 !historical_data/current_data/players_raw.csv
 !historical_data/current_data/teams_current.csv

@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from time import perf_counter
 
-from transfer_analysis import optimize_transfer_plan
+from engine.transfer_analysis import optimize_transfer_plan
 from types import SimpleNamespace
 
 

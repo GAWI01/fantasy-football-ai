@@ -7,7 +7,7 @@ from backtesting.production_adapter import (
     FPLHistoricalPredictionAdapter,
     PredictionAdapterError,
 )
-from feature_contract import FEATURE_COLUMNS, feature_metadata
+from engine.feature_contract import FEATURE_COLUMNS, feature_metadata
 
 
 def source_row(price=5.0):

@@ -12,8 +12,8 @@ import pandas as pd
 import pytest
 
 from backend.planning_service import build_fixture_scaled_horizon
-from decision_engine import build_decision
-from transfer_analysis import optimize_transfer_plan
+from engine.decision_engine import build_decision
+from engine.transfer_analysis import optimize_transfer_plan
 
 WEIGHTS = (1.0, 0.85, 0.7, 0.55, 0.4)
 SQUAD = [
