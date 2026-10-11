@@ -12,7 +12,16 @@ Model output is generated inside this project and published with a versioned man
 
 ## Historical FPL and Understat data
 
-Offline training and mapping scripts use [Vaastav's Fantasy-Premier-League repository](https://github.com/vaastav/Fantasy-Premier-League). The retained FPL seasons and Understat files are separate data dependencies. The upstream software licence does not establish permission from the original FPL/Understat data owners for downstream data reuse. No provider agreement, pinned source revision or complete retrieval/hash register is present in this repository.
+Offline training and mapping scripts use [Vaastav's Fantasy-Premier-League repository](https://github.com/vaastav/Fantasy-Premier-League).
+
+**Permission from the repository author.** On 2026-10-11, Vaastav Anand
+confirmed by direct message that this project may use the data, provided it
+gives attribution that the data comes from
+https://github.com/vaastav/Fantasy-Premier-League. That attribution is shown
+in the README ("Data and credits") and in the app's footer on every page. Keep
+both if either is reworded.
+
+The retained FPL seasons and Understat files are separate data dependencies. The upstream software licence does not establish permission from the original FPL/Understat data owners for downstream data reuse. No provider agreement, pinned source revision or complete retrieval/hash register is present in this repository.
 
 Before regenerating a model for release, record the exact source revision, retrieval time, input checksums, attribution and applicable data-use permission. Understat player-name/ID mapping is currently an offline path; its football statistics are not established live model inputs. Do not describe these sources as approved until evidence exists.
 
