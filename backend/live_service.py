@@ -320,6 +320,27 @@ def _position_name(element_type: int) -> str:
     return {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}.get(element_type, "UNK")
 
 
+def _points_breakdown(item: dict[str, Any], stats: dict[str, Any]) -> list[dict[str, Any]]:
+    """Official points per stat (FPL's `explain`), summed over a double Gameweek.
+
+    Bonus is added to `explain` only once FPL confirms it; until then the
+    provisional bonus in `stats` is listed separately and marked as such.
+    """
+    rows: dict[str, dict[str, Any]] = {}
+    for fixture in item.get("explain") or []:
+        for stat in (fixture or {}).get("stats") or []:
+            identifier = str(stat.get("identifier") or "")
+            if not identifier:
+                continue
+            row = rows.setdefault(identifier, {"stat": identifier, "value": 0, "points": 0, "provisional": False})
+            row["value"] += int(stat.get("value", 0) or 0)
+            row["points"] += int(stat.get("points", 0) or 0) + int(stat.get("points_modification", 0) or 0)
+    bonus = int(stats.get("bonus", 0) or 0)
+    if bonus and "bonus" not in rows:
+        rows["bonus"] = {"stat": "bonus", "value": bonus, "points": bonus, "provisional": True}
+    return list(rows.values())
+
+
 def normalize_live_players(
     bootstrap: dict[str, Any],
     live_payload: dict[str, Any],
@@ -362,6 +383,7 @@ def normalize_live_players(
             "own_goals": int(stats.get("own_goals", 0) or 0),
             "bps": int(stats.get("bps", 0) or 0),
             "clean_sheets": int(stats.get("clean_sheets", 0) or 0),
+            "breakdown": _points_breakdown(item, stats),
             "form": float(player["form"]) if player.get("form") is not None else None,
             "ep_this": float(player["ep_this"]) if player.get("ep_this") is not None else None,
             "expected_goals": float(player["expected_goals"]) if player.get("expected_goals") not in (None, "") else None,

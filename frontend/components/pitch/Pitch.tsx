@@ -1,9 +1,10 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
-import type { DragEvent, ReactNode } from "react";
+import { useEffect, useId, useState, type DragEvent, type ReactNode } from "react";
 
 import { Kit } from "@/components/kit/Kit";
+import { LiveStatCard } from "@/components/pitch/LiveStatCard";
 import { POSITIONS } from "@/lib/fpl/rules";
 import { isFlagged, type SquadPlayer } from "@/lib/model/squad";
 
@@ -79,12 +80,49 @@ export function PitchPlayer({
   const flagTone = status === "i" || status === "s" || status === "u" || status === "n" || player.risk?.label === "VERY_HIGH" ? "risk" : "warn";
   const roles = [isCaptain ? "captain" : null, isVice ? "vice-captain" : null, flagged ? "flagged" : null].filter(Boolean).join(", ");
   const label = `${player.name}, ${player.position}, ${player.teamShort}${roles ? `, ${roles}` : ""}, ${value.label}${benchIndex != null ? `, bench ${benchIndex + 1}` : ""}`;
-  const Tag = onPress ? "button" : "div";
+  // Live tiles open a stats card: hover with a mouse, tap or Enter elsewhere.
+  const inspectable = mode === "live" && !onPress;
+  const [open, setOpen] = useState<"hover" | "pinned" | null>(null);
+  const [tile, setTile] = useState<HTMLElement | null>(null);
+  const cardId = useId();
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: Event) => {
+      if (event instanceof KeyboardEvent && event.key !== "Escape") return;
+      if (event.type === "pointerdown" && tile?.contains(event.target as Node)) return;
+      setOpen(null);
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    window.addEventListener("scroll", close, { passive: true, capture: true });
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+      window.removeEventListener("scroll", close, { capture: true });
+      window.removeEventListener("resize", close);
+    };
+  }, [open, tile]);
+  const Tag = onPress || inspectable ? "button" : "div";
+  const interaction = onPress
+    ? { type: "button" as const, onClick: () => onPress(player), "aria-pressed": selected ?? false }
+    : inspectable
+      ? {
+          type: "button" as const,
+          "aria-expanded": open != null,
+          "aria-describedby": open ? cardId : undefined,
+          onClick: () => setOpen((current) => (current === "pinned" ? null : "pinned")),
+          onPointerEnter: (event: { pointerType: string }) => { if (event.pointerType === "mouse") setOpen((current) => current ?? "hover"); },
+          onPointerLeave: (event: { pointerType: string }) => { if (event.pointerType === "mouse") setOpen((current) => (current === "hover" ? null : current)); },
+        }
+      : { role: "group" };
   return (
+    <>
     <Tag
-      {...(onPress ? { type: "button" as const, onClick: () => onPress(player), "aria-pressed": selected ?? false } : { role: "group" })}
+      ref={inspectable ? setTile : undefined}
+      {...interaction}
       aria-label={label}
-      className={["pp", `pp-${size}`, selected ? "is-selected" : "", target ? "is-target" : "", dimmed ? "is-dimmed" : "", mode === "live" && player.fixtureState === "live" ? "is-playing" : ""].filter(Boolean).join(" ")}
+      className={["pp", `pp-${size}`, selected ? "is-selected" : "", target ? "is-target" : "", dimmed ? "is-dimmed" : "", mode === "live" && player.fixtureState === "live" ? "is-playing" : "", inspectable ? "is-inspectable" : "", open ? "is-open" : ""].filter(Boolean).join(" ")}
       draggable={draggable || undefined}
       onDragStart={draggable ? (event: DragEvent<HTMLElement>) => onDragStart?.(event, player) : undefined}
       onDragEnd={draggable ? onDragEnd : undefined}
@@ -102,6 +140,8 @@ export function PitchPlayer({
       </span>
       {fixture ? <span className="pp-fixture">{fixture}</span> : null}
     </Tag>
+    {open && tile ? <LiveStatCard player={player} anchor={tile} id={cardId} /> : null}
+    </>
   );
 }
 
