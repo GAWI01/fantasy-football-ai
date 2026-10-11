@@ -67,7 +67,7 @@ less: the weights are 1, 0.85, 0.7, 0.55 and 0.4.
 A replay benchmark (`benchmark/`) runs the engine on recorded real teams and
 checks the plans for consistency. For example, no transfers of a bench
 goalkeeper, no captain the plan sells and no automatic wildcards. Root causes
-and results are in [audit/](audit/).
+and results are in [audit/](archive/audit/).
 
 ## The model
 
@@ -122,5 +122,5 @@ forecast each week separately. The method, limitations and commands are in
 | `backtesting/` | Historical backtests and production-parity checks for the model and decisions |
 | `scripts/` | Maintenance scripts, e.g. `generate_icons.py` |
 | `.github/` | CI, the forecast refresh, the uptime check, and issue / pull request templates |
-| `tests/`, `backend/tests/` | Python test suites |
+| `tests/` | Python test suite |
 | `docs/` | Model pipeline, deployment, data sources, audits and screenshots |
