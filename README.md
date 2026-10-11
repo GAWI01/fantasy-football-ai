@@ -77,16 +77,20 @@ flowchart LR
   through a cached, rate-limited gateway, applies the latest official
   availability, prices and names to the forecast, and runs the decision engine.
   No FPL login or API key is needed.
-- **Decision engine** (`decision_engine.py`, `transfer_analysis.py`,
-  `optimizer/`): a mixed-integer search over complete transfer plans, captain
-  selection, chip scenarios measured against the lineup the plan recommends,
-  and a five-Gameweek horizon.
+- **Decision engine** (`optimizer/action_planner.py`, `transfer_analysis.py`,
+  `decision_engine.py`): one canonical action per Gameweek. Holding/rolling,
+  each number of free transfers and up to two hits are scored on the same
+  scale: the best starting XI and captain each plan can field over a weighted
+  five-Gameweek horizon (bench players count only as autosub cover), minus
+  hits and the value of the free transfers it uses. A chip is recommended only
+  on evidence, never because it is available.
 - **Frontend** (`frontend/`, Next.js): the responsive app shown above. It
   checks that every forecast belongs to the Gameweek it is shown for.
 - **Forecasts** (`historical_data/`): a scheduled workflow refreshes official
-  data every three hours. Once a Gameweek has final scores it publishes the next
-  Gameweek's forecast and commits it to `master`, which deploys the API
-  (Railway) and the app (Vercel).
+  data every three hours. As soon as a Gameweek's deadline passes it publishes
+  a provisional forecast for the next one (history up to the Gameweek before),
+  and replaces it once the live Gameweek has final scores. It commits to
+  `master`, which deploys the API (Railway) and the app (Vercel).
 
 ## The model
 
@@ -112,8 +116,10 @@ the validation inputs exactly. After every Gameweek the forecast is scored
 against the final points (`historical_data/current_data/forecast_checks.csv`),
 so drift shows up within a week. Forecasts are expected points, not
 guarantees: one player's Gameweek is very random, and the five-Gameweek
-outlook scales next week's forecast by fixture difficulty rather than
-forecasting each week separately. The method, limitations and commands are in
+outlook scales the model's points-if-available by each fixture's difficulty
+rather than forecasting each week separately; availability is applied per
+Gameweek (a one-match ban or a dated return only affects the Gameweeks it
+covers). The method, limitations and commands are in
 [docs/MODEL_PIPELINE.md](docs/MODEL_PIPELINE.md).
 
 ## Run it locally
@@ -161,6 +167,7 @@ forecast matches the official next Gameweek.
 
 ```bash
 python -m pytest                         # backend, decision engine, model pipeline
+python -m benchmark.run                  # decision benchmark on recorded real teams
 cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit
 ```
 

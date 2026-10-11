@@ -268,18 +268,23 @@ def test_legacy_forecast_routes_apply_official_availability(monkeypatch, path):
     assert prediction['predicted_points'] == 0.0
 
 
-def test_live_picks_carry_the_live_gameweeks_own_forecast(monkeypatch):
+def test_live_picks_carry_the_live_gameweeks_own_forecast(monkeypatch, tmp_path):
+    import json
     monkeypatch.setattr(main, 'get_team_data', lambda _: {'name': 'XI', 'picks': [{'player_id': 10, 'multiplier': 2}]})
     monkeypatch.setattr(main, 'get_live_players', lambda **_: {
         'current_event': 6, 'gameweek_name': 'Gameweek 6', 'status': 'LIVE', 'finished': False,
         'players': [{'player_id': 10, 'team_id': 1, 'event_points': 5}],
     })
     monkeypatch.setattr(main, 'get_event_fixtures', lambda _: {'fixtures': []})
-    monkeypatch.setattr(main, 'get_bootstrap_data', _bootstrap)
-    monkeypatch.setattr(main, 'load_current_manifest', lambda _: _manifest(event=6))
-    monkeypatch.setattr(main, 'load_predictions', lambda: pd.DataFrame([{'player_id': 10, 'predicted_points': 4.5}]))
-    body = TestClient(main.app).get('/team/123/live').json()
-    assert body['picks'][0]['expected_points'] == 4.5
-    monkeypatch.setattr(main, 'load_current_manifest', lambda _: _manifest(event=7))
+    monkeypatch.setattr(main, 'get_bootstrap_data', lambda: {'events': [{'id': 6, 'deadline_time': '2026-10-10T10:00:00Z'}]})
+    monkeypatch.setattr(main, 'PREDICTIONS_DIR', tmp_path)
+    # No GW6 forecast published before the deadline: no expectation.
     body = TestClient(main.app).get('/team/123/live').json()
     assert 'expected_points' not in body['picks'][0]
+    # The pre-deadline GW6 artifact is used even after GW7's forecast is served.
+    pd.DataFrame([{'player_id': 10, 'predicted_points': 4.5}]).to_csv(tmp_path / 'gw6_predictions_v13.csv', index=False)
+    (tmp_path / 'gw6_predictions_v13.csv.manifest.json').write_text(json.dumps({
+        'season': '2026-27', 'prediction_event': 6, 'prediction_file': 'gw6_predictions_v13.csv',
+        'generated_at': '2026-10-04T19:00:00+00:00', 'player_count': 1, 'schema_version': 1}), encoding='utf-8')
+    body = TestClient(main.app).get('/team/123/live').json()
+    assert body['picks'][0]['expected_points'] == 4.5

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pandas as pd
+
+from .availability import gameweek_multipliers
 
 
 _PREDICTION_COLUMNS = {
@@ -52,6 +56,24 @@ def gameweek_flags(fixtures: pd.DataFrame, teams: pd.DataFrame, event: int) -> d
     }
 
 
+def _parse_kickoff(value) -> datetime | None:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    try:
+        moment = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return moment if moment.tzinfo else None
+
+
+def _number(value, default: float | None = None) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return default if pd.isna(number) else number
+
+
 def build_fixture_scaled_horizon(
     predictions: pd.DataFrame,
     fixtures: pd.DataFrame,
@@ -60,6 +82,16 @@ def build_fixture_scaled_horizon(
     prediction_event: int,
     horizon: int = 5,
 ) -> dict[int, pd.DataFrame]:
+    """Per-Gameweek projections for the planning horizon.
+
+    Step 1 is the served forecast unchanged (official availability applied).
+    Later steps rescale the model's points *if available* (`ml_prediction`)
+    to each later fixture's difficulty and venue, then apply that Gameweek's
+    own availability (`backend.availability`). Availability for the target
+    Gameweek is therefore never copied onto the whole horizon: a one-match
+    ban, a short injury or a blank in the target Gameweek only affects the
+    Gameweeks it actually covers.
+    """
     _require_columns(predictions, _PREDICTION_COLUMNS, "predictions")
     _require_columns(fixtures, _FIXTURE_COLUMNS, "fixtures")
     _require_columns(teams, _TEAM_COLUMNS, "teams")
@@ -85,18 +117,14 @@ def build_fixture_scaled_horizon(
     base["projection_method"] = "native_model"
     base["uncertainty"] = base["predicted_points"].map(lambda value: _uncertainty(float(value), 1))
 
-    result: dict[int, pd.DataFrame] = {1: base}
-    base_records = base.to_dict("records")
-    future_events = {
-        prediction_event + step - 1
-        for step in range(2, horizon + 1)
+    events = [prediction_event + step for step in range(horizon)]
+    has_kickoffs = "kickoff_time" in fixtures.columns
+    columns = sorted(_FIXTURE_COLUMNS) + (["kickoff_time"] if has_kickoffs else [])
+    # event -> team -> [(opponent, difficulty, home, kickoff)]
+    matches_by_event: dict[int, dict[int, list[tuple[int, float, bool, datetime | None]]]] = {
+        event: {} for event in events
     }
-    requested_events = future_events | {prediction_event}
-    fixtures_by_event_and_team: dict[
-        int,
-        dict[int, list[tuple[int, float, bool]]],
-    ] = {event: {} for event in requested_events}
-    for fixture in fixtures.loc[:, sorted(_FIXTURE_COLUMNS)].itertuples(index=False):
+    for fixture in fixtures.loc[:, columns].itertuples(index=False):
         try:
             event = int(fixture.event)
             team_h = int(fixture.team_h)
@@ -105,71 +133,111 @@ def build_fixture_scaled_horizon(
             away_difficulty = float(fixture.team_a_difficulty)
         except (TypeError, ValueError):
             continue
-        if event not in requested_events:
+        if event not in matches_by_event:
             continue
-        event_map = fixtures_by_event_and_team[event]
-        event_map.setdefault(team_h, []).append((team_a, home_difficulty, True))
-        event_map.setdefault(team_a, []).append((team_h, away_difficulty, False))
+        kickoff = _parse_kickoff(fixture.kickoff_time) if has_kickoffs else None
+        event_map = matches_by_event[event]
+        event_map.setdefault(team_h, []).append((team_a, home_difficulty, True, kickoff))
+        event_map.setdefault(team_a, []).append((team_h, away_difficulty, False, kickoff))
 
-    base_matches = fixtures_by_event_and_team[prediction_event]
+    base_matches = matches_by_event[prediction_event]
     base["fixture_count"] = base["team"].map(
         lambda team: len(base_matches.get(team_ids.get(str(team).casefold()), []))
     )
-    # Keep the native total once. Future projections scale per fixture, not per DGW.
+    target_kickoffs = [kickoff for team in base_matches.values() for *_, kickoff in team if kickoff]
+    reference = min(target_kickoffs) if target_kickoffs else datetime.now(timezone.utc)
+    result: dict[int, pd.DataFrame] = {1: base}
     base_records = base.to_dict("records")
+    has_model_points = "ml_prediction" in base.columns
+
+    plans = []
+    for player in base_records:
+        team_id = team_ids.get(str(player["team"]).casefold())
+        if team_id is None:
+            raise ValueError(f"Unknown player team: {player['team']}")
+        target_matches = base_matches.get(team_id, [])
+        kickoffs = []
+        for event in events:
+            matches = matches_by_event[event].get(team_id, [])
+            kickoffs.append(min((m[3] for m in matches if m[3] is not None), default=None))
+        status = player.get("status")
+        news = player.get("news") if has_kickoffs else None
+        multipliers = gameweek_multipliers(
+            status if isinstance(status, str) else "a",
+            player.get("chance_of_playing_next_round"),
+            news if isinstance(news, str) else None,
+            kickoffs,
+            reference=reference,
+        )
+        # Points for one neutral fixture if the player is available.
+        if has_model_points and _number(player.get("ml_prediction")) is not None:
+            available_points = float(player["ml_prediction"])
+        else:
+            # Legacy artifacts store only availability-adjusted points.
+            first = multipliers[0]
+            available_points = float(player["predicted_points"]) / first if first > 0 else 0.0
+        if target_matches:
+            base_factor = sum(_fixture_factor(difficulty, home) for _, difficulty, home, _ in target_matches)
+            per_fixture = available_points / base_factor
+            method = "fixture_scaled_v2"
+        elif _number(player.get("ml_per_fixture")) is not None:
+            # Stored for an average-difficulty fixture, home and away averaged
+            # (factor 1.0 by construction of `_fixture_factor`).
+            per_fixture = float(player["ml_per_fixture"])
+            method = "fixture_scaled_v2"
+        else:
+            # Blank in the target Gameweek and no per-fixture estimate stored.
+            per_fixture = available_points / _base_factor(player)
+            method = "fixture_scaled_v2" if available_points > 0 else "no_base_fixture"
+        count = max(1, len(target_matches))
+        xmins_available = _number(player.get("xmins_available"), _number(player.get("xmins"), 90.0))
+        start_available = _number(player.get("start_probability_available"),
+                                  _number(player.get("start_probability"), 1.0))
+        plans.append((player, team_id, per_fixture, method, multipliers,
+                      xmins_available / count if target_matches else xmins_available, start_available))
 
     for step in range(2, horizon + 1):
         event = prediction_event + step - 1
-        matches_by_team = fixtures_by_event_and_team[event]
+        matches_by_team = matches_by_event[event]
         rows = []
-        for player in base_records:
-            team_id = team_ids.get(str(player["team"]).casefold())
-            if team_id is None:
-                raise ValueError(f"Unknown player team: {player['team']}")
+        for player, team_id, per_fixture, method, multipliers, minutes_per_fixture, start_available in plans:
             matches = matches_by_team.get(team_id, [])
             record = dict(player)
             record["gameweek"] = event
-
+            multiplier = multipliers[step - 1]
             if not matches:
-                points = 0.0
                 record.update({
-                    "predicted_points": points,
+                    "predicted_points": 0.0,
                     "opponent": "Blank",
                     "home": None,
                     "difficulty": None,
                     "fixture_count": 0,
+                    "xmins": 0.0,
+                    "start_probability": 0.0,
+                    "availability_multiplier": multiplier,
                     "projection_method": "blank_gameweek",
                     "uncertainty": 0.0,
                 })
                 rows.append(record)
                 continue
-
-            projected = 0.0
-            opponents: list[str] = []
-            difficulties: list[float] = []
-            homes: list[bool] = []
-            target_matches = base_matches.get(team_id, [])
-            base_factor = sum(_fixture_factor(difficulty, home) for _, difficulty, home in target_matches)
-            if not base_factor:
-                base_factor = _base_factor(player)
-            for opponent_id, difficulty, home in matches:
-                projected += float(player["predicted_points"]) * _fixture_factor(difficulty, home) / base_factor
-                opponents.append(team_names.get(opponent_id, f"Team {opponent_id}"))
-                difficulties.append(difficulty)
-                homes.append(home)
-
-            points = round(projected, 3)
+            projected = sum(per_fixture * _fixture_factor(difficulty, home) for _, difficulty, home, _ in matches)
+            points = round(projected * multiplier, 3)
+            difficulties = [difficulty for _, difficulty, _, _ in matches]
+            homes = [home for _, _, home, _ in matches]
             record.update({
                 "predicted_points": points,
-                "opponent": " / ".join(opponents),
+                "opponent": " / ".join(team_names.get(opponent, f"Team {opponent}") for opponent, *_ in matches),
                 "home": homes[0] if len(homes) == 1 else None,
                 "difficulty": round(sum(difficulties) / len(difficulties), 2),
                 "fixture_count": len(matches),
-                "projection_method": "fixture_scaled_v1",
+                "xmins": round(min(90.0 * len(matches), minutes_per_fixture * len(matches)) * multiplier, 1),
+                "start_probability": round(min(1.0, start_available) * multiplier, 3),
+                "availability_multiplier": multiplier,
+                "projection_method": method,
                 "uncertainty": _uncertainty(points, step),
             })
             rows.append(record)
-
-        result[step] = pd.DataFrame(rows, columns=list(base.columns))
+        frame_columns = list(dict.fromkeys([*base.columns, "availability_multiplier"]))
+        result[step] = pd.DataFrame(rows, columns=frame_columns)
 
     return result

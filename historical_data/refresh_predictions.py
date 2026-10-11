@@ -6,8 +6,10 @@ suitable for a scheduled job. It:
 1. refreshes the official current-data snapshot (players, teams, fixtures, Gameweeks);
 2. refreshes the current season's completed fixture history and scores each
    newly finished Gameweek's pre-deadline forecast (historical_data.forecast_check);
-3. publishes the next Gameweek's forecast once every earlier Gameweek is
-   finished and data-checked (otherwise it reports that the forecast is not due);
+3. publishes the next Gameweek's forecast: provisionally as soon as the
+   previous Gameweek's deadline has passed (history up to the Gameweek
+   before it), then finally once every earlier Gameweek is finished and
+   data-checked;
 4. validates the serving bundle.
 
 It decides what is worth committing: a new forecast, or a change to the
@@ -29,6 +31,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from backend.data_manifest import load_current_manifest  # noqa: E402
 from backend.runtime_artifacts import validate_runtime_artifacts  # noqa: E402
 from historical_data import fetch_season_history, forecast_check  # noqa: E402
 from historical_data.current_data import fetch_current_fpl, predict_gw  # noqa: E402
@@ -81,7 +84,9 @@ def refresh() -> dict:
     new_forecast = _bytes(CURRENT_DIR / "manifest.json") != manifest_before
     schedule_changed = schedule_signature(CURRENT_DIR / "fixtures_current.csv") != schedule_before
     if new_forecast and forecast is not None:
-        message = f"Publish {forecast.stem.split('_')[0].upper()} forecasts from the certified model"
+        stage = (load_current_manifest(CURRENT_DIR / "manifest.json").model_provenance or {}).get("forecast_stage")
+        label = "provisional " if stage == "provisional" else ""
+        message = f"Publish {label}{forecast.stem.split('_')[0].upper()} forecasts from the certified model"
     elif checks:
         message = f"Check the GW{checks[-1]['gameweek']} forecast against final scores"
     elif schedule_changed:

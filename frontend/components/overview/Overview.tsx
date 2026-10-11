@@ -83,7 +83,7 @@ export function Overview() {
       ) : (
         <>
           {plan ? (
-            <GameweekPlanCard plan={plan} event={state.targetEvent} modelVersion={state.modelVersion} locked={!state.actionsOpen} />
+            <GameweekPlanCard plan={plan} event={state.targetEvent} modelVersion={state.modelVersion} locked={!state.actionsOpen} provisionalCutoff={state.forecastProvisional ? state.historyCutoff : null} />
           ) : (
             <DataState tone="unavailable" title="No model plan right now">
               {state.failedAreas.has("decision")

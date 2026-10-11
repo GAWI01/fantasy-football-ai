@@ -28,6 +28,10 @@ class FplGatewayError(RuntimeError):
     """Raised when official FPL data is unavailable and no cache can help."""
 
 
+class FplNotFoundError(FplGatewayError):
+    """The official API answered 404: the resource (e.g. a Team ID) does not exist."""
+
+
 @dataclass(frozen=True)
 class GatewayResult:
     data: Any
@@ -133,6 +137,10 @@ class FplGateway:
                         "Accept": "application/json",
                     },
                 )
+                if getattr(response, "status_code", None) == 404:
+                    # A missing resource is an answer, not an outage: no retry,
+                    # no stale fallback.
+                    raise FplNotFoundError(f"FPL API resource not found: {url}")
                 response.raise_for_status()
                 data = response.json()
                 if not isinstance(data, (dict, list)):

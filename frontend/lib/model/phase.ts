@@ -21,6 +21,9 @@ export type GameState = {
   generatedAt: string | null;
   officialFetchedAt: string | null;
   modelVersion: string | null;
+  /** Provisional forecasts use history up to `historyCutoff` while the previous Gameweek is played. */
+  forecastProvisional: boolean;
+  historyCutoff: number | null;
   failedAreas: Set<string>;
 };
 
@@ -38,6 +41,8 @@ export function deriveGameState(envelope: DashboardEnvelope | null, now = Date.n
       generatedAt: null,
       officialFetchedAt: null,
       modelVersion: null,
+      forecastProvisional: false,
+      historyCutoff: null,
       failedAreas: new Set(),
     };
   }
@@ -61,6 +66,8 @@ export function deriveGameState(envelope: DashboardEnvelope | null, now = Date.n
     generatedAt: meta.generated_at ?? null,
     officialFetchedAt: meta.official?.fetched_at ?? null,
     modelVersion: meta.prediction_version ?? data.team.prediction_file ?? null,
+    forecastProvisional: meta.forecast_stage === "provisional",
+    historyCutoff: meta.history_cutoff_gw ?? null,
     failedAreas: new Set(envelope.errors.map((error) => error.area)),
   };
 }

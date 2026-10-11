@@ -82,18 +82,9 @@ def build_decision(
             max_transfers=max_transfers,
             free_transfers=free_transfers,
             bank=float(team.get("bank")) if team.get("bank") is not None else 0.0,
+            evaluate_wildcard=bool((chip_state or {}).get("wildcard_available", False)),
         ),
-        horizon_predictions=(
-            pd.concat(
-                [
-                    frame.assign(GW=int(gw))
-                    for gw, frame in (horizon_predictions or {}).items()
-                ],
-                ignore_index=True,
-            )
-            if horizon_predictions
-            else None
-        ),
+        horizon_predictions=dict(horizon_predictions) if horizon_predictions else None,
         horizon_config=MultiGWConfig(
             horizon=horizon,
             gw_weights=tuple(max(0.4, 1.0 - 0.15 * index) for index in range(horizon)),

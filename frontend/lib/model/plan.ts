@@ -7,7 +7,6 @@ import type {
   RecommendedTransfer,
   TransferScenario,
 } from "@/lib/contracts";
-import { hitCost } from "@/lib/fpl/rules";
 import { isFlagged, type SquadPlayer } from "@/lib/model/squad";
 
 export type Verdict = "TRANSFER" | "HOLD";
@@ -29,18 +28,24 @@ export type TransferMove = {
   inXp: number | null;
 };
 
+/**
+ * One action the backend's canonical planner evaluated. Every number comes
+ * from the backend; the frontend never re-ranks or recomputes a plan.
+ */
 export type ScenarioView = {
   id: string;
   label: string;
   moves: TransferMove[];
-  /** Derived: Σ(in next-GW xP − out next-GW xP). Null when an incoming projection is unknown. */
+  /** Model: change in the best XI + captain's projected points this Gameweek. */
   nextGwGain: number | null;
-  /** Model: minutes-adjusted five-GW gain before hits. */
+  /** Model: weighted five-GW change in the best XI + captain, before hits. */
   horizonGain: number;
   hit: number | null;
-  /** Derived: horizonGain − hit. */
+  /** Model: horizonGain − hit. */
   horizonNet: number | null;
-  /** Model: weighted multi-GW decision score after hits, used by the engine to rank plans. */
+  /** Model: value of the free transfers this option uses instead of rolling. */
+  rollValue: number;
+  /** Model: the score the engine ranks actions by (net gain − roll value − hit margin). */
   modelScore: number;
   coverage: number;
 };
@@ -63,6 +68,8 @@ export type MainRisk = {
 
 export type GameweekPlan = {
   verdict: Verdict;
+  /** Backend action label, e.g. HOLD, SINGLE_TRANSFER, MULTI_TRANSFER, HIT, WILDCARD. */
+  action: string;
   recommended: ScenarioView;
   /** When the verdict is HOLD, the best move the engine evaluated but did not adopt. */
   bestRejected: ScenarioView | null;
@@ -83,7 +90,7 @@ export type GameweekPlan = {
   xiPoints: number | null;
   /** Derived: model XI base points plus the captain's extra multiplier. */
   projectedScore: number | null;
-  chip: { recommended: ChipName | null; score: number; state: ChipState | null };
+  chip: { recommended: ChipName | null; score: number; reason: string | null; state: ChipState | null };
   confidence: Confidence | null;
   mainRisk: MainRisk;
   insights: Array<{ type: string; severity: string; reason: string }>;
@@ -115,8 +122,8 @@ function toMoves(
       incoming,
       inTeam: incoming?.team ?? null,
       inTeamShort: incoming?.team_short ?? null,
-      outXp: out?.xp ?? null,
-      inXp: typeof incoming?.predicted_points === "number" ? incoming.predicted_points : null,
+      outXp: num(transfer.next_gw_points_out) ?? out?.xp ?? null,
+      inXp: num(transfer.next_gw_points_in) ?? (typeof incoming?.predicted_points === "number" ? incoming.predicted_points : null),
     };
   });
 }
@@ -125,28 +132,23 @@ function scenarioView(
   id: string,
   label: string,
   scenario: TransferScenario,
-  freeTransfers: number | null,
   squadById: Map<number, SquadPlayer>,
   market: Map<number, PlayerSummary>,
 ): ScenarioView {
   const moves = toMoves(scenario.transfers ?? [], squadById, market);
-  const hit = moves.length === 0 ? 0 : hitCost(moves.length, freeTransfers);
-  const known = moves.every((move) => move.inXp != null && move.outXp != null);
-  const nextGwGain = moves.length === 0
-    ? 0
-    : known
-      ? moves.reduce((total, move) => total + ((move.inXp ?? 0) - (move.outXp ?? 0)), 0)
-      : null;
+  const hit = num(scenario.hit_cost) ?? (moves.length ? null : 0);
+  const horizonGain = num(scenario.horizon_gain) ?? 0;
   return {
     id,
     label,
     moves,
-    nextGwGain,
-    horizonGain: scenario.horizon_gain ?? 0,
+    nextGwGain: moves.length === 0 ? 0 : num(scenario.next_gw_gain),
+    horizonGain,
     hit,
-    horizonNet: hit == null ? null : (scenario.horizon_gain ?? 0) - hit,
-    modelScore: scenario.combined_score ?? scenario.current_net_gain ?? 0,
-    coverage: scenario.coverage ?? 0,
+    horizonNet: num(scenario.net_gain) ?? (hit == null ? null : horizonGain - hit),
+    rollValue: num(scenario.roll_value_forgone) ?? 0,
+    modelScore: num(scenario.decision_score) ?? num(scenario.combined_score) ?? 0,
+    coverage: num(scenario.coverage) ?? 0,
   };
 }
 
@@ -199,23 +201,28 @@ export function buildPlan(
   const freeTransfers = num(decision.transfers?.free_transfers);
   const strategy = intelligence?.transfer_strategy;
 
-  const selected: TransferScenario = {
-    transfers: strategy?.selected_transfers?.length
-      ? strategy.selected_transfers
-      : decision.transfers?.recommended_transfers ?? (decision.transfers?.recommended ? [decision.transfers.recommended] : []),
-    current_net_gain: strategy?.current_net_gain ?? decision.transfers?.net_gain ?? 0,
-    horizon_gain: strategy?.horizon_gain ?? 0,
-    combined_score: strategy?.combined_score ?? decision.transfers?.net_gain ?? 0,
-    coverage: strategy?.coverage ?? 0,
-  };
-  const action = intelligence?.action ?? (selected.transfers.length && (decision.transfers?.net_gain ?? 0) > 0 ? "TRANSFER" : "HOLD");
+  // The backend's canonical action. transfer_strategy mirrors transfers; the
+  // fallback only serves payloads without the intelligence block.
+  const selected: TransferScenario = strategy
+    ? { ...strategy, transfers: strategy.selected_transfers ?? [] }
+    : {
+      transfers: decision.transfers?.recommended_transfers ?? (decision.transfers?.recommended ? [decision.transfers.recommended] : []),
+      next_gw_gain: decision.transfers?.next_gw_gain ?? null,
+      horizon_gain: decision.transfers?.gross_gain ?? 0,
+      hit_cost: decision.transfers?.hit_cost ?? 0,
+      net_gain: decision.transfers?.net_gain ?? 0,
+      decision_score: decision.transfers?.decision_score ?? decision.transfers?.net_gain ?? 0,
+      coverage: 0,
+    };
+  const action = intelligence?.transfer_action ?? strategy?.action ?? decision.transfers?.action ?? (selected.transfers.length ? "TRANSFER" : "HOLD");
   const verdict: Verdict = action === "HOLD" || !selected.transfers.length ? "HOLD" : "TRANSFER";
 
-  const selectedView = scenarioView("selected", verdict === "TRANSFER" ? "Recommended" : "Best move found", selected, freeTransfers, squadById, market);
-  const hold = scenarioView("hold", "Hold / roll", { transfers: [], current_net_gain: 0, horizon_gain: 0, combined_score: 0, coverage: strategy?.coverage ?? 0 }, freeTransfers, squadById, market);
+  const selectedView = scenarioView("selected", verdict === "TRANSFER" ? "Recommended" : "Best move found", selected, squadById, market);
+  const holdOption = strategy?.options_by_transfer_count?.find((option) => (option.transfers ?? []).length === 0);
+  const hold = scenarioView("hold", "Hold / roll", holdOption ?? { transfers: [], horizon_gain: 0, hit_cost: 0, net_gain: 0, decision_score: 0, coverage: strategy?.coverage ?? 0 }, squadById, market);
   const alternatives = (strategy?.alternatives ?? [])
     .filter((scenario) => scenario.transfers?.length)
-    .map((scenario, index) => scenarioView(`alt-${index + 1}`, `Option ${index + 1}`, scenario, freeTransfers, squadById, market));
+    .map((scenario, index) => scenarioView(`alt-${index + 1}`, `Option ${index + 1}`, scenario, squadById, market));
 
   const ownedIds = new Set(squad.map((player) => player.id));
   const captainPool: DecisionPlayer[] = [
@@ -244,12 +251,15 @@ export function buildPlan(
   const xiPoints = num(decision.starting_xi?.projected_points);
   const captainXp = num(decision.captain?.predicted_points);
   const chipScore = num(intelligence?.chip_advisor.score) ?? 0;
+  const chipReason = text(intelligence?.chip_advisor.reason);
   const chipName = intelligence?.chip_advisor.recommended_chip as ChipName | null | undefined;
 
   return {
     verdict,
+    action: intelligence?.action ?? action,
     recommended: verdict === "TRANSFER" ? selectedView : hold,
-    bestRejected: verdict === "HOLD" && selectedView.moves.length ? selectedView : null,
+    // When holding, the best move the engine evaluated but did not adopt.
+    bestRejected: verdict === "HOLD" ? (selectedView.moves.length ? selectedView : alternatives[0] ?? null) : null,
     hold,
     alternatives,
     freeTransfers,
@@ -268,6 +278,7 @@ export function buildPlan(
     chip: {
       recommended: chipName && chipName in CHIP_LABEL ? chipName : null,
       score: chipScore,
+      reason: chipReason,
       state: intelligence?.chip_state ?? null,
     },
     confidence: intelligence?.confidence ?? null,
