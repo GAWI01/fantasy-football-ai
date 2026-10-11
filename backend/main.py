@@ -380,6 +380,27 @@ def _load_predictions(
     return df, filename
 
 
+def _default_review_event(bootstrap: dict) -> dict:
+    """The latest finished Gameweek that can be reviewed.
+
+    A Gameweek is reviewable only with a forecast saved before its deadline;
+    defaulting to one without leaves the page empty, so step back to the
+    newest one that has it (the latest finished one when none does).
+    """
+    latest = latest_finished_event(bootstrap)
+    finished = sorted(
+        (item for item in bootstrap.get("events") or []
+         if isinstance(item, dict) and item.get("finished") and item.get("id")),
+        key=lambda item: int(item["id"]), reverse=True)
+    for item in finished:
+        try:
+            _load_review_predictions(int(item["id"]), deadline_time=item.get("deadline_time"))
+            return item
+        except (ReviewDataError, ValueError):
+            continue
+    return latest
+
+
 def _load_review_predictions(
     event: int,
     deadline_time: str | None = None,
@@ -1414,7 +1435,7 @@ def get_review_v1(team_id: int, event: int | None = None):
         bootstrap = get_bootstrap_data()
         events = bootstrap.get("events") or []
         if event is None:
-            target_event = latest_finished_event(bootstrap)
+            target_event = _default_review_event(bootstrap)
         else:
             target_event = next(
                 (

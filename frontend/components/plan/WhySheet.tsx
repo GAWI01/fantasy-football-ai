@@ -50,7 +50,7 @@ export function ExplainPlan({ plan, modelVersion }: { plan: GameweekPlan; modelV
           <li><b>5-GW gain</b> is the same change over five Gameweeks, later Gameweeks weighted less. Later Gameweeks scale the model&rsquo;s forecast to each fixture&rsquo;s official difficulty and home/away, with each Gameweek&rsquo;s own availability (a one-match ban only costs one Gameweek). It is a planning guide, not five separate model forecasts.</li>
           <li><b>Holding is always an option.</b> An unused free transfer is worth points next week, so a move is only recommended when it beats rolling the transfer.</li>
           <li><b>Hits</b> cost 4 points per transfer beyond your free transfers. The engine takes a hit only when the five-Gameweek gain beats the hit plus a safety margin.</li>
-          <li>Captain and vice-captain are always chosen from players you own.</li>
+          <li><b>Captain and lineup</b> are picked from your squad after the recommended transfers, so a player you buy can start or wear the armband. If you hold, they come from the players you own now.</li>
         </ul>
         {modelVersion ? <p className="faint">Model artifact: <span className="mono">{modelVersion}</span></p> : null}
       </section>

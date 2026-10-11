@@ -1,84 +1,176 @@
 "use client";
 
-import { GitCompareArrows, Trophy, Users } from "lucide-react";
+import { Crown, Radar, Swords, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { useTeam } from "@/app/providers/TeamProvider";
+import { PlayerChip } from "@/components/player/PlayerChip";
 import { DataState } from "@/components/states/DataState";
-import { Card, Segmented, Skeleton, SourceBadge } from "@/components/ui/primitives";
+import { Card, Meter, Skeleton, SourceBadge } from "@/components/ui/primitives";
 import { fixed } from "@/lib/format";
-import type { LeaguePlayer, LeagueRole, RivalPlayer } from "@/lib/contracts";
+import type { LeaguePlayer, LeagueStanding, RivalPlayer } from "@/lib/contracts";
 import { useLeague, useLeagues, useRival } from "@/lib/hooks/data";
 
-const ROLE_LABEL: Record<NonNullable<LeagueRole>, string> = { CAPTAIN: "Captain", STARTER: "Starter", BENCH: "Bench" };
-type PlayerFilter = "all" | "threats" | "differentials";
-
-function signedGap(value: number): string {
-  if (value === 0) return "—";
-  return value > 0 ? `+${value}` : `${value}`;
+function ordinal(value: number | null | undefined): string {
+  if (value == null) return "—";
+  const tens = value % 100;
+  const suffix = tens >= 11 && tens <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[value % 10] ?? "th";
+  return `${value}${suffix}`;
 }
 
-function RoleTag({ role }: { role: LeagueRole }) {
-  if (!role) return <span className="faint">—</span>;
-  return <span className={`pill${role === "CAPTAIN" ? " pill-accent" : ""}`}>{ROLE_LABEL[role]}</span>;
+function gapLabel(row: LeagueStanding): string {
+  if (row.is_you) return "You";
+  if (row.gap_to_you === 0) return "Level";
+  return row.gap_to_you > 0 ? `+${row.gap_to_you}` : `${row.gap_to_you}`;
 }
 
-function PlayerName({ player }: { player: Pick<LeaguePlayer, "name" | "team_short" | "position"> }) {
-  return <span><b>{player.name}</b> <small className="faint">{player.position ?? ""} · {player.team_short}</small></span>;
-}
-
-function RivalColumn({ title, players, total }: { title: string; players: RivalPlayer[]; total?: number | null }) {
+/** The standings as a race: bar length is points relative to the leader. */
+function Race({ standings, selected, onSelect }: { standings: LeagueStanding[]; selected: number | null; onSelect: (teamId: number) => void }) {
+  const leader = Math.max(1, ...standings.map((row) => row.total ?? 0));
+  const lowest = Math.min(...standings.map((row) => row.total ?? 0));
+  // Start the bars a little below the last place so the gaps are visible.
+  const floor = Math.max(0, lowest - (leader - lowest) * 0.6);
   return (
-    <div className="rival-col">
-      <div className="row"><strong>{title}</strong><span className="spacer" />{total != null ? <span className="num tone-accent">{fixed(total)} xP</span> : null}</div>
-      {players.length ? (
-        <ul className="list">
-          {players.map((player) => (
-            <li key={player.player_id} className="list-row">
-              <div className="list-row-main"><PlayerName player={player} /></div>
-              <div className="list-row-end">
-                <RoleTag role={player.role} />
-                {player.rival_role !== undefined && player.rival_role !== player.role ? <small>Rival: {player.rival_role ? ROLE_LABEL[player.rival_role] : "—"}</small> : null}
-                {player.next_gw_points != null ? <small>{fixed(player.next_gw_points)} xP</small> : null}
-              </div>
+    <ol className="race" aria-label="League standings">
+      {standings.map((row) => {
+        const share = ((row.total ?? 0) - floor) / Math.max(1, leader - floor);
+        const content = (
+          <>
+            <span className="race-rank num">{row.rank}</span>
+            <span className="race-name">
+              <strong>{row.team_name}</strong>
+              <small>{row.manager ?? ""}{row.active_chip ? ` · ${row.active_chip}` : ""} · GW {row.event_points ?? "—"}</small>
+            </span>
+            <span className="race-track" aria-hidden="true"><i style={{ width: `${Math.max(4, share * 100)}%` }} /></span>
+            <span className="race-total num">{row.total ?? "—"}</span>
+            <span className={`race-gap num${row.is_you ? " is-you" : row.gap_to_you > 0 ? " is-ahead" : row.gap_to_you < 0 ? " is-behind" : ""}`}>{gapLabel(row)}</span>
+          </>
+        );
+        return (
+          <li key={row.team_id}>
+            {row.is_you ? (
+              <div className="race-row is-you">{content}</div>
+            ) : (
+              <button type="button" className={`race-row${selected === row.team_id ? " is-selected" : ""}`} aria-pressed={selected === row.team_id} onClick={() => onSelect(row.team_id)} aria-label={`Compare with ${row.team_name}`}>
+                {content}
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function DuelPlayers({ title, players, tone }: { title: string; players: RivalPlayer[]; tone: "you" | "rival" }) {
+  const ordered = [...players].sort((left, right) => Number(left.role === "BENCH") - Number(right.role === "BENCH") || Number(right.role === "CAPTAIN") - Number(left.role === "CAPTAIN"));
+  return (
+    <div className={`duel-col duel-${tone}`}>
+      <span className="eyebrow">{title}</span>
+      {ordered.length ? (
+        <ul className="duel-list">
+          {ordered.map((player) => (
+            <li key={player.player_id} className={player.role === "BENCH" ? "is-bench" : undefined}>
+              <PlayerChip
+                name={player.name}
+                teamShort={player.team_short}
+                position={player.position}
+                size={30}
+                badge={player.role === "CAPTAIN" ? "C" : undefined}
+                meta={player.role === "BENCH" ? "Bench" : `${player.position ?? ""} · ${player.team_short}`}
+                end={player.next_gw_points != null && player.role !== "BENCH" ? <span className="num">{fixed(player.next_gw_points)}</span> : null}
+              />
             </li>
           ))}
         </ul>
-      ) : <p className="faint">None</p>}
+      ) : <p className="faint">No unique players</p>}
     </div>
   );
 }
 
-function RivalCompare({ leagueId, rivalId, teamId, rivalName }: { leagueId: number; rivalId: number; teamId: string; rivalName: string }) {
-  const rival = useRival(leagueId, rivalId, teamId);
-  const data = rival.data?.data;
+function Duel({ leagueId, rival, me, teamId }: { leagueId: number; rival: LeagueStanding; me: LeagueStanding; teamId: string }) {
+  const resource = useRival(leagueId, rival.team_id, teamId);
+  const data = resource.data?.data;
+  const captainOf = (players: RivalPlayer[] | undefined) => players?.find((player) => player.role === "CAPTAIN");
+  const myCaptain = data ? captainOf(data.only_you) ?? data.shared.find((player) => player.role === "CAPTAIN") : undefined;
+  const rivalCaptain = data ? captainOf(data.only_rival) ?? data.shared.find((player) => player.rival_role === "CAPTAIN") : undefined;
+  const youXp = data?.unique_next_gw_points.you ?? null;
+  const rivalXp = data?.unique_next_gw_points.rival ?? null;
+  const split = youXp != null && rivalXp != null && youXp + rivalXp > 0 ? youXp / (youXp + rivalXp) : null;
+
   return (
-    <Card title={`You vs ${rivalName}`} eyebrow="Head to head" icon={<GitCompareArrows size={16} />} source="official">
-      {rival.loading && !data ? <Skeleton lines={6} /> : rival.error ? (
-        <DataState tone="error" compact title="Comparison unavailable">{rival.error}</DataState>
+    <Card title={`You vs ${rival.team_name}`} eyebrow="Head to head" icon={<Swords size={16} />} source="official" className="duel-card">
+      <div className="duel-score">
+        <div><small>You</small><strong className="num">{me.total ?? "—"}</strong></div>
+        <span className={`duel-gap num${rival.gap_to_you > 0 ? " is-ahead" : rival.gap_to_you < 0 ? " is-behind" : ""}`}>
+          {rival.gap_to_you === 0 ? "Level" : rival.gap_to_you > 0 ? `${rival.gap_to_you} behind` : `${-rival.gap_to_you} ahead`}
+        </span>
+        <div><small>{rival.team_name}</small><strong className="num">{rival.total ?? "—"}</strong></div>
+      </div>
+
+      {resource.loading && !data ? <Skeleton lines={5} /> : resource.error ? (
+        <DataState tone="error" compact title="Comparison unavailable">{resource.error}</DataState>
       ) : data ? (
         <>
-          <p className="card-note">
-            The duel is decided by the players you do not share
-            {data.same_captain ? ", and you have the same captain." : ". Your captains differ, which counts double."}
-            {data.unique_next_gw_points.you != null && data.unique_next_gw_points.rival != null
-              ? ` Unique starters project ${fixed(data.unique_next_gw_points.you)} xP for you and ${fixed(data.unique_next_gw_points.rival)} xP for ${rivalName} next Gameweek, if both squads stay the same.`
-              : ""}
-          </p>
-          <div className="rival-grid">
-            <RivalColumn title="Only you" players={data.only_you} total={data.unique_next_gw_points.you} />
-            <RivalColumn title={`Only ${rivalName}`} players={data.only_rival} total={data.unique_next_gw_points.rival} />
-            <RivalColumn title="Shared" players={data.shared} />
+          <div className="duel-captains">
+            <div>
+              <span className="eyebrow"><Crown size={12} aria-hidden="true" /> Your captain</span>
+              {myCaptain ? <PlayerChip name={myCaptain.name} teamShort={myCaptain.team_short} position={myCaptain.position} size={30} badge="C" /> : <span className="faint">—</span>}
+            </div>
+            <span className={`pill ${data.same_captain ? "pill-pos" : "pill-warn"}`}>{data.same_captain ? "Same captain" : "Different captains"}</span>
+            <div className="duel-captain-rival">
+              <span className="eyebrow"><Crown size={12} aria-hidden="true" /> Their captain</span>
+              {rivalCaptain ? <PlayerChip name={rivalCaptain.name} teamShort={rivalCaptain.team_short} position={rivalCaptain.position} size={30} badge="C" /> : <span className="faint">—</span>}
+            </div>
           </div>
-          <p className="card-note">{data.basis} <SourceBadge kind="official" /></p>
+
+          {split != null ? (
+            <div className="duel-split" aria-label={`Unique starters next Gameweek: you ${fixed(youXp)} xP, ${rival.team_name} ${fixed(rivalXp)} xP`}>
+              <div className="row"><b className="num">{fixed(youXp)} xP</b><span className="spacer" /><small className="faint">Players only one of you starts · next GW</small><span className="spacer" /><b className="num">{fixed(rivalXp)} xP</b></div>
+              <div className="duel-split-bar" aria-hidden="true"><i className="is-you" style={{ width: `${split * 100}%` }} /><i className="is-rival" style={{ width: `${(1 - split) * 100}%` }} /></div>
+            </div>
+          ) : null}
+
+          <div className="duel-grid">
+            <DuelPlayers title="Only you" players={data.only_you} tone="you" />
+            <DuelPlayers title={`Only ${rival.team_name}`} players={data.only_rival} tone="rival" />
+          </div>
+          {data.shared.length ? (
+            <p className="duel-shared"><span className="eyebrow">You both have</span> {data.shared.map((player) => player.name).join(" · ")}</p>
+          ) : null}
+          <p className="card-note">{data.basis}</p>
         </>
       ) : null}
     </Card>
   );
 }
 
-/** Mini-leagues: standings and gaps, league effective ownership and head-to-head against one rival. */
+function RadarList({ title, hint, players, empty, tone }: { title: string; hint: string; players: LeaguePlayer[]; empty: string; tone: "warn" | "pos" }) {
+  return (
+    <div className="radar-col">
+      <div className="radar-head"><strong>{title}</strong><small className="faint">{hint}</small></div>
+      {players.length ? (
+        <ul className="radar-list">
+          {players.map((player) => (
+            <li key={player.player_id}>
+              <PlayerChip name={player.name} teamShort={player.team_short} position={player.position} size={30}
+                meta={player.captains ? `Captained by ${player.captains}` : `${player.position ?? ""} · ${player.team_short}`} />
+              {player.rival_eo > 0 ? (
+                <span className="radar-eo">
+                  <Meter value={Math.min(1, player.rival_eo / 100)} tone={tone} label={`${player.name} rivals' effective ownership`} />
+                  <b className="num">{fixed(player.rival_eo, 0)}%</b>
+                </span>
+              ) : <span className="radar-only">Only you</span>}
+            </li>
+          ))}
+        </ul>
+      ) : <p className="faint">{empty}</p>}
+    </div>
+  );
+}
+
+/** Mini-leagues: the race, a head-to-head with one rival, and who the league relies on. */
 export function LeagueWorkspace() {
   const { ready, teamId } = useTeam();
   const leagues = useLeagues(teamId);
@@ -86,20 +178,22 @@ export function LeagueWorkspace() {
   const [leagueId, setLeagueId] = useState<number | null>(null);
   // The chosen rival belongs to one league; switching league clears it.
   const [rival, setRival] = useState<{ league: number; id: number } | null>(null);
-  const [filter, setFilter] = useState<PlayerFilter>("all");
+  const [showAll, setShowAll] = useState(false);
 
   // Default to the smallest league: the one with friends, not a public code league.
   const activeLeague = leagueId ?? [...list].sort((left, right) => (left.managers ?? 1e9) - (right.managers ?? 1e9))[0]?.league_id ?? null;
   const league = useLeague(activeLeague, teamId);
   const data = league.data?.data;
-  const rivalId = rival && rival.league === activeLeague ? rival.id : null;
 
-  const players = useMemo(() => {
-    const all = data?.players ?? [];
-    if (filter === "threats") return all.filter((player) => player.role === "THREAT");
-    if (filter === "differentials") return all.filter((player) => player.role === "DIFFERENTIAL");
-    return all.slice(0, 25);
-  }, [data, filter]);
+  const me = data?.standings.find((row) => row.is_you);
+  const leader = data?.standings[0];
+  const above = data && me ? [...data.standings].reverse().find((row) => (row.rank ?? 0) < (me.rank ?? 0)) : undefined;
+  const below = data && me ? data.standings.find((row) => (row.rank ?? 0) > (me.rank ?? 0)) : undefined;
+  // Default duel: the manager directly above you (or below, when you lead).
+  const rivalId = rival && rival.league === activeLeague ? rival.id : (above ?? below)?.team_id ?? null;
+  const rivalRow = data?.standings.find((row) => row.team_id === rivalId);
+  const threats = useMemo(() => (data?.players ?? []).filter((player) => player.role === "THREAT").slice(0, 8), [data]);
+  const differentials = useMemo(() => (data?.players ?? []).filter((player) => player.role === "DIFFERENTIAL").slice(0, 8), [data]);
 
   if (!ready) return <DataState title="Loading" loading />;
   if (!teamId) {
@@ -110,18 +204,19 @@ export function LeagueWorkspace() {
     );
   }
 
-  const me = data?.standings.find((row) => row.is_you);
-  const leader = data?.standings[0];
-  const rivalRow = data?.standings.find((row) => row.team_id === rivalId);
-  const nextAbove = data && me ? [...data.standings].reverse().find((row) => (row.rank ?? 0) < (me.rank ?? 0)) : undefined;
-
   return (
-    <div className="stack">
+    <div className="stack league-page">
       <header className="page-head">
         <div>
           <span className="eyebrow">Mini-leagues</span>
           <h1>{data?.name ?? "Your leagues"}</h1>
-          <p className="page-lede">Where you stand, which players your rivals rely on, and where a duel is decided. Squads are the latest public ones: FPL shows nobody&apos;s team for the next deadline until it has passed.</p>
+          {data && me ? (
+            <p className="league-status">
+              You are <b>{ordinal(me.rank)}</b> of {data.managers}
+              {leader && !leader.is_you ? <> · <b className="tone-neg">{(leader.total ?? 0) - (me.total ?? 0)}</b> behind the leader</> : <> · <b className="tone-pos">leading</b></>}
+              {above && above.team_id !== leader?.team_id ? <> · <b>{(above.total ?? 0) - (me.total ?? 0)}</b> to {ordinal(above.rank)}</> : null}
+            </p>
+          ) : null}
         </div>
         {list.length > 1 ? (
           <label className="select-label">
@@ -139,87 +234,47 @@ export function LeagueWorkspace() {
         <DataState tone="unavailable" title="No mini-leagues">This team is only in public leagues (overall, country, club). Join or create a private league in FPL to compare with friends.</DataState>
       ) : league.loading && !data ? <Skeleton lines={8} /> : league.error ? (
         <DataState tone="error" title="League unavailable" action={<button className="btn btn-sm" onClick={league.reload}>Try again</button>}>{league.error}</DataState>
-      ) : data ? (
-        <>
-          <div className="grid-3 league-summary">
-            <Card title="Your rank" source="official"><strong className="num big">{me?.rank ?? "—"}<small className="faint"> / {data.managers}</small></strong></Card>
-            <Card title="Gap to leader" source="official"><strong className="num big">{leader && me ? (leader.is_you ? "Leading" : `${leader.total! - me.total!} pts`) : "—"}</strong></Card>
-            <Card title="Gap to next place" source="official"><strong className="num big">{nextAbove && me ? `${nextAbove.total! - me.total!} pts` : "—"}</strong></Card>
-          </div>
-
-          <Card title="Standings" icon={<Trophy size={16} />} source="official">
-            <div className="table-wrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Team</th>
-                    <th scope="col" className="num">GW{data.event ?? ""}</th>
-                    <th scope="col" className="num">Total</th>
-                    <th scope="col" className="num">Vs you</th>
-                    <th scope="col"><span className="sr-only">Compare</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.standings.map((row) => (
-                    <tr key={row.team_id} className={row.is_you ? "is-owned" : undefined}>
-                      <td className="num">{row.rank}</td>
-                      <td><b>{row.team_name}</b> <small className="faint">{row.manager ?? ""}{row.active_chip ? ` · ${row.active_chip}` : ""}</small></td>
-                      <td className="num">{row.event_points ?? "—"}</td>
-                      <td className="num">{row.total ?? "—"}</td>
-                      <td className={`num${row.gap_to_you > 0 ? " tone-neg" : row.gap_to_you < 0 ? " tone-pos" : ""}`}>{row.is_you ? "You" : signedGap(row.gap_to_you)}</td>
-                      <td>{row.is_you ? null : <button type="button" className="btn btn-sm" aria-pressed={rivalId === row.team_id} onClick={() => activeLeague && setRival({ league: activeLeague, id: row.team_id })}>Compare</button>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      ) : data && me ? (
+        <div className="league-grid">
+          <Card title="The race" eyebrow="Tap a manager to compare" icon={<Trophy size={16} />} source="official" className="league-race">
+            <Race standings={data.standings} selected={rivalId} onSelect={(id) => activeLeague && setRival({ league: activeLeague, id })} />
           </Card>
 
-          {rivalId && rivalRow ? <RivalCompare leagueId={data.league_id} rivalId={rivalId} teamId={teamId} rivalName={rivalRow.team_name} /> : null}
+          {rivalRow ? <Duel leagueId={data.league_id} rival={rivalRow} me={me} teamId={teamId} /> : null}
 
-          <Card title="Who the league relies on" eyebrow={`Effective ownership · ${data.analysed_managers} managers`} icon={<Users size={16} />} source={["official", "derived"]}
-            action={<Segmented label="Filter players" value={filter} onChange={(value) => setFilter(value as PlayerFilter)} options={[{ value: "all", label: "Top 25" }, { value: "threats", label: "Threats" }, { value: "differentials", label: "Your differentials" }]} />}>
-            {players.length ? (
+          <Card title="League radar" eyebrow={`Squads of ${data.analysed_managers} managers · GW${data.event ?? "—"}`} icon={<Radar size={16} />} source={["official", "derived"]} className="league-radar">
+            <div className="radar-grid">
+              <RadarList title="They have, you don't" hint="When they score, you lose ground" players={threats} tone="warn"
+                empty="You own every player most of your rivals rely on." />
+              <RadarList title="Your edge" hint="Your starters few rivals have" players={differentials} tone="pos"
+                empty="None of your starters is rare in this league." />
+            </div>
+            <button type="button" className="link radar-toggle" aria-expanded={showAll} onClick={() => setShowAll((value) => !value)}>
+              {showAll ? "Hide full ownership" : "Show full ownership"}
+            </button>
+            {showAll ? (
               <div className="table-wrap">
                 <table className="table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Player</th>
-                      <th scope="col" className="num">Owned</th>
-                      <th scope="col" className="num">Captained</th>
-                      <th scope="col" className="num" title="Effective ownership among your rivals (you excluded)">Rivals&apos; EO</th>
-                      <th scope="col">You</th>
-                      <th scope="col" className="num">xP next</th>
-                    </tr>
-                  </thead>
+                  <thead><tr><th scope="col">Player</th><th scope="col" className="num">Owned</th><th scope="col" className="num">Captained</th><th scope="col" className="num">Rivals&apos; EO</th><th scope="col" className="num">You</th></tr></thead>
                   <tbody>
-                    {players.map((player) => (
+                    {data.players.slice(0, 30).map((player) => (
                       <tr key={player.player_id} className={player.you ? "is-owned" : undefined}>
-                        <td>
-                          <PlayerName player={player} />
-                          {player.role === "THREAT" ? <span className="pill pill-warn"> Threat</span> : player.role === "DIFFERENTIAL" ? <span className="pill pill-pos"> Differential</span> : null}
-                        </td>
+                        <td>{player.name} <small className="faint">{player.team_short}</small></td>
                         <td className="num">{player.owners}/{data.analysed_managers}</td>
-                        <td className="num">{player.captains}</td>
+                        <td className="num">{player.captains || "—"}</td>
                         <td className="num">{fixed(player.rival_eo, 0)}%</td>
-                        <td><RoleTag role={player.you} /></td>
-                        <td className="num">{player.next_gw_points != null ? fixed(player.next_gw_points) : "—"}</td>
+                        <td className="num">{player.you === "CAPTAIN" ? "C" : player.you === "STARTER" ? "✓" : player.you === "BENCH" ? "Bench" : "—"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            ) : <p className="faint">{filter === "threats" ? "No player that most rivals start is missing from your team." : filter === "differentials" ? "None of your starters is rare among your rivals." : "No squads available yet."}</p>}
+            ) : null}
             <p className="card-note">
-              EO counts a starter once, a captain twice (three times with Triple Captain) and a bench player not at all, so it shows how many points a player moves for the league. The column shows it among your rivals only.
-              A <b>threat</b> is a player at least {data.thresholds.threat_eo}% of your rivals&apos; EO that you do not own: when he scores, you lose ground.
-              A <b>differential</b> is a starter of yours under {data.thresholds.differential_eo}% rival EO: when he scores, you gain.
-              {data.managers > data.analysed_managers ? ` Only the top ${data.analysed_managers} managers are analysed.` : ""}
+              Rivals&apos; EO: how many of your rivals start a player, a captain counting twice. {data.basis} <SourceBadge kind="official" />
             </p>
-            <p className="card-note">{data.basis}</p>
           </Card>
-        </>
+        </div>
       ) : null}
     </div>
   );
