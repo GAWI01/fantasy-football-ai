@@ -1,6 +1,8 @@
 # Data notice
 
-The code in this repository and the data it uses are separate.
+The code in this repository and the data it uses are separate. The code is
+MIT-licensed (see [LICENSE](LICENSE)); the data below is not covered by that
+licence.
 
 - **Fantasy Premier League data** (live API responses, and the season files
   under `historical_data/` and `benchmark/data/`) belongs to the Premier League
