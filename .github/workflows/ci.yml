@@ -63,3 +63,36 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://api.example.invalid
         run: pnpm build
+
+  # Dependabot updates merge themselves once both jobs above are green. A red
+  # run never reaches this job. Guards: only pull requests Dependabot opened
+  # from this repository, only runs Dependabot itself triggered (a human commit
+  # on its branch stops it), and only the exact commit CI tested
+  # (--match-head-commit). Frontend majors are never proposed (dependabot.yml);
+  # Actions majors are, and CI itself runs every action this repository uses.
+  # A merge made with the workflow token starts no push run, so CI is started
+  # on master explicitly to test the merged result.
+  automerge:
+    name: Merge green Dependabot update
+    needs: [backend, frontend]
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.actor == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Merge
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --merge --delete-branch --match-head-commit "$HEAD_SHA"
+      - name: Run CI on master
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref master

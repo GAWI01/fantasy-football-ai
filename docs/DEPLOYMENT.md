@@ -215,9 +215,16 @@ No push, hosting operation or rights clearance is implied by this runbook.
 - **CI** (`.github/workflows/ci.yml`) runs on every pull request and every push
   to `master`: the Python test suite, an import check of the API, and the
   frontend's tests, lint, type check and production build. Merge only when it
-  is green. To enforce that, protect `master` in GitHub: Settings → Rules →
-  Rulesets → New branch ruleset → target `master` → "Require status checks to
-  pass" (select both CI jobs) and "Block force pushes".
+  is green.
+- **Dependabot updates merge themselves** when CI is green: the `automerge`
+  job in `ci.yml` runs after both test jobs, only for pull requests opened and
+  pushed by Dependabot, and only for the exact commit CI tested. A red update
+  stays open for a person. Dependabot proposes GitHub Actions and
+  minor/patch frontend updates monthly, once a release is 7 days old; Python
+  pins are never updated automatically (see `.github/dependabot.yml`). The
+  merge is made with the workflow token, which starts no push run, so the job
+  then starts CI on `master` itself; Railway and Vercel deploy the merge as
+  usual.
 - **Uptime** (`.github/workflows/uptime.yml`) checks the web app, the API's
   `/health` and the served forecast every hour. A failed run makes GitHub
   email the repository owner. A forecast that does not match the next
