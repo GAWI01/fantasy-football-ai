@@ -1,4 +1,5 @@
 import type {
+  ChipOutlook,
   ChipState,
   Confidence,
   DashboardData,
@@ -94,7 +95,7 @@ export type GameweekPlan = {
   xiPoints: number | null;
   /** Derived: model XI base points plus the captain's extra multiplier. */
   projectedScore: number | null;
-  chip: { recommended: ChipName | null; score: number; reason: string | null; state: ChipState | null };
+  chip: { recommended: ChipName | null; score: number; reason: string | null; state: ChipState | null; outlook: ChipOutlook[] };
   confidence: Confidence | null;
   mainRisk: MainRisk;
   insights: Array<{ type: string; severity: string; reason: string }>;
@@ -315,6 +316,7 @@ export function buildPlan(
       score: chipScore,
       reason: chipReason,
       state: intelligence?.chip_state ?? null,
+      outlook: intelligence?.chip_outlook ?? [],
     },
     confidence: intelligence?.confidence ?? null,
     // Risk is judged on the lineup the plan leaves you with.

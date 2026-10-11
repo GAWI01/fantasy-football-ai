@@ -17,6 +17,7 @@ import { useCockpit } from "@/lib/hooks/useCockpit";
 import { usePlanHistory } from "@/lib/hooks/usePlanHistory";
 import { chipAvailability, CHIP_LABEL, planSnapshot, transferHeadline, type GameweekPlan, type ScenarioView } from "@/lib/model/plan";
 import type { SquadPlayer } from "@/lib/model/squad";
+import type { ChipOutlook } from "@/lib/contracts";
 
 function scenarioTitle(scenario: ScenarioView): string {
   if (!scenario.moves.length) return "Hold · roll the transfer";
@@ -111,6 +112,34 @@ function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlaye
   );
 }
 
+/** Each chip you still have: play it now or save it, and the week that suits it best. */
+function ChipOutlookList({ outlook }: { outlook: ChipOutlook[] }) {
+  const available = outlook.filter((item) => item.available);
+  const used = outlook.filter((item) => !item.available);
+  return (
+    <div className="chip-outlook">
+      {available.map((item) => (
+        <div key={item.chip} className={`chip-row chip-row-${item.verdict === "USE" ? "use" : "save"}`}>
+          <div className="chip-row-head">
+            <b>{item.label}</b>
+            <span className={`pill ${item.verdict === "USE" ? "pill-warn" : ""}`}>{item.verdict === "USE" ? "Play now" : "Save"}</span>
+            {item.best_window && item.verdict !== "USE" ? <span className="pill pill-accent">Best: GW{item.best_window.gameweek}</span> : null}
+          </div>
+          {item.summary ? <p>{item.summary}</p> : null}
+          {item.this_week != null && item.threshold != null ? (
+            <div className="chip-meter">
+              <Meter value={Math.min(1, item.this_week / item.threshold)} label={`${item.label} this week`} tone={item.this_week >= item.threshold ? "pos" : "warn"} />
+              <small className="faint">This week {fixed(item.this_week)} · worth it from {fixed(item.threshold)}</small>
+            </div>
+          ) : null}
+        </div>
+      ))}
+      {!available.length ? <p className="muted">You have no chips left this half of the season.</p> : null}
+      {used.length ? <p className="card-note">Used this half: {used.map((item) => item.label).join(", ")}.</p> : null}
+    </div>
+  );
+}
+
 function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
   const chips = chipAvailability(plan.chip.state);
   const state = plan.chip.state;
@@ -119,17 +148,19 @@ function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
       <div className="chip-call">
         <span className="eyebrow">{locked ? "Locked for this deadline" : "Recommendation"}</span>
         <strong className={plan.chip.recommended ? "tone-warn" : undefined}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold your chips"}</strong>
-        <p className="muted">{plan.chip.recommended ? `${plan.chip.reason ?? `The ${CHIP_LABEL[plan.chip.recommended]} case beats its evidence bar.`} Check team news before committing.` : "No chip clears its evidence bar this week. A chip being available is not a reason to play it: the Wildcard needs a rebuild that clearly beats your best normal move, and Bench Boost or Triple Captain need a double Gameweek with enough projected points."}</p>
+        <p className="muted">{plan.chip.recommended ? `${plan.chip.reason ?? `The ${CHIP_LABEL[plan.chip.recommended]} case beats its evidence bar.`} Check team news before committing.` : "No chip is worth playing this week. Each chip below shows what it needs and the week in view that suits it best."}</p>
         {plan.chipBudgetIsEstimate ? <p className="card-note">Chip squad affordability is estimated from market prices. Check your actual selling prices in FPL.</p> : null}
       </div>
-      <div className="chip-grid">
-        {chips.map((chip) => (
-          <span key={chip.chip} className={`chip-pill chip-${chip.status}`}>
-            <b>{chip.label}</b>
-            <small>{chip.status === "available" ? "Available" : chip.status === "used" ? "Used this half" : "Unknown"}</small>
-          </span>
-        ))}
-      </div>
+      {plan.chip.outlook.length ? <ChipOutlookList outlook={plan.chip.outlook} /> : (
+        <div className="chip-grid">
+          {chips.map((chip) => (
+            <span key={chip.chip} className={`chip-pill chip-${chip.status}`}>
+              <b>{chip.label}</b>
+              <small>{chip.status === "available" ? "Available" : chip.status === "used" ? "Used this half" : "Unknown"}</small>
+            </span>
+          ))}
+        </div>
+      )}
       {state ? (
         <p className="card-note">
           {state.double_gameweek ? "Double Gameweek fixtures exist in the target Gameweek. " : ""}
