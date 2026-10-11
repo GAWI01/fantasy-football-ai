@@ -136,7 +136,9 @@ class _Problem:
                 uncertainty[picked, g] = band.to_numpy()[mask]
         all_ids = np.array([int(pid) for pid in base.index])
         positions = np.array([_normalise_position(p) for p in base["position"]])
-        clubs = base["team"].astype(str).to_numpy()
+        # Plain strings for every club: pandas 3 keeps a missing club as NaN
+        # through astype(str), and a float among strings breaks sorting.
+        clubs = np.array(["" if pd.isna(club) else str(club) for club in base["team"]], dtype=object)
         prices = pd.to_numeric(base["price"], errors="coerce").to_numpy(dtype=float)
         score = points @ self.weights
 

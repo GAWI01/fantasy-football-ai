@@ -1,0 +1,65 @@
+name: CI
+
+# Every pull request and every push to master runs the same checks a
+# contributor runs locally. Merge only when this is green.
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend, decision engine and model pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            backend/runtime-requirements.txt
+            requirements-pipeline.txt
+      # The exact versions production runs: the API image installs
+      # backend/runtime-requirements.txt and the refresh job
+      # requirements-pipeline.txt. Testing unpinned latest versions would test
+      # something that is not deployed.
+      - run: pip install -r backend/runtime-requirements.txt -r requirements-pipeline.txt pytest httpx
+      - name: Tests
+        env:
+          # Tests never call the real FPL API; keep the upstream limiter out of the way.
+          FPL_AI_UPSTREAM_MAX_PER_MINUTE: "1000"
+        run: python -m pytest -q
+      - name: The API imports with only its runtime dependencies listed
+        run: python -c "import backend.main"
+
+  frontend:
+    name: Frontend tests, lint, types and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm lint
+      - run: pnpm exec tsc --noEmit
+      - name: Production build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.invalid
+        run: pnpm build
