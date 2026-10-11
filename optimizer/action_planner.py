@@ -115,7 +115,8 @@ class _Problem:
     """The candidate pool and constraint matrix shared by every solve."""
 
     def __init__(self, frames: Sequence[pd.DataFrame], weights: Sequence[float], owned: set[int],
-                 sale_values: Mapping[int, float], bank: float, policy: DecisionPolicy):
+                 sale_values: Mapping[int, float], bank: float, policy: DecisionPolicy,
+                 extra_candidates: Sequence[int] = ()):
         base = frames[0].drop_duplicates("player_id").set_index("player_id")
         self.policy = policy
         self.weights = np.asarray(weights, dtype=float)
@@ -139,7 +140,7 @@ class _Problem:
         prices = pd.to_numeric(base["price"], errors="coerce").to_numpy(dtype=float)
         score = points @ self.weights
 
-        keep = np.isin(all_ids, list(owned))
+        keep = np.isin(all_ids, list(owned) + [int(pid) for pid in extra_candidates])
         for position in SQUAD_COUNTS:
             candidates = np.where((positions == position) & ~keep & np.isfinite(prices) & (prices > 0))[0]
             if not len(candidates):
@@ -221,7 +222,7 @@ class _Problem:
         return self.n + self.g * self.n + g * self.n + i
 
     def solve(self, *, newcomers_low: int, newcomers_high: int,
-              banned: Sequence[int] = ()) -> tuple[str, _Solution | None]:
+              banned: Sequence[int] = (), required: Sequence[int] = ()) -> tuple[str, _Solution | None]:
         rows, cols, vals, lower, upper = (list(part) for part in self.base_rows)
         extra = [([(i, 1.0) for i in range(self.n) if not self.owned[i]], newcomers_low, newcomers_high)]
         for entries, low, high in extra:
@@ -234,12 +235,15 @@ class _Problem:
             upper.append(high)
         matrix = coo_matrix((vals, (rows, cols)), shape=(len(lower), self.size)).tocsr()
         upper_bounds = np.ones(self.size)
+        lower_bounds = np.zeros(self.size)
         for player_id in banned:
             upper_bounds[self.index_of(int(player_id))] = 0.0
+        for player_id in required:
+            lower_bounds[self.index_of(int(player_id))] = 1.0
         result = milp(
             c=self.objective,
             integrality=np.ones(self.size),
-            bounds=Bounds(np.zeros(self.size), upper_bounds),
+            bounds=Bounds(lower_bounds, upper_bounds),
             constraints=LinearConstraint(matrix, np.array(lower), np.array(upper)),
             options={"disp": False, "time_limit": self.policy.solver_time_limit},
         )
@@ -261,6 +265,9 @@ class _Problem:
         value = float(np.dot(self.weights, gameweek_values))
         return "optimal", _Solution([int(pid) for pid in self.ids[selected]], starters, captains,
                                     value, gameweek_values)
+
+    def contains(self, player_id: int) -> bool:
+        return bool((self.ids == player_id).any())
 
     def index_of(self, player_id: int) -> int:
         return int(np.where(self.ids == player_id)[0][0])
@@ -468,3 +475,60 @@ def _evaluate_wildcard(problem: _Problem, hold: _Solution, best: Mapping[str, An
         "players_out": sorted(set(hold.ids) - set(rebuild.ids)),
         "recommended": advantage >= policy.wildcard_min_gain,
     }
+
+
+def evaluate_moves(
+    frames: Sequence[pd.DataFrame],
+    *,
+    owned_ids: Sequence[int],
+    sale_info: Mapping[int, tuple[float, str, bool]],
+    bank: float,
+    free_transfers: int,
+    sell: Sequence[int],
+    buy: Sequence[int],
+    weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+) -> dict[str, Any]:
+    """Score a manager's own transfers on the planner's scale.
+
+    The squad sells exactly `sell` and buys exactly `buy`; everything else
+    (best XI, captain, bench per Gameweek) is chosen as for any plan, so the
+    result is directly comparable with holding and with the recommendation.
+    """
+    policy = policy or DEFAULT_POLICY
+    weights = list(weights) if weights is not None else [1.0] * len(frames)
+    owned = {int(pid) for pid in owned_ids}
+    sell, buy = [int(pid) for pid in sell], [int(pid) for pid in buy]
+    if not sell or len(sell) != len(buy):
+        raise ActionPlanningError("Choose the same number of players to sell and to buy")
+    if len(set(sell)) != len(sell) or len(set(buy)) != len(buy):
+        raise ActionPlanningError("Each player can only be chosen once")
+    if not set(sell) <= owned:
+        raise ActionPlanningError("You can only sell players in your squad")
+    if set(buy) & owned:
+        raise ActionPlanningError("You already own a player you chose to buy")
+    missing = [pid for pid in buy if not any((frame["player_id"] == pid).any() for frame in frames[:1])]
+    if missing:
+        raise ActionPlanningError("A chosen player has no projection for this Gameweek")
+    problem = _Problem(frames, weights, owned, {pid: info[0] for pid, info in sale_info.items()}, bank, policy,
+                       extra_candidates=buy)
+    status, hold = problem.solve(newcomers_low=0, newcomers_high=0)
+    if hold is None:
+        raise SolverUnavailable(status)
+    status, solution = problem.solve(newcomers_low=len(buy), newcomers_high=len(buy),
+                                     banned=sell, required=buy)
+    if solution is None:
+        reasons = []
+        sold_value = sum(sale_info[pid][0] for pid in sell)
+        bought_value = sum(float(problem.prices[problem.index_of(pid)]) for pid in buy)
+        if bought_value > bank + sold_value + 1e-6:
+            reasons.append(f"it costs £{bought_value - sold_value - bank:.1f}m more than you can spend")
+        positions_out = sorted(problem.positions[problem.index_of(pid)] for pid in sell)
+        positions_in = sorted(problem.positions[problem.index_of(pid)] for pid in buy)
+        if positions_out != positions_in:
+            reasons.append("players must be replaced position for position")
+        if not reasons:
+            reasons.append("it breaks the three-players-per-club rule")
+        return {"legal": False, "reason": "This move is not allowed: " + "; ".join(reasons) + "."}
+    option = _option(problem, solution, hold, owned, {**sale_info}, free_transfers, policy)
+    return {"legal": True, "option": option, "hold": _option(problem, hold, hold, owned, sale_info, free_transfers, policy)}

@@ -128,7 +128,7 @@ test("lineup swaps keep formations legal and armbands on starters", () => {
   expect(projection.points).toBeCloseTo(SQUAD_XI_POINTS + 8.1);
 
   const plan = buildPlan(makeDashboard().data, squad, market)!;
-  expect(modelLineup(squad, plan.modelXI, plan.bench, plan.captain, plan.vice)?.captain).toBe(107);
+  expect(modelLineup(squad, plan.owned.xi, plan.owned.bench, plan.owned.captain, plan.owned.vice)?.captain).toBe(107);
 });
 
 const SQUAD_XI_POINTS = [4.4, 5.3, 5.1, 3.9, 3.7, 6.4, 8.1, 4.6, 3.2, 7.6, 4.9].reduce((total, value) => total + value, 0);
@@ -201,4 +201,25 @@ test("the live Gameweek's own forecast from the live endpoint drives the expecta
   const active = data.live!.picks.filter((pick) => (pick.multiplier ?? 0) > 0);
   const expected = active.reduce((total, pick) => total + 2 * (pick.multiplier ?? 0), 0);
   expect(buildLiveView(data, buildSquad(data))?.projectedXI).toBeCloseTo(expected);
+});
+
+test("the recommended lineup and captain come from the squad after the transfer", () => {
+  const data = makeDashboard({ verdict: "TRANSFER" }).data;
+  const decision = data.decision!;
+  // Backend lineup after Ekström (109) -> Castellano (201); Castellano captains.
+  const castellano = { player_id: 201, name: "Castellano", position: "MID", team: "Spurs", predicted_points: 5.9, price: 7.0 };
+  const ownedXI = decision.starting_xi!.players;
+  decision.owned_lineup = { starting_xi: ownedXI, bench: decision.bench!.players, captain: decision.captain!, vice_captain: decision.vice_captain! };
+  decision.starting_xi = { ...decision.starting_xi!, players: ownedXI.map((player) => (player.player_id === 109 ? castellano : player)) };
+  decision.captain = castellano;
+  decision.lineup_source = "after_recommended_transfers";
+  const squad = buildSquad(data);
+  const plan = buildPlan(data, squad, market)!;
+  expect(plan.lineupAfterTransfers).toBe(true);
+  expect(plan.captain?.name).toBe("Castellano");
+  expect(plan.modelXI.map((player) => player.id)).toContain(201);
+  expect(plan.modelXI.map((player) => player.id)).not.toContain(109);
+  // My Team edits the squad owned now: its model lineup has no incoming player.
+  expect(plan.owned.xi.map((player) => player.id)).toContain(109);
+  expect(plan.owned.captain?.id).toBe(decision.owned_lineup.captain.player_id);
 });

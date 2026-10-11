@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from pathlib import Path
 from datetime import datetime, timezone
+from threading import RLock
+import copy
+import hashlib
+import json
 import os
 
 import pandas as pd
@@ -10,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api_contract import api_envelope, source_meta
 from .availability import official_multiplier
+from .selling_prices import attach_selling_prices
 from .api_models import (
     DashboardEnvelopeModel,
     FixtureEnvelopeModel,
@@ -53,6 +59,7 @@ from .live_service import (
     get_live_players,
     get_manager_chip_state,
     get_manager_transfers,
+    get_manager_transfer_records,
     get_manager_transfer_state,
     get_team_history,
     latest_finished_event,
@@ -67,6 +74,7 @@ from .review_service import (
 )
 
 from decision_engine import build_decision
+from transfer_analysis import evaluate_transfer_moves
 from optimizer.action_planner import DEFAULT_POLICY
 
 
@@ -901,6 +909,139 @@ def load_predictions() -> pd.DataFrame:
     return df
 
 
+class _DecisionCache:
+    """Small LRU of finished decisions keyed by every input that shapes them.
+
+    The dashboard is polled every minute; recomputing the action planner
+    (several MILP solves) is only needed when the squad, bank, transfers,
+    chips, forecast or official prices/availability actually change.
+    """
+
+    def __init__(self, max_entries: int = 256):
+        self._entries: OrderedDict[str, dict] = OrderedDict()
+        self._max = max_entries
+        self._lock = RLock()
+
+    def get(self, key: str) -> dict | None:
+        with self._lock:
+            value = self._entries.get(key)
+            if value is not None:
+                self._entries.move_to_end(key)
+            return value
+
+    def put(self, key: str, value: dict) -> None:
+        with self._lock:
+            self._entries[key] = value
+            self._entries.move_to_end(key)
+            while len(self._entries) > self._max:
+                self._entries.popitem(last=False)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._entries.clear()
+
+
+_DECISION_CACHE = _DecisionCache()
+
+
+def _decision_cache_key(team: dict, bootstrap: dict, manifest, chip_state: dict,
+                        predictions: pd.DataFrame, **options) -> str:
+    official = [
+        (e.get("id"), e.get("now_cost"), e.get("status"), e.get("chance_of_playing_next_round"), e.get("news"))
+        for e in bootstrap.get("elements") or []
+    ]
+    payload = {
+        "team": {key: team.get(key) for key in ("team_id", "bank", "picks", "started_event")},
+        "forecast": [getattr(manifest, "prediction_file", None), str(getattr(manifest, "generated_at", ""))],
+        # The served projections after the official overlay, exactly as optimised.
+        "projections": int(pd.util.hash_pandas_object(predictions, index=False).sum()),
+        "chips": chip_state,
+        "options": options,
+        "official": official,
+        "fixtures": [(e.get("id"), e.get("deadline_time")) for e in bootstrap.get("events") or []],
+    }
+    encoded = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _decision_inputs(team_id: int, free_transfers: int | None, max_transfers: int | None) -> dict:
+    """Everything a decision for `team_id` is computed from (official data,
+    served forecast, horizon, transfer and chip state)."""
+    team = get_team_data(team_id)
+    predictions = load_predictions()
+    manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+    bootstrap = get_bootstrap_data()
+    try:
+        _validate_prediction_target(manifest, bootstrap)
+    except DataLoaderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    predictions = _apply_official_player_state(predictions, bootstrap)
+    fixtures = load_current_fixtures()
+    teams = load_current_teams()
+    try:
+        transfer_state = get_manager_transfer_state(
+            team_id,
+            manifest.prediction_event,
+            int(team.get("started_event") or 1),
+        )
+    except LiveDataServiceError:
+        transfer_state = {"known": False, "free_transfers": 0}
+    try:
+        # Selling prices follow from public purchase prices; untraceable
+        # players keep the labelled market-price estimate.
+        transfer_records, played_chips = get_manager_transfer_records(team_id)
+        team = {**team, "picks": attach_selling_prices(
+            team["picks"], transfers=transfer_records, chips=played_chips,
+            elements=bootstrap.get("elements") or [],
+            started_event=team.get("started_event"))}
+    except LiveDataServiceError:
+        pass
+    effective_free_transfers = (
+        free_transfers
+        if free_transfers is not None
+        else int(transfer_state["free_transfers"])
+    )
+    # Search hold, every free transfer and up to two hits; the planner
+    # chooses among them (rolling is always a candidate).
+    effective_max_transfers = (
+        max_transfers
+        if max_transfers is not None
+        else min(15, effective_free_transfers + DEFAULT_POLICY.max_hits)
+    )
+    effective_horizon = min(5, 39 - manifest.prediction_event)
+    horizon_predictions = build_fixture_scaled_horizon(
+        predictions,
+        fixtures,
+        teams,
+        prediction_event=manifest.prediction_event,
+        horizon=effective_horizon,
+    )
+    try:
+        chip_state = get_manager_chip_state(
+            team_id,
+            manifest.prediction_event,
+            started_event=team.get("started_event"),
+        )
+    except LiveDataServiceError:
+        chip_state = normalize_manager_chip_state(
+            manifest.prediction_event,
+            {},
+            started_event=team.get("started_event"),
+        )
+    chip_state.update(
+        gameweek_flags(fixtures, teams, manifest.prediction_event)
+    )
+    chip_state["free_transfers"] = effective_free_transfers
+    chip_state["free_transfers_known"] = bool(transfer_state["known"])
+
+    return {
+        "team": team, "predictions": predictions, "manifest": manifest, "bootstrap": bootstrap,
+        "transfer_state": transfer_state, "free_transfers": effective_free_transfers,
+        "max_transfers": effective_max_transfers, "horizon": effective_horizon,
+        "horizon_predictions": horizon_predictions, "chip_state": chip_state,
+    }
+
+
 @app.get("/api/decision/{team_id}")
 def get_decision(
     team_id: int,
@@ -926,73 +1067,30 @@ def get_decision(
         )
 
     try:
-        team = get_team_data(team_id)
-        predictions = load_predictions()
-        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
-        bootstrap = get_bootstrap_data()
-        try:
-            _validate_prediction_target(manifest, bootstrap)
-        except DataLoaderError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        predictions = _apply_official_player_state(predictions, bootstrap)
-        fixtures = load_current_fixtures()
-        teams = load_current_teams()
-        try:
-            transfer_state = get_manager_transfer_state(
-                team_id,
-                manifest.prediction_event,
-                int(team.get("started_event") or 1),
+        inputs = _decision_inputs(team_id, free_transfers, max_transfers)
+        team, predictions, manifest, bootstrap = (
+            inputs["team"], inputs["predictions"], inputs["manifest"], inputs["bootstrap"])
+        transfer_state, chip_state = inputs["transfer_state"], inputs["chip_state"]
+        effective_free_transfers, effective_max_transfers = inputs["free_transfers"], inputs["max_transfers"]
+        effective_horizon, horizon_predictions = inputs["horizon"], inputs["horizon_predictions"]
+        cache_key = _decision_cache_key(
+            team, bootstrap, manifest, chip_state, predictions,
+            budget=budget, free_transfers=effective_free_transfers, max_transfers=effective_max_transfers,
+        )
+        decision = _DECISION_CACHE.get(cache_key)
+        if decision is None:
+            decision = build_decision(
+                team,
+                predictions,
+                budget=budget,
+                free_transfers=effective_free_transfers,
+                max_transfers=effective_max_transfers,
+                horizon_predictions=horizon_predictions,
+                horizon=effective_horizon,
+                chip_state=chip_state,
             )
-        except LiveDataServiceError:
-            transfer_state = {"known": False, "free_transfers": 0}
-        effective_free_transfers = (
-            free_transfers
-            if free_transfers is not None
-            else int(transfer_state["free_transfers"])
-        )
-        # Search hold, every free transfer and up to two hits; the planner
-        # chooses among them (rolling is always a candidate).
-        effective_max_transfers = (
-            max_transfers
-            if max_transfers is not None
-            else min(15, effective_free_transfers + DEFAULT_POLICY.max_hits)
-        )
-        effective_horizon = min(5, 39 - manifest.prediction_event)
-        horizon_predictions = build_fixture_scaled_horizon(
-            predictions,
-            fixtures,
-            teams,
-            prediction_event=manifest.prediction_event,
-            horizon=effective_horizon,
-        )
-        try:
-            chip_state = get_manager_chip_state(
-                team_id,
-                manifest.prediction_event,
-                started_event=team.get("started_event"),
-            )
-        except LiveDataServiceError:
-            chip_state = normalize_manager_chip_state(
-                manifest.prediction_event,
-                {},
-                started_event=team.get("started_event"),
-            )
-        chip_state.update(
-            gameweek_flags(fixtures, teams, manifest.prediction_event)
-        )
-        chip_state["free_transfers"] = effective_free_transfers
-        chip_state["free_transfers_known"] = bool(transfer_state["known"])
-
-        decision = build_decision(
-            team,
-            predictions,
-            budget=budget,
-            free_transfers=effective_free_transfers,
-            max_transfers=effective_max_transfers,
-            horizon_predictions=horizon_predictions,
-            horizon=effective_horizon,
-            chip_state=chip_state,
-        )
+            _DECISION_CACHE.put(cache_key, decision)
+        decision = copy.deepcopy(decision)
         # Public FPL data cannot see every transfer rule, so tell clients
         # whether the count came from the user or was derived.
         decision["transfers"]["free_transfers_source"] = (
@@ -1101,6 +1199,56 @@ def get_plan_v1(team_id: int):
     )
     meta["event"] = manifest.prediction_event
     return api_envelope(get_decision(team_id), meta)
+
+
+def _id_list(value: str, label: str) -> list[int]:
+    try:
+        ids = [int(part) for part in value.split(",") if part.strip()]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"{label} must be comma-separated player IDs") from exc
+    if not 1 <= len(ids) <= 5:
+        raise HTTPException(status_code=400, detail=f"{label} must name between 1 and 5 players")
+    return ids
+
+
+@app.get("/api/v1/evaluate/{team_id}")
+def evaluate_transfers_v1(team_id: int, sell: str, buy: str, free_transfers: int | None = None):
+    """Score the manager's own transfers against holding and the recommendation.
+
+    Uses the same inputs, horizon and planner as the recommendation, so the
+    numbers are directly comparable.
+    """
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="team_id must be positive")
+    if free_transfers is not None and not 0 <= free_transfers <= 5:
+        raise HTTPException(status_code=400, detail="free_transfers must be between 0 and 5")
+    sell_ids, buy_ids = _id_list(sell, "sell"), _id_list(buy, "buy")
+    try:
+        inputs = _decision_inputs(team_id, free_transfers, None)
+        frames = [inputs["horizon_predictions"][key] for key in sorted(inputs["horizon_predictions"])]
+        weights = [max(0.4, 1.0 - 0.15 * index) for index in range(len(frames))]
+        result = evaluate_transfer_moves(
+            inputs["team"], inputs["predictions"], sell=sell_ids, buy=buy_ids,
+            free_transfers=inputs["free_transfers"], horizon_predictions=frames, horizon_weights=weights)
+        recommendation = get_decision(team_id, free_transfers=free_transfers)["transfers"]
+    except HTTPException:
+        raise
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"No FPL team found with ID {team_id}.") from exc
+    except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except (DataLoaderError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    result["recommended"] = {
+        "action": recommendation.get("action"),
+        "transfers": recommendation.get("recommended_transfers", []),
+        "decision_score": recommendation.get("decision_score"),
+        "net_gain": recommendation.get("net_gain"),
+    }
+    result["free_transfers"] = inputs["free_transfers"]
+    meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
+    meta["event"] = inputs["manifest"].prediction_event
+    return api_envelope(result, meta)
 
 
 def get_enriched_player_rankings(

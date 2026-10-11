@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from fpl_rules import detect_club_changes, validate_transfer_squad
-from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, plan_action
+from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, evaluate_moves, plan_action
 
 
 class TransferAnalysisError(ValueError):
@@ -822,3 +822,37 @@ def optimize_transfer_plan(
             for _, row in post_transfer_squad.sort_values("player_id").iterrows()
         ],
     }
+
+
+def evaluate_transfer_moves(
+    team: dict[str, Any],
+    predictions: pd.DataFrame,
+    *,
+    sell: Sequence[int],
+    buy: Sequence[int],
+    free_transfers: int,
+    horizon_predictions: Sequence[pd.DataFrame] | None = None,
+    horizon_weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+) -> dict[str, Any]:
+    """Score the manager's own transfers on the same scale as the recommendation."""
+    picks = _validate_inputs(team, predictions)
+    frames = list(horizon_predictions) if horizon_predictions else [predictions]
+    frames = [frame.assign(position=frame["position"].astype(str).str.upper().replace({"GKP": "GK"}))
+              for frame in frames]
+    weights = list(horizon_weights) if horizon_weights is not None else [1.0] * len(frames)
+    prices = dict(zip(pd.to_numeric(frames[0]["player_id"]).astype(int), pd.to_numeric(frames[0]["price"])))
+    sales = {int(pick["player_id"]): selling_value(pick, float(prices[int(pick["player_id"])])) for pick in picks}
+    try:
+        result = evaluate_moves(
+            frames, owned_ids=list(sales), sale_info=sales, bank=float(team.get("bank") or 0.0),
+            free_transfers=free_transfers, sell=sell, buy=buy, weights=weights, policy=policy)
+    except SolverUnavailable as exc:
+        raise TransferAnalysisError(str(exc)) from exc
+    except ActionPlanningError as exc:
+        return {"legal": False, "reason": str(exc)}
+    if result["legal"]:
+        for key in ("option", "hold"):
+            result[key] = {k: v for k, v in result[key].items() if k != "squad"}
+    result["selling_prices_known"] = all(value[2] for value in sales.values())
+    return result

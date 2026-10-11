@@ -410,6 +410,16 @@ export type DashboardDecision = {
     projected_points: number;
   };
   bench?: { players: Array<DecisionPlayer & { bench_order: number }> };
+  /** "after_recommended_transfers" when starting_xi/bench/captain include the plan's transfers. */
+  lineup_source?: "after_recommended_transfers" | "owned_squad";
+  /** Best lineup of the squad owned now, before any transfer. */
+  owned_lineup?: {
+    formation?: string;
+    starting_xi: DecisionPlayer[];
+    bench: Array<DecisionPlayer & { bench_order: number }>;
+    captain: DecisionPlayer;
+    vice_captain: DecisionPlayer;
+  };
   captain?: DecisionPlayer;
   vice_captain?: DecisionPlayer;
   transfers?: {
@@ -617,5 +627,21 @@ export type FixtureMatrixEnvelope = {
     teams: FixtureMatrixTeam[];
   };
   meta: SourceMeta;
+  errors: AreaError[];
+};
+
+
+/** The manager's own transfers scored by the backend planner (GET /api/v1/evaluate). */
+export type EvaluationEnvelope = {
+  data: {
+    legal: boolean;
+    reason?: string;
+    option?: TransferScenario & { gross_gain?: number };
+    hold?: TransferScenario;
+    recommended: { action?: string; transfers: RecommendedTransfer[]; decision_score?: number | null; net_gain?: number | null };
+    free_transfers: number;
+    selling_prices_known?: boolean;
+  };
+  meta: SourceMeta & { event?: number | null };
   errors: AreaError[];
 };

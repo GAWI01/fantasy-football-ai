@@ -68,3 +68,45 @@ def test_an_available_wildcard_needs_evidence(results):
 
 def test_confidence_is_not_uniformly_high(results):
     assert {summary["confidence"] for summary, _ in results.values()} != {"HIGH"}
+
+
+def test_captain_and_lineup_never_include_a_player_the_plan_sells(results):
+    # Before Phase 2, 639449 was told to sell B.Fernandes and captain him.
+    for summary, _ in results.values():
+        assert not summary["captain_is_sold"], summary
+        assert not summary["lineup_has_sold_player"], summary
+
+
+def test_an_unchanged_decision_is_served_from_cache(monkeypatch):
+    from backend import main
+
+    calls = []
+    original = main.build_decision
+    monkeypatch.setattr(main, "build_decision", lambda *a, **k: calls.append(1) or original(*a, **k))
+    main._DECISION_CACHE.clear()
+    with pinned_data("gw6"), replay(load_snapshot("gw6_pre_deadline"), pre_deadline_event=6):
+        client = TestClient(main.app)
+        first = client.get("/api/v1/dashboard/5151567").json()["data"]["decision"]
+        second = client.get("/api/v1/dashboard/5151567").json()["data"]["decision"]
+        changed = client.get("/api/v1/dashboard/5151567?free_transfers=2").json()["data"]["decision"]
+    assert len(calls) == 2  # the free-transfer override is a different input
+    assert first["transfers"]["recommended_transfers"] == second["transfers"]["recommended_transfers"]
+    assert changed["transfers"]["free_transfers"] == 2
+
+
+def test_own_transfer_is_scored_on_the_recommendation_scale():
+    from backend.main import app
+
+    with pinned_data("gw6"), replay(load_snapshot("gw6_pre_deadline"), pre_deadline_event=6):
+        client = TestClient(app)
+        recommended = client.get("/api/v1/dashboard/895045").json()["data"]["decision"]["transfers"]
+        move = recommended["recommended_transfers"][0]
+        same = client.get(f"/api/v1/evaluate/895045?sell={move['player_out_id']}&buy={move['player_in_id']}").json()["data"]
+        bad = client.get("/api/v1/evaluate/895045?sell=411&buy=249").json()["data"]
+        illegal = client.get("/api/v1/evaluate/895045?sell=411&buy=429").json()["data"]
+        malformed = client.get("/api/v1/evaluate/895045?sell=abc&buy=1")
+    # The recommended move evaluated by hand scores exactly like the recommendation.
+    assert same["legal"] and same["option"]["decision_score"] == pytest.approx(recommended["decision_score"])
+    assert bad["legal"] and bad["option"]["decision_score"] < 0
+    assert not illegal["legal"] and "position for position" in illegal["reason"]
+    assert malformed.status_code == 400
