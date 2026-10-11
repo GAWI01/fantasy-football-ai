@@ -113,12 +113,18 @@ def validate_decision_output(result: Mapping[str, Any]) -> dict[str, Any]:
         intelligence = result["intelligence"]
         if not isinstance(intelligence, Mapping):
             raise DecisionContractError("intelligence must be a mapping")
-        if intelligence.get("action") not in {"HOLD","TRANSFER","MULTI_TRANSFER","WILDCARD","FREE_HIT","BENCH_BOOST","TRIPLE_CAPTAIN"}:
+        if intelligence.get("action") not in {"HOLD","SINGLE_TRANSFER","TRANSFER","MULTI_TRANSFER","HIT","WILDCARD","FREE_HIT","BENCH_BOOST","TRIPLE_CAPTAIN"}:
             raise DecisionContractError("intelligence.action is invalid")
         confidence = intelligence.get("confidence")
         if not isinstance(confidence, Mapping):
             raise DecisionContractError("intelligence.confidence must be a mapping")
         score = confidence.get("score")
-        if score is None or not 0 <= float(score) <= 1:
+        if confidence.get("label") not in {"HIGH", "MEDIUM", "LOW", "UNKNOWN"}:
+            raise DecisionContractError("intelligence.confidence.label is invalid")
+        # An unknown confidence has no score; a known one is in [0, 1].
+        if score is None:
+            if confidence.get("label") != "UNKNOWN":
+                raise DecisionContractError("intelligence.confidence.score is required unless UNKNOWN")
+        elif not 0 <= float(score) <= 1:
             raise DecisionContractError("intelligence.confidence.score must be between 0 and 1")
     return dict(result)

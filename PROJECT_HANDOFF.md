@@ -1,6 +1,53 @@
 # FPL-AI handoff
 
-Updated: 2026-10-04
+Updated: 2026-10-11
+Branch: `fix/decision-correctness-phase1`, based on `master` at `5306fdc`.
+Milestone: Phase 1 decision correctness after the 2026-10-11 practical audit
+(`docs/audit/PRACTICAL_PRODUCT_AUDIT_2026-10-11.md`). Full report, root causes
+and before/after benchmark: `docs/audit/PHASE1_DECISION_CORRECTNESS.md`.
+
+## Phase 1 status (2026-10-11)
+
+DONE
+- Next-GW planning during a live GW: provisional forecast for GW N+1 once GW N's
+  deadline passes (history to N-1), final once N is data-checked; live points
+  keep comparing against GW N's pre-deadline forecast; UI shows "Provisional".
+- One canonical action planner (`optimizer/action_planner.py`): starting XI +
+  captain per horizon GW, bench as autosub cover only, hold/roll, 1..FT free
+  transfers and up to two hits on one scale, roll value for banked FTs.
+- One transfer recommendation per response; intelligence explains, never re-ranks.
+- 5-GW gain counted once; no extra minutes discount on model points.
+- Gameweek-specific availability (`backend/availability.py`): return dates in
+  official news, recovery assumptions, blanks do not zero later GWs.
+- Action labels HOLD / SINGLE_TRANSFER / MULTI_TRANSFER / HIT (WILDCARD /
+  FREE_HIT only when recommended); margin-vs-uncertainty confidence (or UNKNOWN);
+  evidence-based chips; truthful UI copy (no threshold claim, hits real).
+- Unknown Team ID: 404 JSON with CORS, no upstream retry.
+- Recorded real-team decision benchmark (`benchmark/`, `python -m benchmark.run`).
+
+VERIFIED
+- `python -m pytest tests backend/tests`: 522 passed, 1 skipped.
+- Frontend: `pnpm test` 109 passed, `pnpm lint`, `tsc --noEmit`, `pnpm build` clean.
+- Benchmark on 12 recorded real teams (+ FT 0/2/3): 15/15 consistent plans,
+  0 bench-goalkeeper transfers, 0 wrong MULTI labels, 0 automatic Wildcards.
+- Real refresh pipeline (scratch copy, 2026-10-11, GW6 live) published a
+  provisional GW7 forecast; the real API served a GW7 plan; browser check of
+  overview and plan page on desktop and 390 px.
+
+NOT VERIFIED
+- Docker image build (no Docker locally); hosted deployment; the scheduled
+  GitHub Action publishing a provisional forecast on `master`.
+- Policy constants are documented assumptions, not backtested.
+
+REMAINING (see the phase report): model calibration (minutes risk, compressed
+range, ranking), per-GW forecasts, captain ceiling/double counting, post-transfer
+XI display, derived selling prices, FT rule after WC/FH, decision caching and
+latency, chip timing across GWs, earlier audit items (quota, legacy code).
+
+---
+
+# Earlier handoff (2026-10-04)
+
 Branch: `fix/audit-corrections`, based on `master` at `13bf200`.
 Milestone: four audited correction groups, then a retrained and certified model
 with automatic Gameweek refresh; Next.js + FastAPI + CSV serving is preserved.

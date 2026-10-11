@@ -152,8 +152,12 @@ def test_chip_budget_preserves_supplied_owned_selling_values():
     team["bank"] = 3.0
     team["picks"] = [{"player_id": i, "selling_price": 4.0} for i in range(1, 16)]
     result = build_decision(team, make_predictions(), chip_state={"wildcard_available": True})
+    # Bank 3.0 + 15 owned players at their supplied 4.0 selling value. The
+    # Wildcard is valued by the action planner with this budget.
+    assert result["transfers"]["budget"] == 63.0
+    assert result["transfers"]["selling_prices_known"] is True
+    assert result["intelligence"]["wildcard_signal"]["evaluated"] is True
     scenarios = result["intelligence"]["chip_scenarios"]
-    assert scenarios["budget"] == 63.0
     assert scenarios["selling_prices_known"] is True
 
 

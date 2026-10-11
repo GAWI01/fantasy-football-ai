@@ -9,7 +9,7 @@ import { PlayerChip } from "@/components/player/PlayerChip";
 import { FreeTransfersControl } from "@/components/plan/FreeTransfersControl";
 import { WhySheet } from "@/components/plan/WhySheet";
 import { Delta, SourceBadge } from "@/components/ui/primitives";
-import { fixed, price, sentenceCase } from "@/lib/format";
+import { fixed, price, sentenceCase, signed } from "@/lib/format";
 import { CHIP_LABEL, type GameweekPlan, type ScenarioView, type TransferMove } from "@/lib/model/plan";
 
 export function MoveRow({ move, compact = false }: { move: TransferMove; compact?: boolean }) {
@@ -102,10 +102,21 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
 }
 
 function holdCopy(plan: GameweekPlan): string {
-  if (plan.bestRejected) {
-    return "The best move found does not clear the decision threshold after cost and uncertainty. Bank the transfer and keep flexibility.";
+  const best = plan.bestRejected;
+  if (best) {
+    const roll = best.rollValue ? ` A rolled free transfer is worth about ${fixed(best.rollValue)} xP next week.` : "";
+    return `The best move found adds ${signed(best.horizonGain)} xP over five Gameweeks${best.hit ? ` after a −${best.hit} hit` : ""}, which does not beat keeping the transfer.${roll}`;
   }
-  return "No evaluated transfer improves the squad enough. Bank the transfer and keep flexibility.";
+  return "No legal move improves your projected lineup. Bank the transfer and keep flexibility.";
+}
+
+export function ProvisionalPill({ cutoff, event }: { cutoff: number; event: number | null }) {
+  const live = event != null ? event - 1 : null;
+  return (
+    <span className="pill pill-accent" title={`GW${live ?? "—"} is still being played. This forecast uses results up to GW${cutoff} and updates once GW${live ?? "—"} is final.`}>
+      Provisional forecast
+    </span>
+  );
 }
 
 export function GameweekPlanCard({
@@ -113,11 +124,14 @@ export function GameweekPlanCard({
   event,
   modelVersion,
   locked = false,
+  provisionalCutoff = null,
 }: {
   plan: GameweekPlan;
   event: number | null;
   modelVersion: string | null;
   locked?: boolean;
+  /** Set while the previous Gameweek is still played: the forecast uses results up to this Gameweek. */
+  provisionalCutoff?: number | null;
 }) {
   const [whyOpen, setWhyOpen] = useState(false);
   const isTransfer = plan.verdict === "TRANSFER";
@@ -139,6 +153,7 @@ export function GameweekPlanCard({
         </div>
         <div className="hero-meta">
           {locked ? <span className="pill pill-warn">Read-only · deadline passed</span> : null}
+          {provisionalCutoff != null ? <ProvisionalPill cutoff={provisionalCutoff} event={event} /> : null}
           {confidence ? <span className={`pill ${confidence.label === "HIGH" ? "pill-pos" : confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(confidence.label)} confidence</span> : null}
           <SourceBadge kind="model" />
         </div>
@@ -196,7 +211,7 @@ export function GameweekPlanCard({
             <div className="tile">
               <span className="tile-label"><Zap size={14} aria-hidden="true" />Chip</span>
               <strong className={`tile-word${plan.chip.recommended ? " tone-warn" : ""}`}>{plan.chip.recommended ? CHIP_LABEL[plan.chip.recommended] : "Hold chips"}</strong>
-              <small className="faint">{plan.chip.recommended ? "Opportunity cleared the threshold" : "No chip clears the evidence bar"}</small>
+              <small className="faint">{plan.chip.reason ?? (plan.chip.recommended ? "The chip case beats its evidence bar" : "No chip clears the evidence bar")}</small>
               {plan.chipBudgetIsEstimate ? <small className="faint">Squad affordability estimated from market prices.</small> : null}
             </div>
             <div className="tile">

@@ -116,13 +116,56 @@ def test_double_gameweek_sums_both_fixtures(tmp_path, monkeypatch):
     assert midfielder["xmins_available"] == pytest.approx(2 * 90)
 
 
-def test_forecast_waits_for_final_scores_in_earlier_gameweeks(tmp_path, monkeypatch):
+def _pending(current, *gameweeks):
+    frame = pd.read_csv(current / "gameweeks_current.csv")
+    frame.loc[frame.id.isin(gameweeks), ["finished", "data_checked"]] = False
+    frame.to_csv(current / "gameweeks_current.csv", index=False)
+
+
+def test_next_gameweek_is_forecast_provisionally_while_the_previous_one_is_live(tmp_path, monkeypatch):
     current = setup_season(tmp_path, monkeypatch, target=3)
-    gameweeks = pd.read_csv(current / "gameweeks_current.csv")
-    gameweeks.loc[gameweeks.id == 2, "data_checked"] = False
-    gameweeks.to_csv(current / "gameweeks_current.csv", index=False)
-    with pytest.raises(predict_gw.HistoryIncompleteError, match="GW2"):
+    _pending(current, 2)  # GW2 is being played; its rows must not be used
+    result = pd.read_csv(predict_gw.main()).set_index("player_id")
+    manifest = load_current_manifest(current / "manifest.json")
+    assert manifest.prediction_event == 3
+    assert manifest.model_provenance["forecast_stage"] == "provisional"
+    assert manifest.model_provenance["history_cutoff_gw"] == 1
+    # Defender: GW1 history only (2 points), GW3 home v team 3 (difficulty 5).
+    assert result.loc[2, "ml_prediction"] == pytest.approx(2 + 5)
+    assert result.loc[2, "history_cutoff_gw"] == 1
+    assert not result.loc[2, "history_complete"]
+
+
+def test_final_forecast_replaces_the_provisional_one_when_scores_are_checked(tmp_path, monkeypatch):
+    current = setup_season(tmp_path, monkeypatch, target=3)
+    _pending(current, 2)
+    provisional = predict_gw.main()
+    assert predict_gw.main() == provisional  # unchanged inputs: not republished
+    frame = pd.read_csv(current / "gameweeks_current.csv")
+    frame["finished"] = frame["data_checked"] = frame["id"] < 3
+    frame.to_csv(current / "gameweeks_current.csv", index=False)
+    final = predict_gw.main()
+    assert final != provisional
+    provenance = load_current_manifest(current / "manifest.json").model_provenance
+    assert provenance["forecast_stage"] == "final"
+    assert provenance["history_cutoff_gw"] == 2
+    assert pd.read_csv(final).set_index("player_id").loc[2, "ml_prediction"] == pytest.approx(4 + 5)
+
+
+def test_forecast_waits_when_more_than_the_live_gameweek_is_pending(tmp_path, monkeypatch):
+    current = setup_season(tmp_path, monkeypatch, target=3)
+    _pending(current, 1, 2)
+    with pytest.raises(predict_gw.HistoryIncompleteError, match="GW1, GW2"):
         predict_gw.main()
+
+
+def test_every_player_has_a_neutral_fixture_estimate_for_planning_blanks(tmp_path, monkeypatch):
+    setup_season(tmp_path, monkeypatch, target=3)
+    result = pd.read_csv(predict_gw.main()).set_index("player_id")
+    # Team 1 blanks in GW3: no forecast, but a per-fixture estimate for later
+    # Gameweeks: Gameweek totals 6 and 9 + 1 = 10 average 8, plus difficulty 3.
+    assert result.loc[1, "predicted_points"] == 0
+    assert result.loc[1, "ml_per_fixture"] == pytest.approx(8 + 3)
 
 
 def test_schedule_digest_does_not_depend_on_the_platform_line_ending(monkeypatch):

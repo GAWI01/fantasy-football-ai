@@ -54,14 +54,16 @@ def player_horizon_projection(
             continue
         points = float(row["predicted_points"])
         xmins = float(row["xmins"]) if "xmins" in row.index and pd.notna(row["xmins"]) else 90.0
-        xmins = max(0.0, min(90.0, xmins))
-        minutes_factor = xmins / 90.0
+        xmins = max(0.0, min(90.0 * max(1, int(row.get("fixture_count", 1) or 1)), xmins))
         gameweeks.append({
             "gameweek": int(row.get("gameweek", gw)),
             "horizon_index": gw,
             "predicted_points": round(points, 3),
             "xmins": round(xmins, 1),
-            "minutes_adjusted_points": round(points * (0.50 + 0.50 * minutes_factor), 3),
+            # Model points already reflect expected minutes and availability;
+            # discounting them again for minutes would double-count the risk.
+            # The key is kept for API compatibility and equals the points.
+            "minutes_adjusted_points": round(points, 3),
             "opponent": row.get("opponent") if "opponent" in row.index else None,
             "home": bool(row["home"]) if "home" in row.index and pd.notna(row["home"]) else None,
             "difficulty": float(row["difficulty"]) if "difficulty" in row.index and pd.notna(row["difficulty"]) else None,

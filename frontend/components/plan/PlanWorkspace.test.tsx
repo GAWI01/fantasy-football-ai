@@ -54,3 +54,37 @@ test("estimated chip squad affordability remains labelled on Overview", async ()
   render(<TeamProvider><Overview /></TeamProvider>);
   expect(await screen.findByText("Squad affordability estimated from market prices.")).toBeInTheDocument();
 });
+
+function serveDashboard(fetchSpy: ReturnType<typeof mockApi>, dashboard: ReturnType<typeof makeDashboard>) {
+  const route = fetchSpy.getMockImplementation()!;
+  fetchSpy.mockImplementation(async (input, init) => {
+    if (String(input).includes("/dashboard/")) return new Response(JSON.stringify(dashboard), { status: 200 });
+    return route(input, init);
+  });
+}
+
+test("a hold plan explains the rejected move against the value of rolling, without threshold claims", async () => {
+  serveDashboard(mockApi(), makeDashboard({ verdict: "HOLD" }));
+  const { container } = render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  expect(await screen.findByText(/No move beats the value of rolling the free transfer/)).toBeInTheDocument();
+  expect(screen.getByText(/rolling is worth more/)).toBeInTheDocument();
+  expect(container.textContent).not.toMatch(/threshold/i);
+});
+
+test("the explanation describes the hit and holding policy the engine actually applies", async () => {
+  serveDashboard(mockApi(), makeDashboard());
+  const { container } = render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  await screen.findByRole("heading", { name: /Ekström → Castellano/ });
+  expect(container.textContent).toMatch(/takes a hit only when the five-Gameweek gain beats the hit plus a safety margin/);
+  expect(container.textContent).toMatch(/Holding is always an option/);
+  expect(container.textContent).not.toMatch(/clears its threshold/);
+});
+
+test("a provisional forecast is labelled while the previous Gameweek is played", async () => {
+  const dashboard = makeDashboard();
+  Object.assign(dashboard.meta, { forecast_stage: "provisional", history_cutoff_gw: 5 });
+  serveDashboard(mockApi(), dashboard);
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  const pill = await screen.findByText("Provisional forecast");
+  expect(pill).toHaveAttribute("title", expect.stringContaining("results up to GW5"));
+});

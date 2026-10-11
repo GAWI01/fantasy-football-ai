@@ -144,7 +144,7 @@ function decisionPlayer(seed: SquadSeed, event = TARGET_EVENT): DecisionPlayer {
 }
 
 function horizon(seed: SquadSeed): HorizonPlayer {
-  const [id, , , club, , xp, xmins] = seed;
+  const [id, , , club, , xp] = seed;
   const gameweeks = [0, 1, 2, 3, 4].map((offset) => {
     const event = TARGET_EVENT + offset;
     const fixture = opponentFor(club, event);
@@ -154,7 +154,7 @@ function horizon(seed: SquadSeed): HorizonPlayer {
       gameweek: event,
       horizon_index: offset,
       predicted_points: points,
-      minutes_adjusted_points: Math.round(points * Math.min(1, xmins / 85) * 10) / 10,
+      minutes_adjusted_points: points,
       uncertainty: Math.round((0.6 + offset * 0.35) * 10) / 10,
       opponent: clubName(fixture.opponent),
       home: fixture.home,
@@ -282,8 +282,19 @@ export function makeDashboard({ phase = "decision", verdict = "TRANSFER", stale 
   const now = "2026-10-03T09:00:00Z";
   const starters = SQUAD.slice(0, 11);
   const xiPoints = Math.round(starters.reduce((sum, seed) => sum + seed[5], 0) * 10) / 10;
-  const transfer = { player_out_id: 109, player_out: "Ekström", player_in_id: 201, player_in: "Castellano", price: 7.0, predicted_points: 5.9, gain: 2.7, selling_price: 6.4, position: "MID" };
-  const second = { player_out_id: 115, player_out: "Whitlock", player_in_id: 202, player_in: "Brennan", price: 7.5, predicted_points: 5.6, gain: 3.7, selling_price: 4.4, position: "FWD" };
+  const transfer = { player_out_id: 109, player_out: "Ekström", player_in_id: 201, player_in: "Castellano", price: 7.0, predicted_points: 5.9, gain: 2.7, next_gw_points_in: 5.9, next_gw_points_out: 3.2, selling_price: 6.4, position: "MID" };
+  const second = { player_out_id: 115, player_out: "Whitlock", player_in_id: 202, player_in: "Brennan", price: 7.5, predicted_points: 5.6, gain: 3.7, next_gw_points_in: 5.6, next_gw_points_out: 1.9, selling_price: 4.4, position: "FWD" };
+  // Canonical planner output: every option on one scale, holding included.
+  const holdOption = { action: "HOLD", transfers: [], transfers_used: 0, next_gw_gain: 0, horizon_gain: 0, hit_cost: 0, net_gain: 0, roll_value_forgone: 0, decision_score: 0, coverage: 1 };
+  const transferOption = verdict === "TRANSFER"
+    ? { action: "SINGLE_TRANSFER", transfers: [transfer], transfers_used: 1, next_gw_gain: 2.7, horizon_gain: 9.4, hit_cost: 0, net_gain: 9.4, roll_value_forgone: 2, decision_score: 7.4, coverage: 1 }
+    : { action: "SINGLE_TRANSFER", transfers: [transfer], transfers_used: 1, next_gw_gain: 0.6, horizon_gain: 1.6, hit_cost: 0, net_gain: 1.6, roll_value_forgone: 2, decision_score: -0.4, coverage: 1 };
+  const secondOption = verdict === "TRANSFER"
+    ? { action: "SINGLE_TRANSFER", transfers: [second], transfers_used: 1, next_gw_gain: 1.9, horizon_gain: 8.3, hit_cost: 0, net_gain: 8.3, roll_value_forgone: 2, decision_score: 6.3, coverage: 1 }
+    : { action: "SINGLE_TRANSFER", transfers: [second], transfers_used: 1, next_gw_gain: 0.4, horizon_gain: 1.1, hit_cost: 0, net_gain: 1.1, roll_value_forgone: 2, decision_score: -0.9, coverage: 1 };
+  const hitOption = { action: "HIT", transfers: [transfer, second], transfers_used: 2, next_gw_gain: 4.6, horizon_gain: 15.0, hit_cost: 4, net_gain: 11.0, roll_value_forgone: 2, decision_score: 7.0, coverage: 1 };
+  const chosen = verdict === "TRANSFER" ? transferOption : holdOption;
+  const alternatives = verdict === "TRANSFER" ? [hitOption, secondOption, holdOption] : [transferOption, secondOption];
   const decision = noDecision ? null : {
     current_team: { team_id: 4242, name: "Midnight Pressers", bank: 1.4, value: 101.2, transfers: 1, players: SQUAD.map((seed) => decisionPlayer(seed)) },
     starting_xi: { formation: "4-4-2", players: starters.map((seed) => decisionPlayer(seed)), projected_points: xiPoints },
@@ -291,33 +302,33 @@ export function makeDashboard({ phase = "decision", verdict = "TRANSFER", stale 
     captain: decisionPlayer(SQUAD[6]),
     vice_captain: decisionPlayer(SQUAD[9]),
     transfers: {
+      action: chosen.action,
       recommended: verdict === "TRANSFER" ? transfer : null,
-      recommended_transfers: verdict === "TRANSFER" ? [transfer] : [],
-      transfers_used: verdict === "TRANSFER" ? 1 : 0,
+      recommended_transfers: chosen.transfers,
+      transfers_used: chosen.transfers_used,
       free_transfers: 1,
       hit_cost: 0,
-      gross_gain: 2.7,
-      net_gain: verdict === "TRANSFER" ? 9.4 : 0,
+      gross_gain: chosen.horizon_gain,
+      net_gain: chosen.net_gain,
+      next_gw_gain: chosen.next_gw_gain,
+      decision_score: chosen.decision_score,
     },
     intelligence: {
-      action: verdict,
-      confidence: { score: verdict === "TRANSFER" ? 0.74 : 0.61, label: verdict === "TRANSFER" ? "HIGH" : "MEDIUM", components: { decision_margin: 0.68, minutes_certainty: 0.81, fixture_certainty: 1, signal_agreement: 0.55 } },
+      action: chosen.action,
+      transfer_action: chosen.action,
+      confidence: verdict === "TRANSFER"
+        ? { score: 0.22, label: "MEDIUM", basis: "Margin over the next-best action.", components: { decision_margin: 0.4, uncertainty: 0.9, ratio: 0.44 } }
+        : { score: 0.09, label: "LOW", basis: "Margin over the next-best action.", components: { decision_margin: 0.4, uncertainty: 2.2, ratio: 0.18 } },
       captain_decision: { captain: decisionPlayer(SQUAD[6]), vice_captain: decisionPlayer(SQUAD[9]), alternatives: [decisionPlayer(SQUAD[5]), decisionPlayer(SQUAD[1]), decisionPlayer(MARKET_EXTRA[3])] },
       squad_health: { status: "WATCH", unavailable_count: 0, high_risk_count: 1, average_xmins: 72, players: SQUAD.map(health) },
       horizon: { horizon: 5, gameweeks: [7, 8, 9, 10, 11], coverage: 1, team_projected_points: 271.4, team_player_projections: SQUAD.map(horizon) },
       transfer_strategy: {
-        action: verdict,
-        current_net_gain: verdict === "TRANSFER" ? 9.4 : 1.1,
-        horizon_gain: verdict === "TRANSFER" ? 11.2 : 1.6,
-        combined_score: verdict === "TRANSFER" ? 9.4 : 1.1,
-        coverage: 1,
-        selected_transfers: [transfer],
-        alternatives: [
-          { transfers: [second], current_net_gain: 6.1, horizon_gain: 8.3, combined_score: 6.1, coverage: 1 },
-          { transfers: [transfer, second], current_net_gain: 12.2, horizon_gain: 19.5, combined_score: 12.2, coverage: 1 },
-        ],
+        ...chosen,
+        selected_transfers: chosen.transfers,
+        alternatives,
+        options_by_transfer_count: verdict === "TRANSFER" ? [holdOption, transferOption, hitOption] : [holdOption, transferOption],
       },
-      chip_advisor: { recommended_chip: null, score: 0.18, alternatives: [{ chip: "BENCH_BOOST", score: 0.18 }] },
+      chip_advisor: { recommended_chip: null, score: 0, reason: "No chip clears its evidence bar this Gameweek.", alternatives: [] },
       chip_state: { known: true, wildcard_available: true, free_hit_available: true, bench_boost_available: true, triple_captain_available: false, double_gameweek: false, blank_gameweek: false },
       risk_summary: { average_risk: 0.2, high_risk_players: 1, players: [] },
       insights: [

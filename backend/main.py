@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_contract import api_envelope, source_meta
+from .availability import official_multiplier
 from .api_models import (
     DashboardEnvelopeModel,
     FixtureEnvelopeModel,
@@ -33,7 +34,7 @@ from .fpl_gateway import (
     default_gateway,
     end_gateway_trace,
 )
-from .team_service import TeamServiceError, fetch_public_team
+from .team_service import TeamNotFoundError, TeamServiceError, fetch_public_team
 from .fixture_service import (
     FixtureServiceError,
     get_fixture_matrix,
@@ -66,6 +67,7 @@ from .review_service import (
 )
 
 from decision_engine import build_decision
+from optimizer.action_planner import DEFAULT_POLICY
 
 
 app = FastAPI(
@@ -153,9 +155,9 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
             result.at[index, "team"] = club["name"]
         status = player.get("status")
         chance = player.get("chance_of_playing_next_round")
-        unavailable = status in {"s", "u", "n"} or chance == 0 or (status == "i" and chance is None)
+        multiplier = official_multiplier(status, chance)
+        unavailable = multiplier <= 0
         if if_available:
-            multiplier = 0.0 if unavailable else min(1.0, max(0.0, float(chance) / 100)) if chance is not None else 1.0
             result.at[index, "availability_multiplier"] = multiplier
             result.at[index, "predicted_points"] = float(row["ml_prediction"]) * multiplier
             result.at[index, "xmins"] = float(row["xmins_available"]) * multiplier
@@ -176,6 +178,7 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
             result.at[index, "start_probability"] = 0.0
         result.at[index, "status"] = status
         result.at[index, "chance_of_playing_next_round"] = chance
+        result.at[index, "news"] = str(player.get("news") or "")
         if "price" in result.columns and pd.notna(result.at[index, "price"]):
             price = float(result.at[index, "price"])
             result.at[index, "value"] = float(result.at[index, "predicted_points"]) / price if price > 0 else 0.0
@@ -183,20 +186,35 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
 
 
 def _live_event_expectations(event: int) -> dict[int, float] | None:
-    """Pre-deadline forecasts for the Gameweek being played, if that is the served artifact.
+    """Pre-deadline forecasts for the Gameweek being played.
 
-    While a Gameweek is live the next forecast is not published yet, so the
-    manifest still names the live Gameweek's artifact. Any other event (or any
-    unreadable artifact) gives no expectation rather than a mismatched one.
+    Once the next Gameweek's provisional forecast is published, the manifest
+    no longer names the live Gameweek, so the live Gameweek's artifact is
+    selected like the post-Gameweek review does: the latest one published
+    before its deadline. Optional context: live points never fail because of it.
     """
     try:
-        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
-        if manifest.prediction_event != event:
-            return None
-        predictions = _apply_official_player_state(load_predictions(), get_bootstrap_data())
-    except Exception:  # Optional context: live points must never fail because of it.
+        bootstrap = get_bootstrap_data()
+        target = next((item for item in bootstrap.get("events") or [] if item.get("id") == event), None)
+        path = select_review_prediction_file(
+            PREDICTIONS_DIR, event, deadline_time=(target or {}).get("deadline_time"))
+        predictions = pd.read_csv(path)
+    except Exception:
         return None
-    return {int(row.player_id): float(row.predicted_points) for row in predictions.itertuples(index=False)}
+    return {
+        int(row.player_id): float(row.predicted_points)
+        for row in predictions.itertuples(index=False)
+        if pd.notna(row.predicted_points)
+    }
+
+
+def _forecast_stage(manifest) -> dict:
+    """Final or provisional forecast (see historical_data.current_data.predict_gw)."""
+    provenance = manifest.model_provenance or {}
+    return {
+        "forecast_stage": provenance.get("forecast_stage", "final"),
+        "history_cutoff_gw": provenance.get("history_cutoff_gw", manifest.prediction_event - 1),
+    }
 
 
 @app.get("/api/v1/status", response_model=StatusEnvelopeModel)
@@ -252,6 +270,7 @@ def get_status_v1():
                 manifest.prediction_event == target_event if target_event is not None else None
             ),
             "validation_state": _model_validation_state(manifest),
+            **_forecast_stage(manifest),
         }
         meta["model"] = source_meta(
             "model",
@@ -931,10 +950,12 @@ def get_decision(
             if free_transfers is not None
             else int(transfer_state["free_transfers"])
         )
+        # Search hold, every free transfer and up to two hits; the planner
+        # chooses among them (rolling is always a candidate).
         effective_max_transfers = (
             max_transfers
             if max_transfers is not None
-            else min(5, max(1, effective_free_transfers))
+            else min(15, effective_free_transfers + DEFAULT_POLICY.max_hits)
         )
         effective_horizon = min(5, 39 - manifest.prediction_event)
         horizon_predictions = build_fixture_scaled_horizon(
@@ -1009,7 +1030,15 @@ def get_dashboard_v1(team_id: int, free_transfers: int | None = None):
         decision=lambda value: get_decision(value, free_transfers=free_transfers),
     )
     try:
-        payload = build_dashboard(team_id, dependencies)
+        try:
+            payload = build_dashboard(team_id, dependencies)
+        except TeamNotFoundError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No FPL team found with ID {team_id}. Check the number in your team's web address.",
+            ) from exc
+        except (TeamServiceError, LiveDataServiceError) as exc:
+            raise HTTPException(status_code=502, detail=f"Official FPL data is unavailable: {exc}") from exc
         try:
             manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
             bootstrap = get_bootstrap_data()
@@ -1021,6 +1050,7 @@ def get_dashboard_v1(team_id: int, free_transfers: int | None = None):
             payload["meta"].update(planning_state)
             payload["meta"]["prediction_version"] = manifest.prediction_file
             payload["meta"]["model_validation_state"] = _model_validation_state(manifest)
+            payload["meta"].update(_forecast_stage(manifest))
             if _model_validation_state(manifest) != "validated":
                 payload["meta"]["degraded"] = True
                 payload["errors"].append({
