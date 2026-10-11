@@ -21,7 +21,7 @@ def _picks(ids, captain, bench=(), chip=None):
 
 
 def _responses():
-    standings = {"league": {"id": 77, "name": "Pils"}, "standings": {"results": [
+    standings = {"league": {"id": 77, "name": "Friends"}, "standings": {"results": [
         {"entry": 1, "entry_name": "Leader FC", "player_name": "Ada Lead", "rank": 1, "last_rank": 1, "event_total": 60, "total": 400},
         {"entry": 2, "entry_name": "Me United", "player_name": "Bo Me", "rank": 2, "last_rank": 3, "event_total": 50, "total": 380},
         {"entry": 3, "entry_name": "Third", "player_name": "Cy Three", "rank": 3, "last_rank": 2, "event_total": 40, "total": 350},
@@ -30,7 +30,7 @@ def _responses():
         f"{API}/bootstrap-static/": BOOTSTRAP,
         f"{API}/entry/2/": {"leagues": {"classic": [
             {"id": 314, "name": "Overall", "league_type": "s", "rank_count": 11_000_000},
-            {"id": 77, "name": "Pils", "league_type": "x", "rank_count": 3, "entry_rank": 2, "entry_last_rank": 3},
+            {"id": 77, "name": "Friends", "league_type": "x", "rank_count": 3, "entry_rank": 2, "entry_last_rank": 3},
         ]}},
         f"{API}/leagues-classic/77/standings/": standings,
         # Everyone owns 1; leader and third captain it, third with Triple Captain.

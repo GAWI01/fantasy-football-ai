@@ -365,7 +365,7 @@ En erfaren FPL-manager ville raskt sluttet å stole på rådene. Produktet er en
 | Team ID-input (ID eller URL) | VERIFIED | `ConnectHero.tsx` trekker ut `entry/(\d+)`. Regex `^\d{1,10}$`. |
 | Ugyldig format | VERIFIED | Presis lokal melding. |
 | Ukjent ID | **BROKEN** | 500 og «Failed to fetch» (ISSUE-007). |
-| Manager og lagnavn | VERIFIED | Lagnavn og etternavn («Selvaraj»). Kun etternavn er et bevisst valg. |
+| Manager og lagnavn | VERIFIED | Lagnavn og etternavn («Manager»). Kun etternavn er et bevisst valg. |
 | Spillere og squad (15) | VERIFIED | Fra `entry/{id}/event/{current}/picks`. Navn, klubb og pris fra bootstrap. |
 | Starting XI, benk, C/VC | VERIFIED | Offisielle `position` og `multiplier` vises i live-visning og på My Team. Modellens XI vises separat på Overview («Model lineup from your squad»). |
 | Bank / lagverdi | VERIFIED | Bank 0,1, verdi 101,7, likt på Overview og Plan (`data.team.bank` brukes først). |
