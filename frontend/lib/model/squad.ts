@@ -151,13 +151,38 @@ export function buildSquad(data: DashboardData): SquadPlayer[] {
         liveMinutes: live ? num(live.live_minutes) : null,
         liveExpected: live ? num(live.expected_points) : null,
         liveBps: live ? num(live.live_bps) : null,
-        liveBreakdown: live?.breakdown ?? [],
+        liveBreakdown: live ? liveBreakdownOf(live) : [],
         fixtureState: fixture.state,
         liveFixture: fixture.fixture,
       };
     })
     .filter((player): player is SquadPlayer => player != null)
     .sort((left, right) => left.slot - right.slot);
+}
+
+const RAW_STATS: Array<[stat: string, field: keyof LivePick]> = [
+  ["minutes", "live_minutes"],
+  ["goals_scored", "goals"],
+  ["assists", "assists"],
+  ["saves", "saves"],
+  ["penalties_saved", "penalties_saved"],
+  ["penalties_missed", "penalties_missed"],
+  ["yellow_cards", "yellow_cards"],
+  ["red_cards", "red_cards"],
+  ["own_goals", "own_goals"],
+  ["bonus", "bonus"],
+];
+
+/**
+ * FPL's points per stat; without it (an older server), the raw stats the
+ * live pick already carries, with points left unknown rather than guessed.
+ */
+export function liveBreakdownOf(live: LivePick): LiveStat[] {
+  if (live.breakdown?.length) return live.breakdown;
+  return RAW_STATS.flatMap(([stat, field]) => {
+    const value = num(live[field] as number | null | undefined);
+    return value ? [{ stat, value, points: stat === "bonus" ? value : null }] : [];
+  });
 }
 
 /**
