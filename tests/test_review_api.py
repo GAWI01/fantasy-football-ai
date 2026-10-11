@@ -119,6 +119,23 @@ def test_review_api_defaults_to_latest_finished_gameweek(monkeypatch):
     assert body["errors"] == []
 
 
+def test_review_api_defaults_to_the_latest_reviewable_gameweek(monkeypatch):
+    _install_successful_sources(monkeypatch)
+
+    def load(event, deadline_time=None):
+        if event == 2:
+            raise ReviewDataError("No forecast was saved before the GW2 deadline")
+        return pd.DataFrame([{"player_id": 1, "predicted_points": 6.0}, {"player_id": 2, "predicted_points": 5.0}]), "gw1_predictions_v5.csv"
+
+    monkeypatch.setattr(main, "_load_review_predictions", load, raising=False)
+
+    body = client.get("/api/v1/review/123").json()
+
+    # GW2 has no saved forecast, so the page opens on GW1 instead.
+    assert body["data"]["event"] == 1
+    assert body["meta"]["event"] == 1
+
+
 def test_review_api_returns_explicit_unavailable_state_for_unfinished_event(monkeypatch):
     monkeypatch.setattr(main, "get_bootstrap_data", _bootstrap, raising=False)
 

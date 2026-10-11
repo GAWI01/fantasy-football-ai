@@ -292,7 +292,10 @@ def get_event_fixtures(event: int) -> dict[str, Any]:
             "away_score": fixture.get("team_a_score"),
             "kickoff_time": fixture.get("kickoff_time"),
             "started": bool(fixture.get("started")),
-            "finished": bool(fixture.get("finished")),
+            # Full time counts as finished: the score and minutes are final,
+            # only the bonus points still wait for FPL to confirm them.
+            "finished": bool(fixture.get("finished") or fixture.get("finished_provisional")),
+            "bonus_pending": bool(fixture.get("finished_provisional")) and not fixture.get("finished"),
             "minutes": int(fixture.get("minutes", 0) or 0),
         })
     rows.sort(key=lambda item: (item.get("kickoff_time") or "", item["fixture_id"]))

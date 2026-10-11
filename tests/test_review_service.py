@@ -339,7 +339,7 @@ def test_select_review_prediction_file_rejects_uncertified_artifact(tmp_path: Pa
     base = tmp_path / "gw2_predictions.csv"
     base.write_text("base", encoding="utf-8")
 
-    with pytest.raises(ReviewDataError, match="certified pre-deadline"):
+    with pytest.raises(ReviewDataError, match="saved before the GW"):
         select_review_prediction_file(
             tmp_path,
             2,
@@ -352,9 +352,23 @@ def test_select_review_prediction_file_rejects_post_deadline_generation(tmp_path
     artifact.write_text("v5", encoding="utf-8")
     _certify(artifact, event=2, generated_at="2026-08-22T18:00:00+00:00")
 
-    with pytest.raises(ReviewDataError, match="certified pre-deadline"):
+    with pytest.raises(ReviewDataError, match="saved before the GW"):
         select_review_prediction_file(
             tmp_path,
             2,
             deadline_time="2026-08-22T17:30:00Z",
         )
+
+
+def test_wildcard_transfer_chains_collapse_to_net_squad_changes():
+    from backend.review_service import _net_transfers
+
+    transfers = [  # FPL lists the newest first
+        {"event": 3, "element_out": 5, "element_in": 4, "time": "2026-08-29T10:03:00Z"},
+        {"event": 3, "element_out": 4, "element_in": 5, "time": "2026-08-29T10:02:00Z"},
+        {"event": 3, "element_out": 2, "element_in": 3, "time": "2026-08-29T10:01:00Z"},
+        {"event": 3, "element_out": 1, "element_in": 2, "time": "2026-08-29T10:00:00Z"},
+        {"event": 2, "element_out": 9, "element_in": 8, "time": "2026-08-22T10:00:00Z"},
+    ]
+
+    assert _net_transfers(transfers, 3) == [(1, 3)]

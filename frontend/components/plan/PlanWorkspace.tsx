@@ -69,19 +69,20 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
           );
         })}
       </div>
-      {active ? (
+      {/* The recommended option is already spelled out in the transfer decision. */}
+      {active && scenarioTitle(active) !== recommendedTitle ? (
         <div className="scenario-detail">
           <span className="eyebrow">Selected: {scenarioTitle(active)}</span>
           {active.moves.length ? active.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : <p className="muted">Keep the squad and carry the free transfer. Nothing changes this Gameweek, and you keep flexibility for team news.</p>}
           <ScenarioMetrics scenario={active} plan={plan} />
         </div>
-      ) : null}
+      ) : rows.length > 1 ? <p className="card-note">Tap another option to see its moves next to the recommendation.</p> : null}
       {withHit ? (
         <p className="card-note">
           <b>Hit check:</b> best plan with a hit nets {signed(withHit.horizonNet)} over five Gameweeks{noHit ? `, versus ${signed(noHit.horizonNet)} for the best free move` : ""}. {plan.recommended.hit ? "The engine accepts this hit." : "The engine does not take the hit."}
         </p>
       ) : null}
-      <p className="card-note">Next GW is the change in your best XI and captain’s projected points this Gameweek; bench players count only as cover. 5-GW gain is the same over five Gameweeks, later ones weighted less; 5-GW net subtracts the hit. The engine ranks options by 5-GW net minus the value of the free transfers they use, so holding wins when no move beats rolling.</p>
+      <p className="card-note">5-GW net is the five-Gameweek gain minus any hit. See <a href="#why">Why this plan</a> for how the numbers are built.</p>
     </Card>
   );
 }

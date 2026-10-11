@@ -229,7 +229,7 @@ export function ReviewWorkspace() {
         {review.loading && !review.data ? <Card><Skeleton lines={6} /></Card> : review.error && !review.data ? (
           <DataState tone="error" title="Review could not be loaded" action={<button className="btn btn-sm" onClick={review.reload}>Try again</button>}>{review.error}</DataState>
         ) : reviewData && !reviewData.available ? (
-          <DataState tone="unavailable" title={`GW${reviewData.event} review unavailable`}>{reviewData.reason} The model never rebuilds a model opinion that was not saved before the deadline.</DataState>
+          <DataState tone="unavailable" title={`No review for GW${reviewData.event}`}>{reviewData.reason} Pick another Gameweek above. Forecasts are never rebuilt after the fact, so every review is a fair test.</DataState>
         ) : reviewData ? (
           <>
             {review.data?.meta.stale ? <DataState tone="stale" compact title="Official outcomes may be cached">The saved model file is unchanged; official points may lag the latest FPL update.</DataState> : null}

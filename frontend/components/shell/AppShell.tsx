@@ -100,9 +100,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               const Icon = ICONS[item.key];
               const active = isActive(item, pathname);
               return (
-                <Link key={item.key} href={item.href} className="topnav-link" aria-current={active ? "page" : undefined}>
+                <Link key={item.key} href={item.href} className="topnav-link" aria-current={active ? "page" : undefined} aria-label={item.label} title={item.label}>
                   <Icon size={16} aria-hidden="true" />
-                  <span>{item.label}</span>
+                  <span>{item.short}</span>
                 </Link>
               );
             })}
