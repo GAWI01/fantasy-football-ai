@@ -129,8 +129,8 @@ def build_league(
         entry = int(row["entry"])
         standings.append({
             "team_id": entry,
+            # Team names only: managers' personal names are not republished.
             "team_name": str(row.get("entry_name") or ""),
-            "manager": str(row.get("player_name") or "").split(" ")[-1] or None,
             "rank": row.get("rank"),
             "last_rank": row.get("last_rank"),
             "event_points": row.get("event_total"),

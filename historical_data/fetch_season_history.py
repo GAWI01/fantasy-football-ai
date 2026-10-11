@@ -105,7 +105,7 @@ def history_rows(bootstrap: dict, summaries: dict[int, dict], events: list[int])
     return frame.sort_values(["GW", "fixture", "element"], kind="mergesort").reset_index(drop=True)
 
 
-def fetch_season(output_root: Path = PROJECT_ROOT / "historical_data", workers: int = 6) -> dict:
+def fetch_season(output_root: Path = PROJECT_ROOT / "historical_data", workers: int = 2) -> dict:
     session = _session()
     bootstrap = _get_json(session, "bootstrap-static/")
     fixtures = _get_json(session, "fixtures/")

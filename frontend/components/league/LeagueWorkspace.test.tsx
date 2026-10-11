@@ -31,9 +31,9 @@ function serve(fetchSpy: ReturnType<typeof mockApi>) {
     if (url.includes("/api/v1/league/7")) {
       return json({ league_id: 7, name: "Friends League", event: 6, managers: 3, analysed_managers: 3, max_analysed_managers: 30,
         standings: [
-          { team_id: 1, team_name: "Northbank Nomads", manager: "Berg", rank: 1, last_rank: 1, event_points: 60, total: 417, gap_to_you: 145, active_chip: "wildcard", is_you: false },
-          { team_id: 2, team_name: "Late Winners", manager: "Dahl", rank: 2, last_rank: 2, event_points: 44, total: 400, gap_to_you: 128, active_chip: null, is_you: false },
-          { team_id: 4242, team_name: "laget mitt", manager: "Witzøe", rank: 3, last_rank: 3, event_points: 29, total: 272, gap_to_you: 0, active_chip: null, is_you: true },
+          { team_id: 1, team_name: "Northbank Nomads", rank: 1, last_rank: 1, event_points: 60, total: 417, gap_to_you: 145, active_chip: "wildcard", is_you: false },
+          { team_id: 2, team_name: "Late Winners", rank: 2, last_rank: 2, event_points: 44, total: 400, gap_to_you: 128, active_chip: null, is_you: false },
+          { team_id: 4242, team_name: "laget mitt", rank: 3, last_rank: 3, event_points: 29, total: 272, gap_to_you: 0, active_chip: null, is_you: true },
         ],
         players: [player(2, "Saka", { owners: 2, captains: 2, eo: 133.3, rival_eo: 200, role: "THREAT" }), player(4, "Mine", { you: "CAPTAIN", rival_eo: 0, role: "DIFFERENTIAL" })],
         thresholds: { threat_eo: 50, differential_eo: 25 }, basis: "Squads from GW6, the latest deadline that has passed." });

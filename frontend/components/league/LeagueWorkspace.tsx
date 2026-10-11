@@ -40,7 +40,7 @@ function Race({ standings, selected, onSelect }: { standings: LeagueStanding[]; 
             <span className="race-rank num">{row.rank}</span>
             <span className="race-name">
               <strong>{row.team_name}</strong>
-              <small>{row.manager ?? ""}{row.active_chip ? ` · ${row.active_chip}` : ""} · GW {row.event_points ?? "—"}</small>
+              <small>{row.active_chip ? `${row.active_chip} · ` : ""}GW {row.event_points ?? "—"}</small>
             </span>
             <span className="race-track" aria-hidden="true"><i style={{ width: `${Math.max(4, share * 100)}%` }} /></span>
             <span className="race-total num">{row.total ?? "—"}</span>

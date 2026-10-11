@@ -53,6 +53,12 @@ def test_only_private_leagues_are_listed(client):
     assert leagues[0]["rank"] == 2
 
 
+def test_standings_never_republish_managers_personal_names(client):
+    data = client.get("/api/v1/league/77?team_id=2").json()["data"]
+    assert all("manager" not in row for row in data["standings"])
+    assert not any(name in str(data) for name in ("Ada Lead", "Bo Me", "Cy Three"))
+
+
 def test_standings_gaps_and_effective_ownership(client):
     data = client.get("/api/v1/league/77?team_id=2").json()["data"]
     assert data["event"] == 6 and data["analysed_managers"] == 3

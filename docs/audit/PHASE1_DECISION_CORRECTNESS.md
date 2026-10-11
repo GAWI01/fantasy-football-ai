@@ -57,21 +57,21 @@ The snapshot `benchmark/snapshots/gw6_pre_deadline.json.gz` holds official FPL r
 
 | Team | FT | Before | After |
 |---|---|---|---|
-| 895045 | 1 | MULTI_TRANSFER Schade>Groß (API said Szoboszlai>Rashford) · HIGH | SINGLE_TRANSFER Szoboszlai>Rashford · MEDIUM |
-| 895045 (FT=0) | 0 | HOLD Schade>Groß (API said Szoboszlai>Rashford) · HIGH | HIT Szoboszlai>Rashford −4 · LOW |
-| 895045 (FT=2) | 2 | Forster>Kelleher, Szoboszlai>Groß (API said Forster>Pickford, Palmer>Rashford) · HIGH | MULTI_TRANSFER Palmer>Groß, Slater>Rashford · LOW |
-| 895045 (FT=3) | 3 | Forster>Kelleher, Palmer>Groß, Slater>Rashford (API differed) · HIGH | MULTI_TRANSFER Konsa>Tarkowski, Palmer>Groß, Szoboszlai>Rashford · LOW |
-| 4182037 | 1 | MULTI_TRANSFER Semenyo>Rashford · HIGH · **Wildcard** | SINGLE_TRANSFER Semenyo>Rashford · MEDIUM · no chip (WC advantage 14.9 < 20) |
-| 5151567 | 1 | MULTI_TRANSFER Bogle>Tarkowski · HIGH | SINGLE_TRANSFER Bogle>Tarkowski · MEDIUM |
-| 1 | 2 | Button(GK)>Tzolakis, O'Reilly>Branthwaite · HIGH | O'Reilly>Tarkowski, Szoboszlai>Rashford · LOW |
-| 2 | 3 | Dubravka(GK)>Pickford, Konsa>Tarkowski, Palmer>Rashford · HIGH | Konsa>Tarkowski, Palmer>Rogers, Szoboszlai>Rashford · LOW |
+| 9100001 | 1 | MULTI_TRANSFER Schade>Groß (API said Szoboszlai>Rashford) · HIGH | SINGLE_TRANSFER Szoboszlai>Rashford · MEDIUM |
+| 9100001 (FT=0) | 0 | HOLD Schade>Groß (API said Szoboszlai>Rashford) · HIGH | HIT Szoboszlai>Rashford −4 · LOW |
+| 9100001 (FT=2) | 2 | Forster>Kelleher, Szoboszlai>Groß (API said Forster>Pickford, Palmer>Rashford) · HIGH | MULTI_TRANSFER Palmer>Groß, Slater>Rashford · LOW |
+| 9100001 (FT=3) | 3 | Forster>Kelleher, Palmer>Groß, Slater>Rashford (API differed) · HIGH | MULTI_TRANSFER Konsa>Tarkowski, Palmer>Groß, Szoboszlai>Rashford · LOW |
+| 9100002 | 1 | MULTI_TRANSFER Semenyo>Rashford · HIGH · **Wildcard** | SINGLE_TRANSFER Semenyo>Rashford · MEDIUM · no chip (WC advantage 14.9 < 20) |
+| 9100003 | 1 | MULTI_TRANSFER Bogle>Tarkowski · HIGH | SINGLE_TRANSFER Bogle>Tarkowski · MEDIUM |
+| 9100004 | 2 | Button(GK)>Tzolakis, O'Reilly>Branthwaite · HIGH | O'Reilly>Tarkowski, Szoboszlai>Rashford · LOW |
+| 9100005 | 3 | Dubravka(GK)>Pickford, Konsa>Tarkowski, Palmer>Rashford · HIGH | Konsa>Tarkowski, Palmer>Rogers, Szoboszlai>Rashford · LOW |
 | 6658075 | 0 | Konsa>Gabriel −4 (API said Ajayi>Tarkowski) · HIGH | HIT Szoboszlai>Rashford −4 · LOW |
-| 145931 | 2 | Dubravka(GK)>Pickford, Palmer>Rashford · HIGH | **SINGLE_TRANSFER** Szoboszlai>Rashford (rolls one FT) · LOW |
-| 2312895 | 2 | Button(GK)>Pickford, Palmer>Rashford · HIGH | Muharemović>Tarkowski, Palmer>Rashford · LOW |
-| 5841371 | 3 | Three moves, API differed on all three · HIGH · **Wildcard** | Calafiori>Tarkowski, Hughes>Iwobi, Semenyo>Rashford · LOW · no chip |
-| 1482 | 2 | Dovin(GK)>Pickford, Palmer>Rashford · HIGH | Calafiori>Gabriel, Palmer>Rashford · LOW |
-| 5416316 | 2 | Lecomte(GK)>Kelleher, Cherki>Rashford (API differed) · HIGH | Calafiori>Tarkowski, Cherki>Rashford · LOW |
-| 639449 | 1 | Forster (bench GK, 0 xMins)>Pickford · HIGH | HIT B.Fernandes>Rashford, João Pedro>Haaland −4 · LOW |
+| 9100006 | 2 | Dubravka(GK)>Pickford, Palmer>Rashford · HIGH | **SINGLE_TRANSFER** Szoboszlai>Rashford (rolls one FT) · LOW |
+| 9100007 | 2 | Button(GK)>Pickford, Palmer>Rashford · HIGH | Muharemović>Tarkowski, Palmer>Rashford · LOW |
+| 9100008 | 3 | Three moves, API differed on all three · HIGH · **Wildcard** | Calafiori>Tarkowski, Hughes>Iwobi, Semenyo>Rashford · LOW · no chip |
+| 9100009 | 2 | Dovin(GK)>Pickford, Palmer>Rashford · HIGH | Calafiori>Gabriel, Palmer>Rashford · LOW |
+| 9100010 | 2 | Lecomte(GK)>Kelleher, Cherki>Rashford (API differed) · HIGH | Calafiori>Tarkowski, Cherki>Rashford · LOW |
+| 9100011 | 1 | Forster (bench GK, 0 xMins)>Pickford · HIGH | HIT B.Fernandes>Rashford, João Pedro>Haaland −4 · LOW |
 
 | Policy check | Before | After |
 |---|---|---|
@@ -80,14 +80,14 @@ The snapshot `benchmark/snapshots/gw6_pre_deadline.json.gz` holds official FPL r
 | `MULTI_TRANSFER` label with one transfer | 5/15 | **0/15** |
 | Confidence HIGH | 15/15 | **0/15** (MEDIUM 3, LOW 12) |
 | Wildcard recommended because it was available | 2/2 available | **0/2** |
-| Uses fewer FTs than available when the next one does not pay | 0/6 multi-FT cases | **1/6** (145931) |
+| Uses fewer FTs than available when the next one does not pay | 0/6 multi-FT cases | **1/6** (9100006) |
 | HOLD on a real team | 1/15 (FT=0, hit rule) | **0/15** (see below) |
 
 **HOLD on real teams: still 0/15.** The synthetic tests show the engine holds when no move beats rolling (scenarios A, C, D, E, F). On these real squads, though, the GW6 model finds a weighted gain above the 2.0 roll value every time. Rashford is in 14 of 15 plans. His forecast is ml 5.59 if available, ×0.75 doubtful in GW6, with 54 expected minutes. Under GW-specific availability he now counts as recovered after GW6, so his horizon value rose. The policy follows the model faithfully. Whether the model is right about Rashford is the open ML question (see Remaining).
 
 **Live state check (GW6 live, 2026-10-11):**
 - I ran the real refresh pipeline in a scratch copy. It published `gw7_predictions_v13.csv` as provisional, with history to GW5.
-- The real API then returned `service_state: ready`, `prediction_event 7`, `actions_locked: false` and `forecast_stage: provisional`. It recommended O'Shea>Gvardiol, Palmer>Groß for 895045 (MEDIUM).
+- The real API then returned `service_state: ready`, `prediction_event 7`, `actions_locked: false` and `forecast_stage: provisional`. It recommended O'Shea>Gvardiol, Palmer>Groß for 9100001 (MEDIUM).
 - Live GW6 points still compared against the GW6 pre-deadline forecast.
 - In the browser, the plan page showed the GW7 plan with the "Provisional forecast" pill on desktop and at 390 px, with no horizontal scroll and no "threshold" text.
 

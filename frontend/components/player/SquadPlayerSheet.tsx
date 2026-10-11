@@ -44,7 +44,7 @@ export function SquadPlayerDetail({ player, live }: { player: SquadPlayer; live:
           <div className="row row-wrap pdetail-tags">
             <span className={`pill ${availability.tone === "ok" ? "pill-pos" : availability.tone === "warn" ? "pill-warn" : availability.tone === "risk" ? "pill-neg" : ""}`}><i className={`dot dot-${availability.tone}`} />{availability.label}</span>
             {player.risk ? <span className={`pill ${player.risk.label === "LOW" ? "" : player.risk.label === "MEDIUM" ? "pill-warn" : "pill-neg"}`}>{sentenceCase(player.risk.label)} minutes risk</span> : null}
-            {player.isCaptain ? <span className="pill pill-accent">Official captain</span> : player.isVice ? <span className="pill">Official vice</span> : null}
+            {player.isCaptain ? <span className="pill pill-accent">Your captain in FPL</span> : player.isVice ? <span className="pill">Your vice in FPL</span> : null}
           </div>
         </div>
       </div>

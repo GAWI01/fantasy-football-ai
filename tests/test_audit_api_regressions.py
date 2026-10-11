@@ -31,12 +31,13 @@ def _bootstrap():
     }
 
 
-def test_manager_display_excludes_first_name():
+def test_manager_personal_names_are_not_returned():
     result = normalize_team_response(123, {
         'id': 123, 'name': 'Test XI', 'player_first_name': 'Private',
         'player_last_name': 'Surname', 'picks': [],
     })
-    assert result['manager_name'] == 'Surname'
+    assert 'manager_name' not in result
+    assert 'Private' not in str(result) and 'Surname' not in str(result)
 
 
 def test_official_player_name_never_falls_back_to_first_name(monkeypatch):

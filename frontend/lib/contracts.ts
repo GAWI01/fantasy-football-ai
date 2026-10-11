@@ -62,7 +62,6 @@ export type TeamPick = {
 export type DashboardTeam = {
   team_id: number;
   name: string;
-  manager_name?: string | null;
   bank: number | null;
   event: number | null;
   transfers: number | null;
@@ -681,7 +680,7 @@ export type ManagerLeague = { league_id: number; name: string; managers: number 
 export type LeaguesEnvelope = { data: { team_id: number; leagues: ManagerLeague[] }; meta: SourceMeta; errors: AreaError[] };
 
 export type LeagueStanding = {
-  team_id: number; team_name: string; manager: string | null; rank: number | null; last_rank: number | null;
+  team_id: number; team_name: string; rank: number | null; last_rank: number | null;
   event_points: number | null; total: number | null; gap_to_you: number; active_chip: string | null; is_you: boolean;
 };
 
