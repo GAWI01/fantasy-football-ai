@@ -28,8 +28,12 @@
 }
 .pitch-lines { position: absolute; inset: 4% 3% 0; width: 94%; height: 96%; z-index: -1; transform: perspective(1100px) rotateX(16deg); transform-origin: 50% 100%; }
 .pitch-lines * { fill: none; stroke: rgba(255, 255, 255, 0.34); stroke-width: 0.5; vector-effect: non-scaling-stroke; }
-.pitch-rows { position: relative; display: grid; grid-template-rows: repeat(4, auto); row-gap: 14px; min-height: 100%; }
-.pitch-row { display: flex; justify-content: space-evenly; align-items: flex-start; gap: 4px; }
+/* The track never grows past the pitch: a row of five shrinks its tiles
+   instead of pushing every row off-centre and clipping the last player. */
+.pitch-rows { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, auto); row-gap: 14px; min-height: 100%; }
+.pitch-row { display: flex; justify-content: space-evenly; align-items: flex-start; gap: 4px; min-width: 0; }
+.pitch-row > .pp { flex: 0 1 auto; min-width: 0; }
+.pp-plate, .pp-fixture { min-width: 0; }
 .pitch-compact { padding: 12px 6px 10px; }
 .pitch-compact .pitch-rows { row-gap: 8px; }
 
@@ -126,6 +130,10 @@ button.pp:active { transform: scale(0.97); }
   .pp-value { font-size: 11px; }
   .pp-fixture { font-size: 9.5px; }
   .pitch-row[data-line="DEF"] .pp, .pitch-row[data-line="MID"] .pp { width: min(70px, 19vw); }
+  /* Five in a line (3-5-2, 5-3-2, 5-4-1): smaller kits so the names stay readable. */
+  .pitch-row:has(> .pp:nth-child(5)) { gap: 2px; justify-content: space-between; padding: 0 2px; }
+  .pitch-row:has(> .pp:nth-child(5)) .pp-kit > svg { width: 34px; height: 34px; }
+  .pitch-row:has(> .pp:nth-child(5)) .pp-name { font-size: 10.5px; padding: 2px 2px 1px; letter-spacing: 0; }
   .bench { padding: 10px 4px 8px; }
 }
 @media (max-width: 360px) {
