@@ -125,3 +125,121 @@ def chip_advisor(
             "triple_captain_points": TRIPLE_CAPTAIN_MIN_POINTS,
         },
     }
+
+
+CHIP_LABELS = {
+    "WILDCARD": "Wildcard",
+    "FREE_HIT": "Free Hit",
+    "BENCH_BOOST": "Bench Boost",
+    "TRIPLE_CAPTAIN": "Triple Captain",
+}
+# A Free Hit week is one where this many of your starters are missing:
+# no match, or projected (almost) nothing because they are ruled out.
+FREE_HIT_BLANK_STARTERS = 3
+MISSING_STARTER_POINTS = 0.5
+
+
+def _gameweek_points(item: Mapping[str, Any]) -> float:
+    value = item.get("minutes_adjusted_points", item.get("predicted_points"))
+    try:
+        return float(value or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def chip_outlook(
+    *,
+    state: Mapping[str, Any],
+    advisor: Mapping[str, Any],
+    wildcard_signal: Mapping[str, Any] | None,
+    scenario_scores: Mapping[str, float] | None,
+    horizon_team: list[Mapping[str, Any]],
+    starter_ids: list[int],
+    names: Mapping[int, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Per chip: is it worth playing now, and which week in view suits it.
+
+    The recommendation itself is the advisor's (`advisor`); this explains it
+    and points at the best window inside the projection horizon, judged on
+    the current squad: starters missing (Free Hit), bench points
+    (Bench Boost) and the best captain's points (Triple Captain).
+    """
+    names = names or {}
+    scores = dict(scenario_scores or {})
+    starters = {int(player_id) for player_id in starter_ids}
+    weeks: dict[int, dict[str, Any]] = {}
+    for player in horizon_team:
+        player_id = int(player["player_id"])
+        for item in player.get("gameweeks") or []:
+            gameweek = int(item["gameweek"])
+            week = weeks.setdefault(gameweek, {"bench": 0.0, "blanks": 0, "doubles": 0, "captain": (0.0, None)})
+            points = _gameweek_points(item)
+            fixtures = int(item.get("fixture_count", 1) if item.get("fixture_count") is not None else 1)
+            if fixtures >= 2:
+                week["doubles"] += 1
+            if player_id in starters:
+                if fixtures == 0 or points < MISSING_STARTER_POINTS:
+                    week["blanks"] += 1
+                if points > week["captain"][0]:
+                    week["captain"] = (points, player_id)
+            else:
+                week["bench"] += points
+    ordered = sorted(weeks)
+    span = f"GW{ordered[0]}-{ordered[-1]}" if ordered else "the weeks in view"
+    recommended = advisor.get("recommended_chip")
+    signal = dict(wildcard_signal or {})
+    result: list[dict[str, Any]] = []
+    for chip, key in (("WILDCARD", "wildcard_available"), ("FREE_HIT", "free_hit_available"),
+                      ("BENCH_BOOST", "bench_boost_available"), ("TRIPLE_CAPTAIN", "triple_captain_available")):
+        available = bool(state.get(key, False))
+        entry: dict[str, Any] = {"chip": chip, "label": CHIP_LABELS[chip], "available": available,
+                                 "verdict": None, "this_week": None, "threshold": None, "best_window": None, "summary": None}
+        if not available:
+            result.append(entry)
+            continue
+        entry["verdict"] = "USE" if recommended == chip else "SAVE"
+        if chip == "WILDCARD":
+            advantage, threshold = signal.get("advantage"), signal.get("threshold")
+            entry["this_week"] = None if advantage is None else round(float(advantage), 2)
+            entry["threshold"] = threshold
+            entry["summary"] = (
+                f"A rebuild beats your best normal move by {float(advantage):.1f} points (worth it from {float(threshold):.0f})."
+                if advantage is not None and threshold is not None
+                else "Worth it when a rebuild clearly beats your best normal move."
+            )
+        elif chip == "FREE_HIT":
+            entry["this_week"] = scores.get("FREE_HIT")
+            entry["threshold"] = FREE_HIT_MIN_GAIN
+            window = max((gw for gw in ordered if weeks[gw]["blanks"] >= FREE_HIT_BLANK_STARTERS),
+                         key=lambda gw: (weeks[gw]["blanks"], -gw), default=None)
+            if window is not None:
+                entry["best_window"] = {"gameweek": window, "value": weeks[window]["blanks"], "unit": "starters missing"}
+                entry["summary"] = (f"GW{window}: {weeks[window]['blanks']} of your starters have no match or are ruled out. "
+                                    "That is a Free Hit week.")
+            else:
+                entry["summary"] = (f"Your starters are expected to play in {span}. Keep it for a blank Gameweek "
+                                    "or a week when injuries and bans pile up.")
+        elif chip == "BENCH_BOOST":
+            entry["this_week"] = scores.get("BENCH_BOOST")
+            entry["threshold"] = BENCH_BOOST_MIN_BENCH_POINTS
+            window = max(ordered, key=lambda gw: (weeks[gw]["bench"], -gw), default=None)
+            if window is not None:
+                week = weeks[window]
+                entry["best_window"] = {"gameweek": window, "value": round(week["bench"], 2), "unit": "bench xP"}
+                double = f", {week['doubles']} of your players play twice" if week["doubles"] else ""
+                entry["summary"] = (f"Best week in view: GW{window}, your bench projects {week['bench']:.1f} points{double}. "
+                                    f"Worth it from {BENCH_BOOST_MIN_BENCH_POINTS:.0f} in a double Gameweek.")
+        else:
+            entry["this_week"] = scores.get("TRIPLE_CAPTAIN")
+            entry["threshold"] = TRIPLE_CAPTAIN_MIN_POINTS
+            window = max(ordered, key=lambda gw: (weeks[gw]["captain"][0], -gw), default=None)
+            if window is not None:
+                points, player_id = weeks[window]["captain"]
+                who = names.get(player_id, "your best captain") if player_id is not None else "your best captain"
+                entry["best_window"] = {"gameweek": window, "value": round(points, 2), "unit": "captain xP", "player_id": player_id}
+                entry["summary"] = (f"Best week in view: GW{window}, {who} projects {points:.1f} points. "
+                                    f"Worth it from {TRIPLE_CAPTAIN_MIN_POINTS:.0f} in a double Gameweek.")
+        if entry["verdict"] == "USE":
+            entry["summary"] = str(advisor.get("reason") or entry["summary"])
+        result.append(entry)
+    return result

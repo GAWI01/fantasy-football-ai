@@ -88,3 +88,20 @@ test("a provisional forecast is labelled while the previous Gameweek is played",
   const pill = await screen.findByText("Provisional forecast");
   expect(pill).toHaveAttribute("title", expect.stringContaining("results up to GW5"));
 });
+
+test("each remaining chip says whether to play it and which week suits it", async () => {
+  const fetchSpy = mockApi();
+  const dashboard = makeDashboard();
+  dashboard.data.decision!.intelligence!.chip_outlook = [
+    { chip: "WILDCARD", label: "Wildcard", available: false, verdict: null, this_week: null, threshold: null, best_window: null, summary: null },
+    { chip: "FREE_HIT", label: "Free Hit", available: true, verdict: "SAVE", this_week: null, threshold: 8, best_window: { gameweek: 9, value: 4, unit: "starters missing" }, summary: "GW9: 4 of your starters have no match or are ruled out. That is a Free Hit week." },
+    { chip: "BENCH_BOOST", label: "Bench Boost", available: true, verdict: "SAVE", this_week: 6, threshold: 12, best_window: { gameweek: 10, value: 13, unit: "bench xP" }, summary: "Best week in view: GW10." },
+  ];
+  serveDashboard(fetchSpy, dashboard);
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+
+  expect(await screen.findByText(/GW9: 4 of your starters/)).toBeInTheDocument();
+  expect(screen.getByText("Best: GW9")).toBeInTheDocument();
+  expect(screen.getByText(/This week 6.0 · worth it from 12.0/)).toBeInTheDocument();
+  expect(screen.getByText("Used this half: Wildcard.")).toBeInTheDocument();
+});
