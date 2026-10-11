@@ -1,0 +1,38 @@
+name: Uptime
+
+# Hourly check that the live app, the API and the forecast are up. A failed
+# run makes GitHub email the repository owner, so an outage or a missing
+# forecast is noticed without opening the site.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      APP_URL: https://fantasyfootball-ai.vercel.app
+      API_URL: https://backend-production-9fd3c.up.railway.app
+    steps:
+      - name: Web app answers
+        run: curl --fail --silent --show-error --max-time 30 --retry 2 --retry-delay 10 -o /dev/null "$APP_URL/"
+      - name: API is healthy
+        run: curl --fail --silent --show-error --max-time 30 --retry 2 --retry-delay 10 "$API_URL/health"
+      # A mismatch is normal for up to ~3 hours after a deadline (the refresh
+      # job runs every 3 hours, and its own failures already notify), so it is
+      # reported as a warning rather than failing the check.
+      - name: Forecast for the next Gameweek
+        run: |
+          status=$(curl --fail --silent --show-error --max-time 60 --retry 2 --retry-delay 10 "$API_URL/api/v1/status")
+          echo "$status" | python3 -c '
+          import json, sys
+          model = json.load(sys.stdin)["data"]["model"]
+          print("forecast:", model.get("prediction_file"), "| stage:", model.get("forecast_stage"), "| matches next GW:", model.get("matches_target_event"))
+          if not model.get("matches_target_event"):
+              print("::warning::The served forecast does not match the next Gameweek yet.")
+          '
