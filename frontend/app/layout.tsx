@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     template: "%s · Fantasy Football AI",
   },
   description: "Independent Fantasy Premier League decision support: transfers, captaincy, lineup, chips and a live Gameweek cockpit. Fantasy Football AI is an independent, free tool and never changes your official team.",
+  applicationName: "Fantasy Football AI",
+  // favicon.ico, icon.png and apple-icon.png in app/ are linked automatically.
+  appleWebApp: { capable: true, title: "FF.AI", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
