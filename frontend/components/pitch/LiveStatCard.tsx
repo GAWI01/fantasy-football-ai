@@ -32,7 +32,7 @@ function scoreLine(player: SquadPlayer): string | null {
   const fixture = player.liveFixture;
   if (!fixture) return player.fixtureState === "none" ? "No match this Gameweek" : null;
   const teams = `${fixture.home_team_short ?? fixture.home_team} ${fixture.started ? `${fixture.home_score ?? 0}–${fixture.away_score ?? 0}` : "v"} ${fixture.away_team_short ?? fixture.away_team}`;
-  const state = fixture.finished ? (fixture.bonus_pending ? "FT · bonus pending" : "FT") : fixture.started ? `${fixture.minutes}′` : "To play";
+  const state = fixture.finished ? "FT" : fixture.started ? `${fixture.minutes}′` : "To play";
   return `${teams} · ${state}`;
 }
 
@@ -57,11 +57,8 @@ export function LiveStatCard({ player, anchor, id }: { player: SquadPlayer; anch
   }, [anchor]);
 
   const multiplier = player.isStarter ? Math.max(1, player.multiplier ?? 1) : 1;
-  // FPL lists provisional bonus too; it is confirmed only once the fixture is.
-  const bonusPending = Boolean(player.liveFixture?.bonus_pending);
-  const stats = player.liveBreakdown.map((stat) => (stat.stat === "bonus" && bonusPending ? { ...stat, provisional: true } : stat));
+  const stats = player.liveBreakdown;
   const score = scoreLine(player);
-  const provisional = stats.some((stat) => stat.provisional);
   const total = stats.reduce((sum, stat) => sum + (stat.points ?? 0), 0);
 
   return createPortal(
@@ -82,18 +79,15 @@ export function LiveStatCard({ player, anchor, id }: { player: SquadPlayer; anch
         <ul className="lsc-rows">
           {stats.map((stat) => (
             <li key={stat.stat} className={(stat.points ?? 0) < 0 ? "is-neg" : undefined}>
-              <span>{statLabel(stat)}{stat.provisional ? <em>provisional</em> : null}</span>
+              <span>{statLabel(stat)}</span>
               <span className="num lsc-value">{stat.value}</span>
               <span className="num lsc-points">{stat.points == null ? "" : stat.points > 0 ? `+${stat.points}` : stat.points}</span>
             </li>
           ))}
         </ul>
       ) : <p className="lsc-empty">{player.fixtureState === "upcoming" ? "Has not played yet." : "No points recorded yet."}</p>}
-      {player.liveExpected != null || provisional ? (
-        <footer className="lsc-foot">
-          {player.liveExpected != null ? <span>Model <b className="num">{player.liveExpected.toFixed(1)}</b> xP</span> : null}
-          {provisional ? <span className="lsc-note">Bonus not confirmed yet</span> : null}
-        </footer>
+      {player.liveExpected != null ? (
+        <footer className="lsc-foot"><span>Model expected <b className="num">{player.liveExpected.toFixed(1)}</b> xP</span></footer>
       ) : null}
     </div>,
     document.body,
