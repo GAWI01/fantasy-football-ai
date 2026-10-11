@@ -9,7 +9,7 @@ the live state (GW6 live, provisional GW7 forecast).
 | Change | Why (found in the benchmark or audit) | Where |
 |---|---|---|
 | **Selling prices derived from public data** | Every budget was a market-price estimate. Purchase prices are public: the latest non-Free-Hit `element_in_cost`, or the season start price (`now_cost − cost_change_start`) for a GW1 squad. The FPL rule (half the rise, rounded down) gives the selling price. | `backend/selling_prices.py`, `backend/main.py` |
-| **Lineup, captain and bench after the recommended transfers** | 639449 was told to sell B.Fernandes and captain him. Every plan's XI still contained the players it sold. | `decision_engine.py` (`lineup_source`, `owned_lineup`), `frontend/lib/model/plan.ts` |
+| **Lineup, captain and bench after the recommended transfers** | 9100011 was told to sell B.Fernandes and captain him. Every plan's XI still contained the players it sold. | `decision_engine.py` (`lineup_source`, `owned_lineup`), `frontend/lib/model/plan.ts` |
 | **Captain = expected points, with a 0.3-point tie band** | Projections already include minutes and availability, so the old score discounted doubts two or three times. Within 0.3 points the surer starter wins (Haaland over Rashford, 5.52 vs 5.59 xP, 100% vs 79% start). | `decision_intelligence.py` |
 | **Decision cache** | The dashboard polls every minute, and each poll re-ran up to ~8 MILP solves. Decisions are now cached on every input (squad, bank, transfers, chips, forecast, projections, official prices and availability). | `backend/main.py` |
 | **New: "Test your own move"** | Managers want to know whether their own idea is good, not just what the engine prefers. The move is scored by the same planner, against holding and against the recommendation. Illegal moves are explained (budget, position, club limit). | `GET /api/v1/evaluate/{team_id}?sell=&buy=`, `optimizer/action_planner.evaluate_moves`, `frontend/components/plan/OwnMoveCard.tsx` |
@@ -25,7 +25,7 @@ the live state (GW6 live, provisional GW7 forecast).
 | One plan per response / no bench-GK transfers | 15/15 / 0 | 15/15 / 0 |
 | Dashboard latency (replay, warm) | ~2.0 s | **~0.55 s** |
 
-**Live (GW6 live, provisional GW7):** 639449 is recommended Palmer → Tavernier and João Pedro → Haaland, with captain Haaland (bought) and vice B.Fernandes. "Test your own move" (Palmer → Cherki) returned "Worse than holding by 1.1 points". Both checks were run on desktop and at 390 px, with no horizontal scroll and no page errors.
+**Live (GW6 live, provisional GW7):** 9100011 is recommended Palmer → Tavernier and João Pedro → Haaland, with captain Haaland (bought) and vice B.Fernandes. "Test your own move" (Palmer → Cherki) returned "Worse than holding by 1.1 points". Both checks were run on desktop and at 390 px, with no horizontal scroll and no page errors.
 
 ## Tests
 

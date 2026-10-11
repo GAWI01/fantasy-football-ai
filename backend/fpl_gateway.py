@@ -20,7 +20,7 @@ MAX_CACHE_ENTRIES = int(os.getenv("FPL_AI_UPSTREAM_CACHE_ENTRIES", "2000"))
 MAX_UPSTREAM_REQUESTS_PER_MINUTE = int(os.getenv("FPL_AI_UPSTREAM_MAX_PER_MINUTE", "60"))
 USER_AGENT = os.getenv(
     "FPL_AI_UPSTREAM_USER_AGENT",
-    "FantasyFootballAI/1.0 (independent non-commercial tool; +https://github.com/GAWI01/FPL-AI)",
+    "FantasyFootballAI/1.0 (independent free non-commercial tool; +https://github.com/GAWI01/fantasy-football-ai)",
 )
 
 

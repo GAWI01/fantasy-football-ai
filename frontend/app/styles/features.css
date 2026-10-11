@@ -785,3 +785,12 @@ button.race-row:hover { background: var(--surface-hover); }
 .chip-row-head b { margin-right: auto; }
 .chip-row p { margin: 0; font-size: var(--fs-sm); color: var(--text-2); }
 .chip-meter { display: grid; gap: 4px; }
+
+/* Privacy and terms */
+.legal-page { max-width: 760px; }
+.legal-page .card { padding: 18px 20px; display: grid; gap: 10px; }
+.legal-page h2 { font-size: 1.15rem; margin: 0; }
+.legal-page p, .legal-page li { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; }
+.legal-page ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.legal-page a, .side-disclaimer a, .card-note a { color: var(--violet-text); text-decoration: underline; text-underline-offset: 2px; }
+.legal-page code { font-size: 0.85em; }

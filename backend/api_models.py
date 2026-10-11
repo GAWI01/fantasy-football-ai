@@ -27,7 +27,6 @@ class DashboardTeamModel(BaseModel):
 
     team_id: int
     name: str
-    manager_name: str | None = None
     bank: float | None = None
     event: int | None = None
     transfers: int | None = None

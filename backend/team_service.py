@@ -145,12 +145,9 @@ def normalize_team_response(
         except (TypeError, ValueError) as exc:
             raise TeamServiceError("FPL financial value must be numeric") from exc
 
-    manager_name = str(entry.get("player_last_name") or "").strip() or None
-
     return {
         "team_id": team_id,
         "name": entry["name"],
-        "manager_name": manager_name,
         "bank": money_in_millions(
             entry.get("bank"),
             history.get("bank"),

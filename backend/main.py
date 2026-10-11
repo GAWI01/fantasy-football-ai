@@ -56,6 +56,7 @@ from .fixture_service import (
 )
 from .overview_service import build_top_players
 from .observability import request_logging_middleware
+from .rate_limit import rate_limit_middleware
 from .settings import parse_cors_origins
 from .live_service import (
     LiveDataServiceError,
@@ -90,6 +91,8 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Added first so it runs inside CORS: a 429 still carries CORS headers.
+app.middleware("http")(rate_limit_middleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=parse_cors_origins(os.getenv("FPL_AI_CORS_ORIGINS")),

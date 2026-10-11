@@ -19,7 +19,8 @@ from benchmark.harness import load_snapshot, pinned_data, replay  # noqa: E402
 
 SNAPSHOT = "gw6_pre_deadline"
 EVENT = 6
-TEAMS = [895045, 4182037, 5151567, 1, 2, 6658075, 145931, 2312895, 5841371, 1482, 5416316, 639449]
+# Recorded real teams, pseudonymised (synthetic IDs, no names); 6658075 is the project owner's own team.
+TEAMS = [9100001, 9100002, 9100003, 9100004, 9100005, 6658075, 9100006, 9100007, 9100008, 9100009, 9100010, 9100011]
 FT_OVERRIDES = {895045: [0, 2, 3]}
 
 

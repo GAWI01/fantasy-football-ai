@@ -75,7 +75,7 @@ export function SettingsWorkspace() {
 
       <Card title="What Fantasy Football AI can and cannot do" icon={<ShieldCheck size={16} />}>
         <p>Fantasy Football AI is a free, independent tool. It reads public manager data and gives decision support. It cannot make transfers, play chips or change your captain on the official game; every lineup and transfer on this site is a simulation until you make it yourself.</p>
-        <p className="card-note">Not affiliated with or endorsed by the Premier League or Fantasy Premier League. Club colours are shown as original, simplified kits and are not official designs.</p>
+        <p className="card-note">Not affiliated with or endorsed by the Premier League or Fantasy Premier League. Club colours are shown as original, simplified kits and are not official designs. <Link href="/privacy">Privacy and terms</Link>.</p>
       </Card>
     </div>
   );

@@ -7,7 +7,7 @@ Dato: 2026-10-11 · Kodebase: `master` @ `5306fdc` · Sesong 2026-27, GW6 live, 
 - Kjørte hele stacken lokalt: FastAPI-backend (`uvicorn backend.main:app`) mot det **ekte** FPL-API-et, og Next.js-frontend (`pnpm build && pnpm start`).
 - Testet UI-et i Chromium (Playwright) på desktop (1440 px) og mobil (390 px), for alle sider.
 - Akkurat nå er GW6 live, og den publiserte prognosen gjelder GW6. Planleggingen er derfor låst (se ISSUE-001). For å teste beslutningsmotoren kjørte jeg også en **simulert backend**: den eneste endringen var at bootstrap-flaggene ble satt til «rett før GW6-fristen». Alt annet var ekte FPL-data og ekte GW6-lagvalg.
-- Kjørte motoren på **12 ekte lag**: topp 3 i Overall, et lag rundt rank 20 000, Team ID 1 og 2, demo-laget 6658075 og fem andre. Testet også FT-override 0/2/3.
+- Kjørte motoren på **12 ekte lag**: topp 3 i Overall, et lag rundt rank 20 000, de to første Team ID-ene, demo-laget 6658075 og fem andre. Testet også FT-override 0/2/3.
 - Statusene i rapporten betyr:
   - **VERIFIED**: observert i runtime.
   - **CODE**: bekreftet ved å lese koden og/eller med et lite skript.
@@ -104,7 +104,7 @@ En erfaren FPL-manager ville raskt sluttet å stole på rådene. Produktet er en
   - Banneret sier «Some analysis is unavailable (decision, planning_state)».
   - Dette skjer 5 dager og 20 timer før GW7-fristen.
 - **Expected behavior:** Brukeren skal kunne planlegge GW N+1 så snart GW N-fristen har passert. Det er da de fleste gjør research.
-- **How reproduced:** Start backend i dag. Kall `GET /api/v1/dashboard/895045` (`decision: null`) og `GET /api/decision/895045` (503).
+- **How reproduced:** Start backend i dag. Kall `GET /api/v1/dashboard/9100001` (`decision: null`) og `GET /api/decision/9100001` (503).
 - **Probable root cause:** `historical_data/current_data/predict_gw.py` kaster `HistoryIncompleteError` til alle tidligere GW-er er `finished` og `data_checked`. Samtidig avviser `backend/main.py:_validate_prediction_target` den forrige GW-ens prognose. Resultatet er et hull hver uke. `forecast_checks.csv` har bare GW3 (legacy). Det finnes ingen artefakter for GW4 og GW5, så produktet hadde trolig ingen prognose de ukene heller (NOT VERIFIED historisk).
 - **Relevant files:** `historical_data/refresh_predictions.py`, `historical_data/current_data/predict_gw.py`, `backend/main.py:104` (`_validate_prediction_target`), `.github/workflows/refresh-predictions.yml`, `frontend/components/plan/PlanWorkspace.tsx`.
 - **Recommended fix:**
@@ -121,9 +121,9 @@ En erfaren FPL-manager ville raskt sluttet å stole på rådene. Produktet er en
 
   | Lag | Anbefaling | Problem |
   |---|---|---|
-  | 639449 | Forster (benk-GK, 0 xMins) → Pickford, «+12,5» som eneste transfer | Pickford blir benket, fordi laget allerede har en spillende keeper. |
-  | 145931, 2312895, 1482, 5416316, 1, 2 | Alle bruker én av transferene på reservekeeperen | Samme feil. |
-  | 895045, FT=3 | `Forster→Tzolakis`, `Slater (benk)→Rashford` | Benkeplasser oppgraderes. |
+  | 9100011 | Forster (benk-GK, 0 xMins) → Pickford, «+12,5» som eneste transfer | Pickford blir benket, fordi laget allerede har en spillende keeper. |
+  | 9100006, 9100007, 9100009, 9100010, 9100004, 9100005 | Alle bruker én av transferene på reservekeeperen | Samme feil. |
+  | 9100001, FT=3 | `Forster→Tzolakis`, `Slater (benk)→Rashford` | Benkeplasser oppgraderes. |
 
 - **Expected behavior:** Gevinsten skal måles på forventet **XI-poengsum**, inkludert sannsynlig innbytte, ikke som summen av alle 15. En benk-GK-oppgradering har nesten null verdi.
 - **Probable root cause:** `transfer_analysis.py:optimize_transfer_plan`. Objektivet `-points` summeres over alle 15 valgte spillere (`objective = np.r_[-points * ...]`), og `gain = in.predicted_points - out.predicted_points` per bytte.
@@ -160,8 +160,8 @@ En erfaren FPL-manager ville raskt sluttet å stole på rådene. Produktet er en
 - **Severity:** HIGH
 - **Area:** Konsistens og beslutningslag
 - **Observed behavior (VERIFIED):**
-  - Lag 895045: `transfers.recommended` er Szoboszlai→Rashford (net 6,21). `intelligence.transfer_strategy.selected_transfers` er Schade→Groß. UI viser Schade→Groß.
-  - Samme avvik i 6658075, 5841371 (alle tre transfers forskjellige) og 5416316.
+  - Lag 9100001: `transfers.recommended` er Szoboszlai→Rashford (net 6,21). `intelligence.transfer_strategy.selected_transfers` er Schade→Groß. UI viser Schade→Groß.
+  - Samme avvik i 6658075, 9100008 (alle tre transfers forskjellige) og 5416316.
   - Frontend viser «5-GW gain» fra intelligence-laget, mens selve optimereren rangerte på noe annet.
 - **Probable root cause:**
   - `optimizer/transfer_optimizer.py` bytter allerede `predicted_points` ut med en **vektet 5-GW-score** (`aggregate_multi_gw_value`, vektene 1/0,85/0,7/0,55/0,4). `net_gain` er altså allerede en horisontverdi.
@@ -200,7 +200,7 @@ En erfaren FPL-manager ville raskt sluttet å stole på rådene. Produktet er en
   - `action = MULTI_TRANSFER`, også med én transfer.
   - `confidence.label = HIGH` (0,88–0,99).
   - `wildcard_pressure = 1.0`.
-  - Wildcard ble anbefalt for 4182037 (topp 2) og 5841371, kun fordi WC var tilgjengelig.
+  - Wildcard ble anbefalt for 9100002 (topp 2) og 9100008, kun fordi WC var tilgjengelig.
 - **Probable root cause:**
   - **Aksjon:** `decision_strategy.transfer_pressure` sammenligner en 5-GW-sum med én GW (`future − current) / 8`. Det blir nesten alltid ≥ 0,65 og gir dermed «MULTI_TRANSFER».
   - **Confidence:** `decision_margin = |net| / 6`, der `net` er en 5-GW-verdi og derfor mettes raskt. `fixture_certainty` er dekningsgrad (alltid 1). `signal_agreement` er alltid 1 når net > 0.
@@ -268,7 +268,7 @@ En erfaren FPL-manager ville raskt sluttet å stole på rådene. Produktet er en
 - **Area:** Captain
 - **Observed behavior (VERIFIED):**
   - Haaland var captain i 11 av 12 lag. Det er rimelig.
-  - Forsvarere dukker opp som captain-alternativer: Gabriel på 3. plass (lag 895045), Tarkowski som visekaptein (lag 1482).
+  - Forsvarere dukker opp som captain-alternativer: Gabriel på 3. plass (lag 9100001), Tarkowski som visekaptein (lag 9100009).
   - Modellens toppverdi er bare 5,5 xP, så alt er komprimert.
 - **Probable root cause:**
   - `decision_intelligence._captain_score` = `pp × (0,55 + 0,45·start) × availability_factor × fixture_factor`.
@@ -324,7 +324,7 @@ En erfaren FPL-manager ville raskt sluttet å stole på rådene. Produktet er en
 
 - **Severity:** LOW
 - **Area:** UI
-- **Observed behavior (VERIFIED):** Y-aksen i Season-kortet viser «-218» for lag 895045 (rank 1).
+- **Observed behavior (VERIFIED):** Y-aksen i Season-kortet viser «-218» for lag 9100001 (rank 1).
 - **Root cause:** `frontend/components/charts/TrendChart.tsx:46` trekker fra `span·0,08` uten nedre grense.
 - **Fix:** Klem til ≥ 1 for rank.
 

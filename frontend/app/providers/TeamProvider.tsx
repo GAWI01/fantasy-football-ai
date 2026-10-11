@@ -126,7 +126,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   const disconnect = useCallback(() => {
     abortRef.current?.abort();
-    try { window.localStorage.removeItem(TEAM_STORAGE_KEY); } catch { /* ignore */ }
+    // Disconnecting forgets everything this app stored in the browser, not just the Team ID.
+    try {
+      Object.keys(window.localStorage).filter((key) => key.startsWith("fpl-ai-")).forEach((key) => window.localStorage.removeItem(key));
+    } catch { /* ignore */ }
     writeFreeTransferOverride(null);
     overridesRef.current.clear();
     setTeamId(null);

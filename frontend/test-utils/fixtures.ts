@@ -343,7 +343,6 @@ export function makeDashboard({ phase = "decision", verdict = "TRANSFER", stale 
       team: {
         team_id: 4242,
         name: "Midnight Pressers",
-        manager_name: "Test Manager",
         bank: 1.4,
         event: currentEvent,
         transfers: 1,
