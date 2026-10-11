@@ -1,0 +1,39 @@
+{
+  "season": "2026-27",
+  "prediction_event": 7,
+  "prediction_file": "gw7_predictions_v13.csv",
+  "generated_at": "2026-10-11T17:56:13.613460+00:00",
+  "player_count": 667,
+  "schema_version": 1,
+  "artifact_sha256": "62d423882a67dfbeabaa40b68ab5963921ea8959b816eebbf9ee86ebaf3c2550",
+  "model_provenance": {
+    "feature_contract_version": 4,
+    "xp_source": "previous_completed_gw_points_mean_v1",
+    "target": "same_fixture_total_points",
+    "validation_state": "validated",
+    "model_sha256": "b5c02560306f7d90acf17ffbff9cfe4f900f212d262ddafe3d17f06e25a37a3a",
+    "sklearn_version": "1.5.2",
+    "validation_report_file": "fpl_model_v4.pkl.validation.json",
+    "validation_report_sha256": "aa382ead55e209964669003f0bc4468d10e7f82fe071ef9c77a5c3fcc07f724b",
+    "model_file": "fpl_model_v4.pkl",
+    "evaluation": {
+      "leakage_safe": true,
+      "production_parity": true,
+      "report_id": "fpl_model_v4.pkl.validation.json",
+      "report_sha256": "aa382ead55e209964669003f0bc4468d10e7f82fe071ef9c77a5c3fcc07f724b"
+    },
+    "prediction_season": "2026-27",
+    "target_schedule_sha256": "6df12237c4a6f96f74b21c5083f7cdf210f84e8b9f6f7b86ca7b46a96f168f05",
+    "forecast_stage": "provisional",
+    "history_cutoff_gw": 5,
+    "input_sha256": "4f8e104ad76478973f56251ad42445d6281156b23ce2a1611d76c88415e9d696",
+    "input_files": {
+      "players_raw.csv": "04fb4800b8e65adb62c1b3adbafaa3462ba42d8a686ec81ef43e1faecbfc4f9c",
+      "teams_current.csv": "2bff5a1ecb23ab8d7ebe4779301903b698d9e00fb438b4d57902b1f4077483de",
+      "gameweeks_current.csv": "fce988081e006bf69065e382271b1f3c2a5f14353fe413f6bb3edf036ed677cc",
+      "2026-27/merged_gw.csv": "cf5d8d5f4e9cdbcd4d795b334e0097311ad7eb164531a1e72f2725d53b944282",
+      "2026-27/fixtures.csv": "a293a7bc71d9737532fc64dc99e381bc881c5051862bb6c233525d38f3f9994c"
+    },
+    "code_revision": "sha256:457298566a7c7c65849f3b4e1a32063da5d04287ba1a4594c97b541bfe535379"
+  }
+}
