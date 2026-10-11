@@ -7,17 +7,21 @@ Usage, from the repository root:
 
 Needs Pillow (`python -m pip install pillow`).
 
-Two crops of the source are used:
+The logo is designed in `frontend/brand/app-icon.svg`: a full-bleed square
+whose artwork stays inside the central 80%. Export it to a 1024x1024 PNG
+(any vector tool, or open the SVG in a browser and save a screenshot) as
+`frontend/brand/app-icon-source.png`, then run this script.
 
-* FULL: the whole artwork inside its glowing frame, full-bleed. Used where
-  the icon is shown at 64 px or more (iPhone home screen, PWA, Android).
-* MARK: a tight crop of the ball and shield. Used at 16-48 px (browser tab,
-  favicon, the logo in the app header), where the full artwork and the
-  "FF.AI" lettering would turn to mush.
+Two crops of the source can be used:
 
-The boxes are in source pixels (left, top, right, bottom) for the 1254x1254
-source. With a different image, adjust them and check the preview the script
-writes to frontend/brand/icon-preview.png.
+* FULL: used where the icon is shown at 64 px or more (iPhone home screen,
+  PWA, Android).
+* MARK: used at 16-48 px (browser tab, favicon, the header logo).
+
+The simple FF monogram reads at every size, so both are the whole image.
+For a detailed illustration, set MARK_BOX to a tight crop of its main
+subject. Boxes are fractions of the source (left, top, right, bottom).
+Check the contact sheet written to frontend/brand/icon-preview.png.
 """
 from __future__ import annotations
 
@@ -33,9 +37,12 @@ SOURCE = FRONTEND / "brand" / "app-icon-source.png"
 
 # Crop boxes as fractions of the source size, so a re-exported source at a
 # different resolution keeps the same framing.
-FULL_BOX = (128 / 1254, 112 / 1254, 1088 / 1254, 1072 / 1254)
-MARK_BOX = (340 / 1254, 255 / 1254, 920 / 1254, 835 / 1254)
-# Background behind the padded maskable icon: the artwork's own dark edge.
+FULL_BOX = (0.0, 0.0, 1.0, 1.0)
+MARK_BOX = (0.0, 0.0, 1.0, 1.0)
+# True when the source keeps its artwork inside the central 80% (the
+# Android maskable safe zone): the full-bleed image is then maskable as is.
+# Otherwise it is shrunk onto MASKABLE_BACKGROUND.
+SOURCE_IS_MASKABLE = True
 MASKABLE_BACKGROUND = (8, 6, 22)
 # Corner radius as a share of the side, close to the iOS/Android squircle.
 CORNER = 0.2237
@@ -64,6 +71,8 @@ def _rounded(image: Image.Image, radius_share: float = CORNER) -> Image.Image:
 
 def _maskable(full: Image.Image, size: int) -> Image.Image:
     """Android adaptive icon: the artwork inside the central 80% safe zone."""
+    if SOURCE_IS_MASKABLE:
+        return _resize(full, size)
     canvas = Image.new("RGB", (size, size), MASKABLE_BACKGROUND)
     inner = round(size * 0.8)
     offset = (size - inner) // 2
