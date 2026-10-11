@@ -214,3 +214,21 @@
   .deadline small { display: none; }
   .team-badge { display: none; }
 }
+
+/* Home-screen app (iOS "Add to Home Screen", installed PWA). The status bar
+   is translucent and drawn over the page, and there is no browser toolbar at
+   the bottom, so: pad the masthead below the clock, and dock the tab bar
+   just above the home indicator over a solid fade instead of floating it
+   over visible content. A normal browser tab never matches this query. */
+@media (display-mode: standalone) {
+  .masthead { padding-top: env(safe-area-inset-top); background: #04060d; }
+  .skip-link:focus { top: calc(12px + env(safe-area-inset-top)); }
+}
+@media (display-mode: standalone) and (max-width: 767px) {
+  .tabbar { bottom: max(10px, calc(env(safe-area-inset-bottom) - 8px)); }
+  .app::after {
+    content: ""; position: fixed; left: 0; right: 0; bottom: 0; z-index: 24; pointer-events: none;
+    height: calc(var(--tabbar-h) + max(10px, calc(env(safe-area-inset-bottom) - 8px)) + 22px);
+    background: linear-gradient(180deg, rgba(4, 6, 13, 0) 0%, rgba(4, 6, 13, 0.92) 45%, #04060d 100%);
+  }
+}
