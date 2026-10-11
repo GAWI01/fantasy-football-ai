@@ -61,6 +61,11 @@ def _request_id(value: str | None) -> str:
     return str(uuid4())
 
 
+def _loggable_path(path: str) -> str:
+    """The route without IDs: Team and league IDs identify FPL managers."""
+    return re.sub(r"/\d+(?=/|$)", "/{id}", path)
+
+
 async def request_logging_middleware(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
@@ -76,7 +81,7 @@ async def request_logging_middleware(
             extra={
                 "request_id": request_id,
                 "method": request.method,
-                "path": request.url.path,
+                "path": _loggable_path(request.url.path),
                 "status_code": 500,
                 "duration_ms": duration_ms,
             },
@@ -89,7 +94,7 @@ async def request_logging_middleware(
         extra={
             "request_id": request_id,
             "method": request.method,
-            "path": request.url.path,
+            "path": _loggable_path(request.url.path),
             "status_code": response.status_code,
             "duration_ms": duration_ms,
         },

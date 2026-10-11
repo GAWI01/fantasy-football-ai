@@ -13,10 +13,10 @@ En praktisk ende-til-ende-audit (`docs/audit/PRACTICAL_PRODUCT_AUDIT_2026-10-11.
   - `python -m pytest tests backend/tests`
   - `cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit && pnpm build`
 - **Re-test i runtime etter fixene.** Hvis prognosen ikke matcher neste GW, lag en lokal simulering der bare bootstrap-flaggene `is_current`, `is_next` og `deadline_time` skrives om (se rapporten, «Metode»). Kjør `/api/v1/dashboard/{id}` for minst disse lagene og rapporter før/etter i en tabell (aksjon, transfers, hit, captain, confidence, wildcard):
-  - 895045, 4182037, 5151567
-  - 1, 2
-  - 6658075, 639449, 1482
-  - 5841371, 5416316, 145931, 2312895
+  - 9100001, 9100002, 9100003
+  - 9100004, 9100005
+  - 6658075, 9100011, 9100009
+  - 9100008, 9100010, 9100006, 9100007
 
   Test også `?free_transfers=0`, `2` og `3`.
 

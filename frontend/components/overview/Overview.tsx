@@ -60,7 +60,7 @@ export function Overview() {
     <div className="overview">
       <header className="page-head overview-head">
         <div>
-          <span className="eyebrow">{team.manager_name ? `${team.manager_name} · ` : ""}Team {team.team_id}</span>
+          <span className="eyebrow">Team {team.team_id}</span>
           <h1>{team.name}</h1>
         </div>
         {showToggle ? (
