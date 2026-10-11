@@ -136,6 +136,7 @@
   display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap;
   font-size: 11px; color: var(--text-3); border-top: 1px solid var(--line);
 }
+.site-foot a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
 
 /* Phone dock */
 .tabbar { display: none; }

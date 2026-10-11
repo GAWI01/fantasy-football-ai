@@ -20,7 +20,7 @@ Transfers, captaincy, chips, live points and mini-leagues. One clear plan per de
 Enter your public FPL Team ID. No login is needed, and the app never changes
 your team.
 
-| | |
+| Feature | What it does |
 |---|---|
 | 🎯 **Gameweek plan** | Transfer or roll, captain and vice, bench order and the main risk, with a confidence level. The plan is ready as soon as the previous deadline passes. |
 | 📡 **Live** | Live points against the model's expectation. Tap any player for their points breakdown. |
@@ -120,7 +120,7 @@ cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit
 
 ## Docs
 
-| | |
+| Doc | What's inside |
 |---|---|
 | [Features](docs/FEATURES.md) | Every page and what each number means |
 | [Architecture](docs/ARCHITECTURE.md) | Backend, decision engine, forecasts, repository map |
@@ -130,10 +130,15 @@ cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit
 | [App icon](docs/APP_ICON.md) | How to swap the icon |
 | [Data sources](docs/DATA_SOURCES.md) | Where the data comes from and the conditions |
 
+## Data and credits
+
+- **Historical data:** the model is trained on past FPL seasons from
+  [**vaastav/Fantasy-Premier-League**](https://github.com/vaastav/Fantasy-Premier-League)
+  by Vaastav Anand, used with his permission and this attribution. Thank you!
+- **Live data:** the public Fantasy Premier League API.
+
 ---
 
 <sub>Free, independent and non-commercial. Not affiliated with or endorsed by
 the Premier League or Fantasy Premier League. FPL data, names and marks belong
-to their owners. Historical seasons come from
-[vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League).
-Made by [GAWI01](https://github.com/GAWI01).</sub>
+to their owners. Made by [GAWI01](https://github.com/GAWI01).</sub>
