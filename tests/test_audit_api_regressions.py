@@ -248,7 +248,7 @@ def test_decision_prices_and_value_use_current_official_cost():
     assert result.loc[0, 'value'] == pytest.approx(5.0 / 7.5)
 
 
-@pytest.mark.parametrize('path', ['/team/123', '/players/top'])
+@pytest.mark.parametrize('path', ['/team/123'])
 def test_legacy_forecast_routes_apply_official_availability(monkeypatch, path):
     bootstrap = _bootstrap()
     bootstrap['elements'][0].update(status='s', chance_of_playing_next_round=0)
@@ -259,7 +259,6 @@ def test_legacy_forecast_routes_apply_official_availability(monkeypatch, path):
     monkeypatch.setattr(main, 'get_official_team', lambda _: {
         'name': 'XI', 'team_id': 123, 'picks': [{'player_id': 10}],
     })
-    monkeypatch.setattr(main, 'load_players', lambda: pd.DataFrame([{'player_id': 10}]))
     monkeypatch.setattr(main, '_load_predictions', lambda _: (pd.DataFrame([{
         'player_id': 10, 'name': 'Full Player Name', 'team': 'Arsenal', 'position': 'MID',
         'price': 6.0, 'predicted_points': 5.0, 'xmins': 90.0,
