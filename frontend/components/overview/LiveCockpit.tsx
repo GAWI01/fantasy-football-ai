@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowRightLeft, Clock, Crown, Goal, Hourglass, Radio, Sparkles, Trophy } from "lucide-react";
+import { Activity, ArrowRightLeft, Crown, Goal, Hourglass, Radio, Sparkles, Trophy } from "lucide-react";
 
 import { Kit } from "@/components/kit/Kit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
@@ -122,9 +122,6 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
             {live.yetToPlay.length ? (
               <li><Hourglass size={15} aria-hidden="true" className="tone-accent" /><span>{plural(live.yetToPlay.length, "starter")} still to finish: {live.yetToPlay.map((player) => player.name).join(", ")}.</span></li>
             ) : <li><Hourglass size={15} aria-hidden="true" /><span>All your starters have finished or have no match.</span></li>}
-            {live.fixtures.some((fixture) => fixture.bonus_pending) ? (
-              <li><Clock size={15} aria-hidden="true" /><span>Full time, but bonus points are provisional until FPL confirms them (usually about an hour after the final whistle).</span></li>
-            ) : null}
             {live.autoSubWatch.map(({ out, in: incoming }) => (
               <li key={out.id}><ArrowRightLeft size={15} aria-hidden="true" className="tone-warn" /><span><b>{out.name}</b> played 0 minutes.{incoming ? <> If FPL auto-subs, <b>{incoming.name}</b> is first in your bench order who fits the formation.</> : " No eligible bench player fits the formation."}</span></li>
             ))}
@@ -144,7 +141,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
                     <span className="event-label">
                       {events.map((event) => (
                         <span key={event.event_type} className={NEGATIVE_EVENTS.has(event.event_type) ? "tone-neg" : undefined}>
-                          {eventLabel(event)}{event.provisional ? <em>provisional</em> : null}
+                          {eventLabel(event)}
                         </span>
                       ))}
                     </span>
@@ -153,7 +150,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
               })}
             </ul>
           ) : <p className="faint">No returns from your players yet.</p>}
-          <p className="card-note">Official totals per player, not a minute-by-minute timeline. Bonus is provisional until FPL confirms it.</p>
+          <p className="card-note">Official totals per player, not a minute-by-minute timeline.</p>
         </Card>
       </div>
     </div>

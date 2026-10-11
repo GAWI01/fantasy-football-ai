@@ -247,13 +247,12 @@ def test_event_fixtures_expose_live_scores_and_official_match_state(monkeypatch)
             "kickoff_time": "2026-08-29T14:00:00Z",
             "started": True,
             "finished": False,
-            "bonus_pending": False,
             "minutes": 67,
         }],
     }
 
 
-def test_full_time_counts_as_finished_while_bonus_is_pending(monkeypatch):
+def test_full_time_counts_as_finished_before_fpl_data_check(monkeypatch):
     bootstrap = {"teams": [{"id": 1, "name": "Arsenal", "short_name": "ARS"}, {"id": 2, "name": "Chelsea", "short_name": "CHE"}]}
     fixtures = [{
         "id": 22, "event": 2, "team_h": 1, "team_a": 2, "team_h_score": 2, "team_a_score": 1,
@@ -265,10 +264,9 @@ def test_full_time_counts_as_finished_while_bonus_is_pending(monkeypatch):
     fixture = live_service.get_event_fixtures(2)["fixtures"][0]
 
     assert fixture["finished"] is True
-    assert fixture["bonus_pending"] is True
 
 
-def test_points_breakdown_sums_explain_and_flags_unconfirmed_bonus():
+def test_points_breakdown_sums_explain_and_keeps_awarded_bonus():
     item = {"explain": [
         {"fixture": 1, "stats": [{"identifier": "minutes", "points": 2, "value": 90, "points_modification": 0},
                                  {"identifier": "saves", "points": 1, "value": 4, "points_modification": 0}]},
@@ -278,7 +276,7 @@ def test_points_breakdown_sums_explain_and_flags_unconfirmed_bonus():
     rows = live_service._points_breakdown(item, {"bonus": 2})
 
     assert rows == [
-        {"stat": "minutes", "value": 120, "points": 3, "provisional": False},
-        {"stat": "saves", "value": 4, "points": 1, "provisional": False},
-        {"stat": "bonus", "value": 2, "points": 2, "provisional": True},
+        {"stat": "minutes", "value": 120, "points": 3},
+        {"stat": "saves", "value": 4, "points": 1},
+        {"stat": "bonus", "value": 2, "points": 2},
     ]

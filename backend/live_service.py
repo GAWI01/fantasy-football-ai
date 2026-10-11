@@ -292,10 +292,9 @@ def get_event_fixtures(event: int) -> dict[str, Any]:
             "away_score": fixture.get("team_a_score"),
             "kickoff_time": fixture.get("kickoff_time"),
             "started": bool(fixture.get("started")),
-            # Full time counts as finished: the score and minutes are final,
-            # only the bonus points still wait for FPL to confirm them.
+            # Full time counts as finished: FPL's `finished` waits for its
+            # data check, which can take hours after the final whistle.
             "finished": bool(fixture.get("finished") or fixture.get("finished_provisional")),
-            "bonus_pending": bool(fixture.get("finished_provisional")) and not fixture.get("finished"),
             "minutes": int(fixture.get("minutes", 0) or 0),
         })
     rows.sort(key=lambda item: (item.get("kickoff_time") or "", item["fixture_id"]))
@@ -323,8 +322,7 @@ def _position_name(element_type: int) -> str:
 def _points_breakdown(item: dict[str, Any], stats: dict[str, Any]) -> list[dict[str, Any]]:
     """Official points per stat (FPL's `explain`), summed over a double Gameweek.
 
-    Bonus is added to `explain` only once FPL confirms it; until then the
-    provisional bonus in `stats` is listed separately and marked as such.
+    Bonus FPL has awarded is in `stats`; it is added if `explain` lacks it.
     """
     rows: dict[str, dict[str, Any]] = {}
     for fixture in item.get("explain") or []:
@@ -332,12 +330,12 @@ def _points_breakdown(item: dict[str, Any], stats: dict[str, Any]) -> list[dict[
             identifier = str(stat.get("identifier") or "")
             if not identifier:
                 continue
-            row = rows.setdefault(identifier, {"stat": identifier, "value": 0, "points": 0, "provisional": False})
+            row = rows.setdefault(identifier, {"stat": identifier, "value": 0, "points": 0})
             row["value"] += int(stat.get("value", 0) or 0)
             row["points"] += int(stat.get("points", 0) or 0) + int(stat.get("points_modification", 0) or 0)
     bonus = int(stats.get("bonus", 0) or 0)
     if bonus and "bonus" not in rows:
-        rows["bonus"] = {"stat": "bonus", "value": bonus, "points": bonus, "provisional": True}
+        rows["bonus"] = {"stat": "bonus", "value": bonus, "points": bonus}
     return list(rows.values())
 
 
