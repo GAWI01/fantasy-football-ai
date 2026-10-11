@@ -1,11 +1,11 @@
 {
   "season": "2026-27",
-  "prediction_event": 6,
-  "prediction_file": "gw6_predictions_v13.csv",
-  "generated_at": "2026-10-04T19:25:24.818418+00:00",
+  "prediction_event": 7,
+  "prediction_file": "gw7_predictions_v13.csv",
+  "generated_at": "2026-10-11T17:56:13.613460+00:00",
   "player_count": 667,
   "schema_version": 1,
-  "artifact_sha256": "bacd41375f4d1fd949f06a3e20108fe90e1b0d7382f22581fd4df9e2117df9d0",
+  "artifact_sha256": "62d423882a67dfbeabaa40b68ab5963921ea8959b816eebbf9ee86ebaf3c2550",
   "model_provenance": {
     "feature_contract_version": 4,
     "xp_source": "previous_completed_gw_points_mean_v1",
@@ -23,15 +23,17 @@
       "report_sha256": "aa382ead55e209964669003f0bc4468d10e7f82fe071ef9c77a5c3fcc07f724b"
     },
     "prediction_season": "2026-27",
-    "target_schedule_sha256": "edb5df853ed442ef688f63826a46fd6fb47824af9db0189c3e3a66cbe7111516",
-    "input_sha256": "b8a0ff5905383793ee54c6b35f45ab946cdb97c44809e80d7f4ef3fbdcac3ebc",
+    "target_schedule_sha256": "6df12237c4a6f96f74b21c5083f7cdf210f84e8b9f6f7b86ca7b46a96f168f05",
+    "forecast_stage": "provisional",
+    "history_cutoff_gw": 5,
+    "input_sha256": "4f8e104ad76478973f56251ad42445d6281156b23ce2a1611d76c88415e9d696",
     "input_files": {
-      "players_raw.csv": "03cc9736834e1eee13e68a33109a103d001041017767b2cea3a599966391c769",
-      "teams_current.csv": "85a921503f0246ba70b434209ab1900ce83930c4cfd480366f536ad15b684e6a",
-      "gameweeks_current.csv": "28d2dd6e2be553b5fdc42e1ccd3ff22f6202d64761e89a60147fdb874e470cba",
+      "players_raw.csv": "04fb4800b8e65adb62c1b3adbafaa3462ba42d8a686ec81ef43e1faecbfc4f9c",
+      "teams_current.csv": "2bff5a1ecb23ab8d7ebe4779301903b698d9e00fb438b4d57902b1f4077483de",
+      "gameweeks_current.csv": "fce988081e006bf69065e382271b1f3c2a5f14353fe413f6bb3edf036ed677cc",
       "2026-27/merged_gw.csv": "cf5d8d5f4e9cdbcd4d795b334e0097311ad7eb164531a1e72f2725d53b944282",
-      "2026-27/fixtures.csv": "765dbc140aa2139065cf4e74b12b77871017ee99432ff565a12f3da2f2c2a4bc"
+      "2026-27/fixtures.csv": "a293a7bc71d9737532fc64dc99e381bc881c5051862bb6c233525d38f3f9994c"
     },
-    "code_revision": "sha256:a067a94ebced180a1bb27bc0d749037ac1b48f5af5446832cb10c9542c6dc2e4"
+    "code_revision": "sha256:457298566a7c7c65849f3b4e1a32063da5d04287ba1a4594c97b541bfe535379"
   }
 }
