@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from backend.data_manifest import load_current_manifest
-from feature_contract import FEATURE_COLUMNS, feature_matrix, feature_metadata
+from engine.feature_contract import FEATURE_COLUMNS, feature_matrix, feature_metadata
 from historical_data import fetch_season_history, validate_model
 from historical_data.build_features import build_feature_frame
 from historical_data.current_data import predict_gw

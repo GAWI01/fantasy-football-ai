@@ -374,7 +374,7 @@ The final transfer engine must enforce actual FPL squad constraints, including:
 - hit cost
 - duplicate-player prevention
 
-The current `transfer_analysis.py` does not yet implement the complete constraint system.
+The current `engine/transfer_analysis.py` does not yet implement the complete constraint system.
 
 Its current analysis:
 

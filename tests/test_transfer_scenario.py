@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from transfer_analysis import (
+from engine.transfer_analysis import (
     TransferAnalysisError,
     analyze_transfer_scenario,
 )

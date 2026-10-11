@@ -5,7 +5,7 @@ from typing import Any, Mapping, Sequence
 import pandas as pd
 import numpy as np
 
-from fpl_rules import detect_club_changes, validate_transfer_squad
+from engine.fpl_rules import detect_club_changes, validate_transfer_squad
 from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, evaluate_moves, plan_action
 
 

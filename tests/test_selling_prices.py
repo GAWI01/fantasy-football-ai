@@ -32,7 +32,7 @@ def test_untraceable_purchase_keeps_the_estimate():
 
 
 def test_attached_prices_are_marked_as_derived_and_count_as_known():
-    from transfer_analysis import selling_value
+    from engine.transfer_analysis import selling_value
 
     picks = attach_selling_prices([{"player_id": 1}], transfers=[], chips=[], elements=ELEMENTS, started_event=1)
     assert picks[0]["purchase_price"] == 7.0

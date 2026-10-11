@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from feature_contract import FEATURE_COLUMNS, build_feature_row
+from engine.feature_contract import FEATURE_COLUMNS, build_feature_row
 
 
 class ProductionParityError(ValueError):

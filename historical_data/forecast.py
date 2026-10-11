@@ -19,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from feature_contract import feature_matrix  # noqa: E402
+from engine.feature_contract import feature_matrix  # noqa: E402
 from historical_data.build_features import build_feature_frame  # noqa: E402
 
 POSITIONS = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}

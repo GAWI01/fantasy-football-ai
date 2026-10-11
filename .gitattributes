@@ -1,7 +1,16 @@
-# Digest-checked artifacts: their SHA256 is recorded at publication, so line
-# endings must never be converted on checkout.
-historical_data/current_data/gw*_predictions_v*.csv text eol=lf
-historical_data/current_data/*.manifest.json text eol=lf
-historical_data/current_data/manifest.json text eol=lf
-models/*.json text eol=lf
-models/*.pkl binary
+# Normalise line endings in the repository.
+* text=auto eol=lf
+
+# Binary files.
+*.png binary
+*.ico binary
+*.gz binary
+*.pkl binary
+
+# Data and recorded responses: not code, so keep them out of language stats
+# and collapse them in diffs.
+historical_data/**/*.csv linguist-generated
+benchmark/data/** linguist-generated
+benchmark/snapshots/** linguist-generated
+benchmark/results/** linguist-generated
+docs/archive/** linguist-documentation

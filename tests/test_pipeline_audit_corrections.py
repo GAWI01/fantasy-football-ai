@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 from backend.data_manifest import publish_prediction_manifest
-from feature_contract import FEATURE_COLUMNS, FeatureContractError, build_feature_row
-from feature_contract import feature_metadata
+from engine.feature_contract import FEATURE_COLUMNS, FeatureContractError, build_feature_row
+from engine.feature_contract import feature_metadata
 from historical_data.current_data import predict_gw, xmins
 from historical_data.train_model import prepare_data, evaluate_model
 from historical_data import build_features as historical_features

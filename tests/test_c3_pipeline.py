@@ -5,7 +5,7 @@ from backtesting.c3_pipeline import (
     calculate_backtest_metrics,
     validate_backtest_results,
 )
-from feature_contract import FEATURE_CONTRACT_VERSION
+from engine.feature_contract import FEATURE_CONTRACT_VERSION
 
 
 def test_backtest_metrics_are_deterministic():

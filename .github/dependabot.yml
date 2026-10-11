@@ -1,0 +1,28 @@
+# Monthly, grouped dependency updates. CI tests every update PR; production
+# pins (backend/runtime-requirements.txt, requirements-pipeline.txt) change
+# only when such a PR is reviewed and merged.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      frontend:
+        patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      backend:
+        patterns: ["*"]

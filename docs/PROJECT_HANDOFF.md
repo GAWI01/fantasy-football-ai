@@ -181,7 +181,7 @@ Railway: repository root, `RAILWAY_DOCKERFILE_PATH=Dockerfile.backend`, PORT=800
 Vercel: root `frontend`, Node 22.x, pnpm 11.25.0, frozen install, `pnpm build`,
 HTTPS Railway origin in NEXT_PUBLIC_API_URL before build. Backend first, inspect
 status, frontend second, finalize CORS, then hosted smoke tests.
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full instructions.
+See [docs/DEPLOYMENT.md](DEPLOYMENT.md) for full instructions.
 
 ## Checks actually run
 
@@ -248,5 +248,5 @@ upstream reachability, latency and device checks. No push/deploy is authorized
 by this handoff alone.
 
 **Public free beta and paid release remain blocked by the unchanged
-[DATA_USE_RELEASE_GATE.md](docs/DATA_USE_RELEASE_GATE.md).** No licensing
+[DATA_USE_RELEASE_GATE.md](DATA_USE_RELEASE_GATE.md).** No licensing
 clearance, public-launch approval or permission evidence was created.

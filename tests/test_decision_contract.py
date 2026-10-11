@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from decision_contract import DecisionContractError, DecisionInput, validate_decision_output
+from engine.decision_contract import DecisionContractError, DecisionInput, validate_decision_output
 
 
 def predictions():

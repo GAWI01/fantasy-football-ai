@@ -2,12 +2,12 @@ from __future__ import annotations
 from typing import Any, Mapping
 import pandas as pd
 
-from decision_contract import DecisionInput, validate_decision_output
+from engine.decision_contract import DecisionInput, validate_decision_output
 from optimizer.starting_xi import select_starting_xi
 from optimizer.squad_optimizer import optimize_squad
 from optimizer.transfer_optimizer import TransferOptimizationConfig, optimize_transfers
 from optimizer.multi_gw import MultiGWConfig
-from decision_intelligence import build_intelligence, captain_intelligence
+from engine.decision_intelligence import build_intelligence, captain_intelligence
 
 def _player_records(df: pd.DataFrame) -> list[dict[str, Any]]:
     records=[]

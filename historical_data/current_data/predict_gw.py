@@ -37,7 +37,7 @@ if str(PROJECT_ROOT) not in sys.path:
 import sklearn  # noqa: E402
 
 from backend.data_manifest import load_current_manifest, publish_prediction_artifact, season_for_date  # noqa: E402
-from feature_contract import FeatureContractError, feature_metadata, validate_model_metadata  # noqa: E402
+from engine.feature_contract import FeatureContractError, feature_metadata, validate_model_metadata  # noqa: E402
 from historical_data.forecast import live_feature_rows, predict_fixture_points  # noqa: E402
 from historical_data.current_data.xmins import availability_label, availability_multiplier, calculate_xmins  # noqa: E402
 from historical_data.train_model import BASE_DIR as HISTORY_DIR, MODEL_OUTPUT  # noqa: E402
@@ -339,7 +339,7 @@ def main(force: bool = False) -> Path:
     provenance["input_sha256"] = _digest(inputs)
     provenance["input_files"] = {path.name if path.parent == CURRENT_DIR else f"{season}/{path.name}":
                                  hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs}
-    sources = [Path(__file__), PROJECT_ROOT / "feature_contract.py",
+    sources = [Path(__file__), PROJECT_ROOT / "engine" / "feature_contract.py",
                PROJECT_ROOT / "historical_data" / "build_features.py",
                PROJECT_ROOT / "historical_data" / "forecast.py", CURRENT_DIR / "xmins.py"]
     # Content-address the actual generator sources, including local changes.

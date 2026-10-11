@@ -11,7 +11,7 @@ import csv
 import io
 import math
 
-from feature_contract import feature_metadata
+from engine.feature_contract import feature_metadata
 
 
 @dataclass(frozen=True)

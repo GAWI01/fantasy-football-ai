@@ -29,7 +29,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from feature_contract import (  # noqa: E402
+from engine.feature_contract import (  # noqa: E402
     CATEGORICAL_COLUMNS,
     FEATURE_COLUMNS,
     NUMERIC_COLUMNS,

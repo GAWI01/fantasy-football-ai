@@ -3,13 +3,13 @@ from typing import Any, Mapping
 import pandas as pd
 from optimizer.chip_optimizer import evaluate_chip_scenarios
 
-from decision_horizon import (
+from engine.decision_horizon import (
     normalize_horizon_predictions,
     player_horizon_projection,
     evaluate_transfer_horizon,
 )
-from decision_risk import squad_health, risk_adjusted_points
-from decision_strategy import (
+from engine.decision_risk import squad_health, risk_adjusted_points
+from engine.decision_strategy import (
     MINUTES_DOUBT_START_PROBABILITY,
     chip_advisor,
     chip_outlook,

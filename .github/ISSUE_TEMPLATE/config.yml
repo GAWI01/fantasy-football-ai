@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Open the app
+    url: https://fantasyfootball-ai.vercel.app
+    about: Fantasy Football AI, live.
+  - name: Privacy and terms
+    url: https://fantasyfootball-ai.vercel.app/privacy
+    about: What data the app uses and how to ask for removal.

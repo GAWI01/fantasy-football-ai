@@ -4,7 +4,7 @@ from backtesting.production_parity import (
     reconstruct_production_target,
     validate_historical_prediction_rows,
 )
-from feature_contract import FEATURE_COLUMNS
+from engine.feature_contract import FEATURE_COLUMNS
 
 
 def make_frame():

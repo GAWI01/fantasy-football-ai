@@ -1,5 +1,5 @@
 import pandas as pd
-from decision_intelligence import build_intelligence
+from engine.decision_intelligence import build_intelligence
 
 def test_hold_when_no_positive_transfer():
     p = pd.DataFrame([

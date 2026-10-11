@@ -1,0 +1,15 @@
+name: Feature idea
+description: Suggest something that would make Gameweek decisions easier.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What decision or task should be easier?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How it could work in the app.
