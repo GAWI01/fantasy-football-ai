@@ -100,6 +100,8 @@ export type LiveFixture = {
   kickoff_time?: string | null;
   started: boolean;
   finished: boolean;
+  /** Full time, but FPL has not yet confirmed the bonus points. */
+  bonus_pending?: boolean;
   minutes: number;
 };
 

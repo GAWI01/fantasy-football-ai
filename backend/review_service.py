@@ -70,7 +70,37 @@ def select_review_prediction_file(
 
     if eligible:
         return max(eligible, key=lambda item: (item[0], item[1]))[2]
-    raise ReviewDataError(f"No certified pre-deadline prediction artifact found for GW{event}")
+    raise ReviewDataError(
+        f"No forecast was saved before the GW{event} deadline, so there is nothing honest to compare it with."
+    )
+
+
+def _net_transfers(transfers: list[dict[str, Any]], event: int) -> list[tuple[int, int]]:
+    """The Gameweek's transfers as net squad changes, oldest first.
+
+    A wildcard (or a change of mind) records every swap: A out for B, then B
+    out for C. What changed in the squad is A out, C in, so chains collapse
+    and a player bought and sold back cancels out. Projected and actual
+    deltas telescope, so the totals are unchanged.
+    """
+    rows = [
+        item for item in transfers
+        if isinstance(item, dict) and int(item.get("event", 0) or 0) == event
+    ]
+    rows.sort(key=lambda item: str(item.get("time") or ""))
+    origin: dict[int, int] = {}  # player currently in the squad -> who he replaced
+    order: list[int] = []
+    for item in rows:
+        player_out = int(item.get("element_out", 0) or 0)
+        player_in = int(item.get("element_in", 0) or 0)
+        replaced = origin.pop(player_out, player_out)
+        if player_out in order:
+            order.remove(player_out)
+        if player_in == replaced:
+            continue
+        origin[player_in] = replaced
+        order.append(player_in)
+    return [(origin[player_in], player_in) for player_in in order]
 
 
 def _round_points(value: float) -> float:
@@ -314,11 +344,7 @@ def build_post_gameweek_review(
 
     bench_rows = [row for row in pick_rows if row["slot"] > 11]
     transfer_rows: list[dict[str, Any]] = []
-    for transfer in transfers:
-        if not isinstance(transfer, dict) or int(transfer.get("event", 0) or 0) != event:
-            continue
-        player_in_id = int(transfer.get("element_in", 0) or 0)
-        player_out_id = int(transfer.get("element_out", 0) or 0)
+    for player_out_id, player_in_id in _net_transfers(transfers, event):
         if player_in_id not in prediction_by_id or player_out_id not in prediction_by_id:
             raise ReviewDataError("prediction artifact does not cover a Gameweek transfer")
         if player_in_id not in actual_by_id or player_out_id not in actual_by_id:
