@@ -20,7 +20,7 @@ function serve(fetchSpy: ReturnType<typeof mockApi>) {
     if (url.includes("/api/v1/leagues/")) {
       return json({ team_id: 4242, leagues: [
         { league_id: 9, name: "Big code league", managers: 40000, rank: 100, last_rank: 90, analysed_managers: 30 },
-        { league_id: 7, name: "Pils, betting og poeng", managers: 3, rank: 3, last_rank: 3, analysed_managers: 3 },
+        { league_id: 7, name: "Friends League", managers: 3, rank: 3, last_rank: 3, analysed_managers: 3 },
       ] });
     }
     if (url.includes("/rival/")) {
@@ -29,10 +29,10 @@ function serve(fetchSpy: ReturnType<typeof mockApi>) {
         unique_next_gw_points: { you: 6.5, rival: 5.1 }, basis: "Both squads as picked for GW6." });
     }
     if (url.includes("/api/v1/league/7")) {
-      return json({ league_id: 7, name: "Pils, betting og poeng", event: 6, managers: 3, analysed_managers: 3, max_analysed_managers: 30,
+      return json({ league_id: 7, name: "Friends League", event: 6, managers: 3, analysed_managers: 3, max_analysed_managers: 30,
         standings: [
-          { team_id: 1, team_name: "No Salad", rank: 1, last_rank: 1, event_points: 60, total: 417, gap_to_you: 145, active_chip: "wildcard", is_you: false },
-          { team_id: 2, team_name: "Ballerotellitubby", rank: 2, last_rank: 2, event_points: 44, total: 400, gap_to_you: 128, active_chip: null, is_you: false },
+          { team_id: 1, team_name: "Northbank Nomads", rank: 1, last_rank: 1, event_points: 60, total: 417, gap_to_you: 145, active_chip: "wildcard", is_you: false },
+          { team_id: 2, team_name: "Late Winners", rank: 2, last_rank: 2, event_points: 44, total: 400, gap_to_you: 128, active_chip: null, is_you: false },
           { team_id: 4242, team_name: "laget mitt", rank: 3, last_rank: 3, event_points: 29, total: 272, gap_to_you: 0, active_chip: null, is_you: true },
         ],
         players: [player(2, "Saka", { owners: 2, captains: 2, eo: 133.3, rival_eo: 200, role: "THREAT" }), player(4, "Mine", { you: "CAPTAIN", rival_eo: 0, role: "DIFFERENTIAL" })],
@@ -45,21 +45,21 @@ function serve(fetchSpy: ReturnType<typeof mockApi>) {
 test("the smallest league opens with the race, a default duel and the league radar", async () => {
   serve(mockApi());
   render(<TeamProvider><LeagueWorkspace /></TeamProvider>);
-  expect(await screen.findByRole("heading", { name: "Pils, betting og poeng" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Friends League" })).toBeInTheDocument();
   // One-line status: rank, gap to the leader and to the place above.
   expect(screen.getByText("3rd")).toBeInTheDocument();
   expect(screen.getByText("145")).toBeInTheDocument();
   expect(screen.getByText("128")).toBeInTheDocument();
   // The duel opens against the manager directly above you.
-  expect(await screen.findByRole("heading", { name: "You vs Ballerotellitubby" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "You vs Late Winners" })).toBeInTheDocument();
   // Radar: a threat you do not own and your differential, in separate lists.
   const threats = screen.getByText("They have, you don't").closest(".radar-col") as HTMLElement;
   expect(within(threats).getByText("Saka")).toBeInTheDocument();
   const edge = screen.getByText("Your edge").closest(".radar-col") as HTMLElement;
   expect(within(edge).getByText("Mine")).toBeInTheDocument();
   // Tapping another manager switches the duel.
-  await userEvent.click(screen.getByRole("button", { name: "Compare with No Salad" }));
-  expect(await screen.findByRole("heading", { name: "You vs No Salad" })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Compare with Northbank Nomads" }));
+  expect(await screen.findByRole("heading", { name: "You vs Northbank Nomads" })).toBeInTheDocument();
   expect(await screen.findByText("Different captains")).toBeInTheDocument();
   expect(screen.getByText("6.5 xP")).toBeInTheDocument();
 });
