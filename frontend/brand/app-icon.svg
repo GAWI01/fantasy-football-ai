@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- FF.AI app icon: an italic FF monogram with the green dot of "FF.AI".
+       Full-bleed square; iOS and Android round the corners themselves.
+       All artwork stays inside the central 80% (Android maskable safe zone). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d28d9"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="840" cy="160" r="440" fill="#ffffff" opacity="0.06"/>
+  <g transform="translate(236 224) skewX(-10)" fill="#ffffff">
+    <rect x="0" y="0" width="108" height="576" rx="16"/>
+    <rect x="0" y="0" width="300" height="104" rx="16"/>
+    <rect x="0" y="236" width="240" height="100" rx="16"/>
+    <rect x="296" y="0" width="108" height="576" rx="16"/>
+    <rect x="296" y="0" width="300" height="104" rx="16"/>
+    <rect x="296" y="236" width="240" height="100" rx="16"/>
+  </g>
+  <circle cx="784" cy="732" r="68" fill="#4ade80"/>
+</svg>
