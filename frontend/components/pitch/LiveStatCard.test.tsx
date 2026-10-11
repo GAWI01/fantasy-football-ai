@@ -36,6 +36,22 @@ describe("live stats card", () => {
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
+  it("falls back to the raw live stats when the points breakdown is missing", () => {
+    const data = makeDashboard({ phase: "live" }).data;
+    const first = data.live!.picks[0];
+    Object.assign(first, { event_points: 6, live_minutes: 90, saves: 4, bonus: 2, breakdown: undefined });
+    const player = buildSquad(data).find((item) => item.id === first.player_id)!;
+    render(<PitchPlayer player={player} mode="live" />);
+
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(player.name) }));
+
+    const card = screen.getByRole("tooltip");
+    expect(card).toHaveTextContent("Minutes played");
+    expect(card).toHaveTextContent("Saves");
+    expect(card).toHaveTextContent("+2");
+    expect(card).not.toHaveTextContent("No points recorded yet");
+  });
+
   it("does not turn editable tiles into stat buttons", () => {
     const player = livePlayer();
     render(<PitchPlayer player={player} mode="projected" />);
