@@ -544,6 +544,7 @@ def get_live_team(team_id: int):
                 "yellow_cards": int(live_player.get("yellow_cards", 0) or 0),
                 "red_cards": int(live_player.get("red_cards", 0) or 0),
                 "own_goals": int(live_player.get("own_goals", 0) or 0),
+                "breakdown": live_player.get("breakdown") or [],
             })
         expected = _live_event_expectations(int(live["current_event"]))
         if expected is not None:

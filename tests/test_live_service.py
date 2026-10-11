@@ -266,3 +266,19 @@ def test_full_time_counts_as_finished_while_bonus_is_pending(monkeypatch):
 
     assert fixture["finished"] is True
     assert fixture["bonus_pending"] is True
+
+
+def test_points_breakdown_sums_explain_and_flags_unconfirmed_bonus():
+    item = {"explain": [
+        {"fixture": 1, "stats": [{"identifier": "minutes", "points": 2, "value": 90, "points_modification": 0},
+                                 {"identifier": "saves", "points": 1, "value": 4, "points_modification": 0}]},
+        {"fixture": 2, "stats": [{"identifier": "minutes", "points": 1, "value": 30, "points_modification": 0}]},
+    ]}
+
+    rows = live_service._points_breakdown(item, {"bonus": 2})
+
+    assert rows == [
+        {"stat": "minutes", "value": 120, "points": 3, "provisional": False},
+        {"stat": "saves", "value": 4, "points": 1, "provisional": False},
+        {"stat": "bonus", "value": 2, "points": 2, "provisional": True},
+    ]
