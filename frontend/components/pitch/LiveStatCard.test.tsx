@@ -12,7 +12,7 @@ function livePlayer() {
   first.breakdown = [
     { stat: "minutes", value: 90, points: 2 },
     { stat: "saves", value: 4, points: 1 },
-    { stat: "bonus", value: 1, points: 1, provisional: true },
+    { stat: "bonus", value: 1, points: 1 },
   ];
   return buildSquad(data).find((player) => player.id === first.player_id)!;
 }
@@ -30,7 +30,8 @@ describe("live stats card", () => {
     expect(card).toHaveTextContent("Minutes played");
     expect(card).toHaveTextContent("Saves");
     expect(card).toHaveTextContent("+1");
-    expect(card).toHaveTextContent("Bonus not confirmed yet");
+    expect(card).toHaveTextContent("Bonus");
+    expect(card).not.toHaveTextContent("provisional");
 
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("tooltip")).toBeNull();

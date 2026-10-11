@@ -157,11 +157,9 @@ button.pp:active { transform: scale(0.97); }
 .lsc-score { margin: 0; font-size: 11.5px; color: var(--text-2); padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 .lsc-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
 .lsc-rows li { display: grid; grid-template-columns: minmax(0, 1fr) 34px 34px; align-items: baseline; gap: 6px; font-size: 12.5px; }
-.lsc-rows em { font-style: normal; font-size: 9.5px; color: var(--amber-text); margin-left: 5px; }
 .lsc-value { text-align: right; color: var(--text-3); }
 .lsc-points { text-align: right; font-weight: 700; color: var(--green-text); }
 .lsc-rows li.is-neg .lsc-points { color: var(--red-text); }
 .lsc-empty { margin: 0; font-size: 12px; color: var(--text-3); }
 .lsc-foot { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: var(--text-3); padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
 .lsc-foot b { color: var(--text); }
-.lsc-note { color: var(--amber-text); }

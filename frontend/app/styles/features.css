@@ -325,7 +325,6 @@
 .events li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .events li:last-child { border-bottom: 0; }
 .event-label { font-size: var(--fs-sm); font-weight: 650; white-space: nowrap; display: grid; justify-items: end; }
-.event-label em { font-style: normal; font-size: 10px; color: var(--amber-text); font-weight: 600; margin-left: 5px; }
 .event-pos .event-label { color: var(--green-text); }
 .event-neg .event-label { color: var(--red-text); }
 

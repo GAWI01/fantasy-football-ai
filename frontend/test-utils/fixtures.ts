@@ -262,7 +262,7 @@ function live(event: number, mode: "live" | "finished"): DashboardLive {
     events: [
       { player_id: 107, player_name: "Duarte", team_short: "LIV", event_type: "GOAL", count: 1, active: true, provisional: false },
       { player_id: 106, player_name: "Sato", team_short: "MCI", event_type: "ASSIST", count: 2, active: true, provisional: false },
-      { player_id: 110, player_name: "Kovač", team_short: "MCI", event_type: "BONUS", count: 2, active: true, provisional: true },
+      { player_id: 110, player_name: "Kovač", team_short: "MCI", event_type: "BONUS", count: 2, active: true, provisional: false },
       { player_id: 105, player_name: "Varga", team_short: "CHE", event_type: "YELLOW_CARD", count: 1, active: true, provisional: false },
     ],
     fixtures,

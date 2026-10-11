@@ -620,7 +620,8 @@ def get_live_team(team_id: int):
                     "event_type": event_type,
                     "count": count,
                     "active": int(pick.get("multiplier", 0) or 0) > 0,
-                    "provisional": event_type == "BONUS" and live["status"] == "LIVE",
+                    # Bonus in the live feed has been awarded by FPL already.
+                    "provisional": False,
                 })
         return {
             "team_id": team_id,
