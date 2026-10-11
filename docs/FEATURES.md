@@ -137,7 +137,7 @@ FPL publishes squads only after a deadline, so mini-leagues use the latest
 squads whose deadline has passed and say so. In large leagues the top 30
 managers are analysed, plus you.
 
-*The manager and team names in this screenshot are anonymised.*
+*The team names in this screenshot are anonymised.*
 
 ## My Team
 
@@ -202,7 +202,7 @@ hover, and no sideways scrolling.
 
 Every number is labelled by where it comes from:
 
-- **Official:** straight from FPL.
+- **FPL data:** straight from the official game. The app itself is independent, not official.
 - **Model:** the forecast.
 - **Derived:** calculated from official data and the forecast.
 

@@ -3,8 +3,8 @@
 Updated: 2026-10-11
 Branch: `fix/decision-correctness-phase1`, based on `master` at `5306fdc`.
 Milestone: Phase 1 decision correctness after the 2026-10-11 practical audit
-(`docs/audit/PRACTICAL_PRODUCT_AUDIT_2026-10-11.md`). Full report, root causes
-and before/after benchmark: `docs/audit/PHASE1_DECISION_CORRECTNESS.md`.
+(`docs/archive/audit/PRACTICAL_PRODUCT_AUDIT_2026-10-11.md`). Full report, root causes
+and before/after benchmark: `docs/archive/audit/PHASE1_DECISION_CORRECTNESS.md`.
 
 ## Mini-leagues (2026-10-11)
 
@@ -21,7 +21,7 @@ real 7-manager private league (desktop and 390 px).
 ## Phase 2 status (2026-10-11)
 
 Branch `feature/decision-quality-phase2` (on top of Phase 1). See
-`docs/audit/PHASE2_DECISION_QUALITY.md`.
+`docs/archive/audit/PHASE2_DECISION_QUALITY.md`.
 
 DONE: derived selling prices; lineup, captain and bench from the squad after
 the recommended transfers (owned-squad lineup kept for My Team); captain by
@@ -149,7 +149,7 @@ this serving path. Legacy Streamlit/SQLite and offline ML remain separate.
   files, metadata mismatch, row count, target mismatch and stale/unknown upstream.
 - `.env.example`, `docs/DEPLOYMENT.md`: safe variables and exact hosting order,
   private access boundary, artifact publication and smoke-test instructions.
-- `docs/PRD_IMPLEMENTATION_STATUS.md`: dated staging evidence; original local
+- `docs/archive/PRD_IMPLEMENTATION_STATUS.md`: dated staging evidence; original local
   verification record retained.
 
 Frontend API/CORS behavior was already suitable and remains unchanged. No
@@ -223,7 +223,7 @@ exceptions and an exact serving-data file set. These are configuration/import
 checks, not an actual Docker image build.
 
 Converted the invalid Windows-encoded dash bytes in this file and
-docs/PRD_IMPLEMENTATION_STATUS.md to UTF-8 while preserving existing valid text.
+docs/archive/PRD_IMPLEMENTATION_STATUS.md to UTF-8 while preserving existing valid text.
 A documentation encoding regression now reads both files strictly as UTF-8.
 
 After the corrections, the targeted deployment/status/runtime-artifact suite

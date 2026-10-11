@@ -159,7 +159,7 @@ From repository root in the project Python environment:
 
 ```text
 python -m pip check
-python -m pytest tests backend/tests -q
+python -m pytest -q
 python -m backend.data_loader
 python -m backend.runtime_artifacts
 ```
