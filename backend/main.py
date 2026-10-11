@@ -16,6 +16,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api_contract import api_envelope, source_meta
 from .availability import official_multiplier
 from .selling_prices import attach_selling_prices
+from .league_service import (
+    LeagueNotFoundError,
+    LeagueServiceError,
+    build_league,
+    compare_rival,
+    manager_leagues,
+)
 from .api_models import (
     DashboardEnvelopeModel,
     FixtureEnvelopeModel,
@@ -1249,6 +1256,67 @@ def evaluate_transfers_v1(team_id: int, sell: str, buy: str, free_transfers: int
     meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
     meta["event"] = inputs["manifest"].prediction_event
     return api_envelope(result, meta)
+
+
+def _next_gw_projections(bootstrap: dict) -> dict[int, float] | None:
+    """Next-Gameweek model points, when the served forecast targets it."""
+    try:
+        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+        _validate_prediction_target(manifest, bootstrap)
+        predictions = _apply_official_player_state(load_predictions(), bootstrap)
+    except Exception:  # Optional context: league views never fail because of it.
+        return None
+    return {int(row.player_id): float(row.predicted_points) for row in predictions.itertuples(index=False)}
+
+
+def _league_errors(call):
+    trace_token = begin_gateway_trace()
+    try:
+        data = call()
+    except LeagueNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (LeagueServiceError, LiveDataServiceError) as exc:
+        raise HTTPException(status_code=502, detail=f"Official FPL data is unavailable: {exc}") from exc
+    finally:
+        official_trace = end_gateway_trace(trace_token)
+    return api_envelope(data, _gateway_source_meta("official", official_trace))
+
+
+@app.get("/api/v1/leagues/{team_id}")
+def get_leagues_v1(team_id: int):
+    """The manager's private mini-leagues."""
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="team_id must be positive")
+    return _league_errors(lambda: {"team_id": team_id, "leagues": manager_leagues(team_id)})
+
+
+@app.get("/api/v1/league/{league_id}")
+def get_league_v1(league_id: int, team_id: int):
+    """Standings, gaps and league effective ownership from the latest public squads."""
+    if league_id <= 0 or team_id <= 0:
+        raise HTTPException(status_code=400, detail="league_id and team_id must be positive")
+
+    def build():
+        bootstrap = get_bootstrap_data()
+        return build_league(team_id, league_id, bootstrap=bootstrap, projections=_next_gw_projections(bootstrap))
+    return _league_errors(build)
+
+
+@app.get("/api/v1/league/{league_id}/rival/{rival_id}")
+def get_rival_v1(league_id: int, rival_id: int, team_id: int):
+    """Shared and unique players against one rival in a league."""
+    if min(league_id, rival_id, team_id) <= 0:
+        raise HTTPException(status_code=400, detail="IDs must be positive")
+    if rival_id == team_id:
+        raise HTTPException(status_code=400, detail="Choose another manager to compare with")
+
+    def build():
+        bootstrap = get_bootstrap_data()
+        league = build_league(team_id, league_id, bootstrap=bootstrap)
+        if all(row["team_id"] != rival_id for row in league["standings"]):
+            raise LeagueNotFoundError(f"Manager {rival_id} is not in league {league_id}")
+        return compare_rival(team_id, rival_id, bootstrap=bootstrap, projections=_next_gw_projections(bootstrap))
+    return _league_errors(build)
 
 
 def get_enriched_player_rankings(

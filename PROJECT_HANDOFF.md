@@ -6,6 +6,18 @@ Milestone: Phase 1 decision correctness after the 2026-10-11 practical audit
 (`docs/audit/PRACTICAL_PRODUCT_AUDIT_2026-10-11.md`). Full report, root causes
 and before/after benchmark: `docs/audit/PHASE1_DECISION_CORRECTNESS.md`.
 
+## Mini-leagues (2026-10-11)
+
+Branch `feature/mini-league` (on top of Phase 2). New page `/league` and API
+`/api/v1/leagues/{team_id}`, `/api/v1/league/{league_id}?team_id=`,
+`/api/v1/league/{league_id}/rival/{rival_id}?team_id=` (`backend/league_service.py`).
+Private leagues only; squads from the latest deadline that has passed (FPL does
+not publish next-deadline squads); top 30 managers analysed per league to stay
+within the upstream request budget. Rivals' EO excludes you; threat = ≥50%
+rival EO you do not own; differential = your starter under 25% rival EO.
+VERIFIED: tests (pytest 535, frontend 113), lint/tsc/build; browser check on a
+real 7-manager private league (desktop and 390 px).
+
 ## Phase 2 status (2026-10-11)
 
 Branch `feature/decision-quality-phase2` (on top of Phase 1). See

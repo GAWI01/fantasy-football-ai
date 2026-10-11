@@ -645,3 +645,39 @@ export type EvaluationEnvelope = {
   meta: SourceMeta & { event?: number | null };
   errors: AreaError[];
 };
+
+
+export type LeagueRole = "CAPTAIN" | "STARTER" | "BENCH" | null;
+
+export type ManagerLeague = { league_id: number; name: string; managers: number | null; rank: number | null; last_rank: number | null; analysed_managers: number };
+
+export type LeaguesEnvelope = { data: { team_id: number; leagues: ManagerLeague[] }; meta: SourceMeta; errors: AreaError[] };
+
+export type LeagueStanding = {
+  team_id: number; team_name: string; manager: string | null; rank: number | null; last_rank: number | null;
+  event_points: number | null; total: number | null; gap_to_you: number; active_chip: string | null; is_you: boolean;
+};
+
+export type LeaguePlayer = {
+  player_id: number; name: string; team_short: string; position: string | null;
+  owners: number; captains: number; ownership: number; eo: number; rival_eo: number;
+  you: LeagueRole; role: "THREAT" | "DIFFERENTIAL" | null; next_gw_points: number | null;
+};
+
+export type LeagueEnvelope = {
+  data: {
+    league_id: number; name: string; event: number | null; managers: number; analysed_managers: number; max_analysed_managers: number;
+    standings: LeagueStanding[]; players: LeaguePlayer[]; thresholds: { threat_eo: number; differential_eo: number }; basis: string;
+  };
+  meta: SourceMeta; errors: AreaError[];
+};
+
+export type RivalPlayer = { player_id: number; name: string; team_short: string; position: string | null; role: LeagueRole; rival_role?: LeagueRole; next_gw_points: number | null };
+
+export type RivalEnvelope = {
+  data: {
+    event: number; team_id: number; rival_id: number; only_you: RivalPlayer[]; only_rival: RivalPlayer[]; shared: RivalPlayer[];
+    same_captain: boolean; unique_next_gw_points: { you: number | null; rival: number | null }; basis: string;
+  };
+  meta: SourceMeta; errors: AreaError[];
+};
