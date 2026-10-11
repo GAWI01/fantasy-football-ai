@@ -63,7 +63,7 @@ export function LiveStatCard({ player, anchor, id }: { player: SquadPlayer; anch
   const stats = player.liveBreakdown.map((stat) => (stat.stat === "bonus" && bonusPending ? { ...stat, provisional: true } : stat));
   const score = scoreLine(player);
   const provisional = stats.some((stat) => stat.provisional);
-  const total = stats.reduce((sum, stat) => sum + stat.points, 0);
+  const total = stats.reduce((sum, stat) => sum + (stat.points ?? 0), 0);
 
   return createPortal(
     <div
@@ -82,10 +82,10 @@ export function LiveStatCard({ player, anchor, id }: { player: SquadPlayer; anch
       {stats.length ? (
         <ul className="lsc-rows">
           {stats.map((stat) => (
-            <li key={stat.stat} className={stat.points < 0 ? "is-neg" : undefined}>
+            <li key={stat.stat} className={(stat.points ?? 0) < 0 ? "is-neg" : undefined}>
               <span>{statLabel(stat)}{stat.provisional ? <em>provisional</em> : null}</span>
               <span className="num lsc-value">{stat.value}</span>
-              <span className="num lsc-points">{stat.points > 0 ? `+${stat.points}` : stat.points}</span>
+              <span className="num lsc-points">{stat.points == null ? "" : stat.points > 0 ? `+${stat.points}` : stat.points}</span>
             </li>
           ))}
         </ul>
