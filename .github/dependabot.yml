@@ -1,6 +1,14 @@
-# Monthly, grouped dependency updates. CI tests every update PR; production
-# pins (backend/runtime-requirements.txt, requirements-pipeline.txt) change
-# only when such a PR is reviewed and merged.
+# Monthly, grouped dependency updates; CI tests every update PR, and only a
+# green one should be merged.
+#
+# No pip updates: backend/runtime-requirements.txt (the API image) and
+# requirements-pipeline.txt (the certified forecast pipeline) pin the same
+# numpy/pandas/scipy versions and must change together, with the model
+# recertified (see docs/MODEL_PIPELINE.md). Dependabot updates one file at a
+# time and breaks that.
+#
+# Frontend major versions (TypeScript, ESLint, Vitest, ...) need code changes,
+# so only minor and patch updates are proposed automatically.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -15,14 +23,9 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       frontend:
-        patterns: ["*"]
-  - package-ecosystem: pip
-    directory: /backend
-    schedule:
-      interval: monthly
-    open-pull-requests-limit: 2
-    groups:
-      backend:
         patterns: ["*"]
