@@ -129,7 +129,7 @@ def test_live_team_excludes_bench_points_and_reports_official_match_progress(mon
     assert body["events"] == [
         {"player_id": 10, "player_name": "Saka", "team_short": "ARS", "event_type": "GOAL", "count": 1, "active": True, "provisional": False},
         {"player_id": 10, "player_name": "Saka", "team_short": "ARS", "event_type": "ASSIST", "count": 1, "active": True, "provisional": False},
-        {"player_id": 10, "player_name": "Saka", "team_short": "ARS", "event_type": "BONUS", "count": 2, "active": True, "provisional": True},
+        {"player_id": 10, "player_name": "Saka", "team_short": "ARS", "event_type": "BONUS", "count": 2, "active": True, "provisional": False},
         {"player_id": 11, "player_name": "Odegaard", "team_short": "ARS", "event_type": "YELLOW_CARD", "count": 1, "active": True, "provisional": False},
         {"player_id": 12, "player_name": "Bench Star", "team_short": "CHE", "event_type": "RED_CARD", "count": 1, "active": False, "provisional": False},
     ]

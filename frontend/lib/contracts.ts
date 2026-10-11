@@ -83,8 +83,6 @@ export type LiveStat = {
   value: number;
   /** Null when only the raw stat is known, not its points. */
   points: number | null;
-  /** Bonus FPL has not confirmed yet. */
-  provisional?: boolean;
 };
 
 export type LivePick = TeamPick & {
@@ -116,8 +114,6 @@ export type LiveFixture = {
   kickoff_time?: string | null;
   started: boolean;
   finished: boolean;
-  /** Full time, but FPL has not yet confirmed the bonus points. */
-  bonus_pending?: boolean;
   minutes: number;
 };
 
