@@ -81,7 +81,8 @@ export type DashboardTeam = {
 export type LiveStat = {
   stat: string;
   value: number;
-  points: number;
+  /** Null when only the raw stat is known, not its points. */
+  points: number | null;
   /** Bonus FPL has not confirmed yet. */
   provisional?: boolean;
 };
@@ -94,6 +95,11 @@ export type LivePick = TeamPick & {
   assists?: number | null;
   bonus?: number | null;
   saves?: number | null;
+  penalties_saved?: number | null;
+  penalties_missed?: number | null;
+  yellow_cards?: number | null;
+  red_cards?: number | null;
+  own_goals?: number | null;
   breakdown?: LiveStat[];
 };
 
