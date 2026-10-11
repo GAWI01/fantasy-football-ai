@@ -15,7 +15,6 @@ const STAT_LABEL: Record<string, [string, string]> = {
   goals_conceded: ["Goal conceded", "Goals conceded"],
   saves: ["Save", "Saves"],
   bonus: ["Bonus", "Bonus"],
-  bps: ["BPS", "BPS"],
   yellow_cards: ["Yellow card", "Yellow cards"],
   red_cards: ["Red card", "Red cards"],
   own_goals: ["Own goal", "Own goals"],
@@ -90,11 +89,12 @@ export function LiveStatCard({ player, anchor, id }: { player: SquadPlayer; anch
           ))}
         </ul>
       ) : <p className="lsc-empty">{player.fixtureState === "upcoming" ? "Has not played yet." : "No points recorded yet."}</p>}
-      <footer className="lsc-foot">
-        {player.liveBps != null ? <span>BPS <b className="num">{player.liveBps}</b></span> : null}
-        {player.liveExpected != null ? <span>Model <b className="num">{player.liveExpected.toFixed(1)}</b> xP</span> : null}
-        {provisional ? <span className="lsc-note">Bonus not confirmed yet</span> : null}
-      </footer>
+      {player.liveExpected != null || provisional ? (
+        <footer className="lsc-foot">
+          {player.liveExpected != null ? <span>Model <b className="num">{player.liveExpected.toFixed(1)}</b> xP</span> : null}
+          {provisional ? <span className="lsc-note">Bonus not confirmed yet</span> : null}
+        </footer>
+      ) : null}
     </div>,
     document.body,
   );
