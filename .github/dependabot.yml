@@ -1,5 +1,7 @@
-# Monthly, grouped dependency updates; CI tests every update PR, and only a
-# green one should be merged.
+# Monthly, grouped dependency updates. CI tests every update PR, and its
+# automerge job merges it when CI is green; a red update is never merged.
+# A release must be 7 days old before it is proposed (cooldown), so a
+# hijacked package version is usually pulled before it can be merged.
 #
 # No pip updates: backend/runtime-requirements.txt (the API image) and
 # requirements-pipeline.txt (the certified forecast pipeline) pin the same
@@ -15,6 +17,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ["*"]
@@ -23,6 +27,8 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
