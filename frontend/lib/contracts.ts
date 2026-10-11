@@ -77,6 +77,15 @@ export type DashboardTeam = {
   started_event?: number | null;
 };
 
+/** Official points for one stat (FPL's live `explain`). */
+export type LiveStat = {
+  stat: string;
+  value: number;
+  points: number;
+  /** Bonus FPL has not confirmed yet. */
+  provisional?: boolean;
+};
+
 export type LivePick = TeamPick & {
   multiplied_points?: number | null;
   /** Pre-deadline model forecast for this live Gameweek, only when the served forecast targets it. */
@@ -85,6 +94,7 @@ export type LivePick = TeamPick & {
   assists?: number | null;
   bonus?: number | null;
   saves?: number | null;
+  breakdown?: LiveStat[];
 };
 
 export type LiveFixture = {

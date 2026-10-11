@@ -4,6 +4,7 @@ import type {
   HorizonGameweek,
   LiveFixture,
   LivePick,
+  LiveStat,
   PlayerSummary,
   SquadHealthPlayer,
   TeamPick,
@@ -65,6 +66,8 @@ export type SquadPlayer = {
   /** Model forecast for the Gameweek being played (from the live endpoint). */
   liveExpected: number | null;
   liveBps: number | null;
+  /** Official points per stat this Gameweek. */
+  liveBreakdown: LiveStat[];
   fixtureState: FixtureState;
   liveFixture: LiveFixture | null;
 };
@@ -148,6 +151,7 @@ export function buildSquad(data: DashboardData): SquadPlayer[] {
         liveMinutes: live ? num(live.live_minutes) : null,
         liveExpected: live ? num(live.expected_points) : null,
         liveBps: live ? num(live.live_bps) : null,
+        liveBreakdown: live?.breakdown ?? [],
         fixtureState: fixture.state,
         liveFixture: fixture.fixture,
       };
@@ -211,6 +215,7 @@ export function incomingSquadPlayer(model: DecisionPlayer, market?: PlayerSummar
     liveMinutes: null,
     liveExpected: null,
     liveBps: null,
+    liveBreakdown: [],
     fixtureState: "unknown",
     liveFixture: null,
   };
