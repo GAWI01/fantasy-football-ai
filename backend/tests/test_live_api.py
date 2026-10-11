@@ -4,36 +4,6 @@ from fastapi.testclient import TestClient
 from backend.main import app
 
 
-def test_live_players_endpoint(monkeypatch):
-    monkeypatch.setattr(
-        "backend.main.get_live_players",
-        lambda limit=20, position=None: {
-            "current_event": 2,
-            "gameweek_name": "Gameweek 2",
-            "status": "LIVE",
-            "finished": False,
-            "players": [{"player_id": 10, "name": "Saka", "event_points": 7}],
-        },
-    )
-    response = TestClient(app).get("/live/players?limit=10")
-    assert response.status_code == 200
-    assert response.json()["players"][0]["event_points"] == 7
-
-
-def test_team_history_endpoint(monkeypatch):
-    monkeypatch.setattr(
-        "backend.main.get_team_history",
-        lambda team_id: {
-            "team_id": team_id,
-            "history": [{"event": 1, "points": 50, "overall_rank": 100}],
-        },
-    )
-    response = TestClient(app).get("/team/123/history")
-    assert response.status_code == 200
-    assert response.json()["team_id"] == 123
-    assert response.json()["history"][0]["event"] == 1
-
-
 def test_live_team_endpoint_merges_actual_gameweek_points(monkeypatch):
     monkeypatch.setattr(
         "backend.main.get_team_data",

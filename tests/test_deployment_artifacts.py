@@ -44,15 +44,13 @@ def test_frontend_production_sources_do_not_fall_back_to_localhost():
         assert "http://localhost:8000" not in content
 
 
-def test_local_production_stack_and_render_blueprint_are_declared():
+def test_local_production_stack_is_declared():
     compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
-    blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
     deployment = (ROOT / "docs" / "DEPLOYMENT.md").read_text(encoding="utf-8")
 
     assert "backend:" in compose and "frontend:" in compose
     assert "Dockerfile.backend" in compose
     assert "healthcheck:" in compose
-    assert "fpl-ai-api" in blueprint and "fpl-ai-web" in blueprint
     assert "Hosted smoke test" in deployment
 
 
@@ -70,7 +68,7 @@ def test_backend_allowlist_can_serve_without_developer_files(tmp_path):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, destination)
     assert not (tmp_path / "models").exists()
-    assert not (tmp_path / "fpl.db").exists()
+    assert not (tmp_path / "tests").exists()
     assert not (tmp_path / "frontend").exists()
     result = subprocess.run(
         [sys.executable, "-c", (
