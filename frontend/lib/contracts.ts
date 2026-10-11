@@ -346,6 +346,18 @@ export type ChipState = {
   blank_gameweek?: boolean;
 };
 
+/** Per chip: worth playing now, and the best week in the projection horizon. */
+export type ChipOutlook = {
+  chip: string;
+  label: string;
+  available: boolean;
+  verdict: "USE" | "SAVE" | null;
+  this_week: number | null;
+  threshold: number | null;
+  best_window: { gameweek: number; value: number; unit: string; player_id?: number | null } | null;
+  summary: string | null;
+};
+
 export type DecisionIntelligence = {
   chip_scenarios?: { budget_is_estimate?: boolean };
   action: string;
@@ -384,6 +396,7 @@ export type DecisionIntelligence = {
     alternatives: Array<{ chip: string; score: number; reason?: string }>;
   };
   chip_state: ChipState;
+  chip_outlook?: ChipOutlook[];
   wildcard_signal?: {
     available: boolean;
     evaluated: boolean;
