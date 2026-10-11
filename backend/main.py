@@ -35,7 +35,6 @@ from .api_models import (
 from .data_loader import (
     DataLoaderError,
     load_fixtures as load_current_fixtures,
-    load_players,
     load_teams as load_current_teams,
 )
 from .data_manifest import load_current_manifest, model_validation_state, season_for_date
@@ -54,7 +53,6 @@ from .fixture_service import (
     get_team_fixtures,
     get_upcoming_team_fixtures,
 )
-from .overview_service import build_top_players
 from .observability import request_logging_middleware
 from .rate_limit import rate_limit_middleware
 from .settings import parse_cors_origins
@@ -461,7 +459,6 @@ def _prediction_by_id(
 
 
 
-@app.get("/live/players")
 def get_live_player_rankings(
     limit: int = 20,
     position: str | None = None,
@@ -474,7 +471,6 @@ def get_live_player_rankings(
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
-@app.get("/team/{team_id}/history")
 def get_team_history_endpoint(team_id: int):
     try:
         return get_team_history(team_id)
@@ -484,7 +480,6 @@ def get_team_history_endpoint(team_id: int):
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
-@app.get("/fixtures/team/{team_id}/upcoming")
 def get_upcoming_fixtures(
     team_id: int,
     limit: int = 10,
@@ -495,24 +490,6 @@ def get_upcoming_fixtures(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except FixtureServiceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-
-@app.get("/fixtures/team/{team_id}")
-def get_fixtures(
-    team_id: int,
-    limit: int = 5,
-):
-    try:
-        return get_team_fixtures(
-            team_id,
-            limit=limit,
-        )
-    except FixtureServiceError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=str(exc),
-        ) from exc
-
-
 
 @app.get("/team/{team_id}/live")
 def get_live_team(team_id: int):
@@ -814,108 +791,6 @@ def get_team(team_id: int):
             detail=f"Could not build team data: {exc}",
         ) from exc
 
-
-@app.get("/players/top")
-def get_top_players(
-    limit: int = 5,
-    position: str | None = None,
-):
-    if limit < 1 or limit > 50:
-        raise HTTPException(
-            status_code=400,
-            detail="limit must be between 1 and 50",
-        )
-
-    try:
-        players = load_players()
-
-        fixture_data = get_team_fixtures(
-            1,
-            limit=1,
-        )
-
-        current_event = fixture_data.get(
-            "current_event"
-        )
-
-        next_event = fixture_data.get(
-            "next_event"
-        )
-
-        if (
-            not isinstance(current_event, int)
-            or current_event <= 0
-        ):
-            raise DataLoaderError(
-                "Could not determine current gameweek"
-            )
-
-        if (
-            next_event is not None
-            and (
-                not isinstance(next_event, int)
-                or next_event <= 0
-            )
-        ):
-            next_event = None
-
-        prediction_event = _get_prediction_event(
-            current_event,
-            next_event,
-        )
-
-        predictions, prediction_file = _load_predictions(
-            prediction_event
-        )
-
-        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
-        bootstrap = get_bootstrap_data()
-        _validate_prediction_target(manifest, bootstrap)
-        predictions = _apply_official_player_state(predictions, bootstrap)
-        players = pd.DataFrame(bootstrap.get("elements") or []).rename(columns={"id": "player_id"})
-
-        teams = pd.DataFrame(bootstrap.get("teams") or [])
-
-        return {
-            "prediction_event": prediction_event,
-            "prediction_file": prediction_file,
-            "model_validation_state": _model_validation_state(manifest),
-            "players": build_top_players(
-                predictions,
-                players,
-                teams,
-                limit=limit,
-                position=position,
-            ),
-        }
-
-    except DataLoaderError as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=str(exc),
-        ) from exc
-
-    except FixtureServiceError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=str(exc),
-        ) from exc
-
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=str(exc),
-        ) from exc
-
-    except (
-        OSError,
-        pd.errors.ParserError,
-        TypeError,
-    ) as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Could not build player rankings: {exc}",
-        ) from exc
 
 def get_team_data(team_id: int) -> dict:
     """Compatibility wrapper for the decision endpoint and future API layers."""
