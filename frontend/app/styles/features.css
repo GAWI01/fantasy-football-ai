@@ -690,10 +690,88 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 .own-move-result { margin-top: 12px; }
 
 /* Mini-leagues */
-.league-summary .big { font-size: 1.8rem; font-family: var(--font-display); }
-.rival-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.rival-col { min-width: 0; }
-@media (max-width: 860px) {
-  .rival-grid { grid-template-columns: 1fr; }
-  .league-summary { grid-template-columns: 1fr; }
+.league-status { color: var(--text-2); font-size: var(--fs-md); margin-top: 6px; }
+.league-status b { color: var(--text); font-variant-numeric: tabular-nums; }
+.league-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
+.league-radar { grid-column: 1 / -1; }
+
+.race { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.race-row { width: 100%; display: grid; grid-template-columns: 22px minmax(0, 1.3fr) minmax(60px, 1fr) 44px 52px; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--r-sm); border: 1px solid transparent; background: var(--surface-2); text-align: left; color: inherit; }
+button.race-row { cursor: pointer; transition: border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease); }
+button.race-row:hover { background: var(--surface-hover); }
+.race-row.is-selected { border-color: var(--violet-line); background: var(--violet-soft); }
+.race-row.is-you { border-color: var(--green-line); background: var(--green-soft); }
+.race-rank { color: var(--text-3); font-weight: 650; }
+.race-name { min-width: 0; display: grid; line-height: 1.25; }
+.race-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); }
+.race-name small { color: var(--text-3); font-size: var(--fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.race-track { height: 8px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.race-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--violet), var(--cyan)); }
+.race-row.is-you .race-track i { background: linear-gradient(90deg, #10b981, #6ee7b7); }
+.race-total { text-align: right; font-weight: 650; }
+.race-gap { text-align: right; font-size: var(--fs-sm); font-weight: 650; }
+.race-gap.is-ahead { color: var(--red-text); }
+.race-gap.is-behind { color: var(--green-text); }
+.race-gap.is-you { color: var(--green-text); }
+
+.duel-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 4px 0 14px; border-bottom: 1px solid var(--line); }
+.duel-score > div { display: grid; line-height: 1.1; min-width: 0; }
+.duel-score > div:last-child { text-align: right; }
+.duel-score small { color: var(--text-3); font-size: var(--fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duel-score strong { font-family: var(--font-display); font-size: 2rem; }
+.duel-gap { padding: 4px 10px; border-radius: 99px; background: var(--surface-3); font-size: var(--fs-sm); font-weight: 650; white-space: nowrap; }
+.duel-gap.is-ahead { color: var(--red-text); background: var(--red-soft); }
+.duel-gap.is-behind { color: var(--green-text); background: var(--green-soft); }
+.duel-captains { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 12px; padding: 14px 0; }
+.duel-captains > div { display: grid; gap: 6px; min-width: 0; }
+.duel-captain-rival { justify-items: end; }
+.duel-captains .eyebrow { display: inline-flex; align-items: center; gap: 4px; }
+.duel-split { display: grid; gap: 6px; padding-bottom: 14px; }
+.duel-split b { white-space: nowrap; }
+.duel-split small { text-align: center; }
+.duel-split-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--surface-3); }
+.duel-split-bar .is-you { background: linear-gradient(90deg, #10b981, #6ee7b7); }
+.duel-split-bar .is-rival { background: linear-gradient(90deg, #fb7185, #e11d48); }
+.duel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.duel-col { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.duel-you .eyebrow { color: var(--green-text); }
+.duel-rival .eyebrow { color: var(--red-text); }
+.duel-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.duel-list li { padding: 6px 8px; border-radius: var(--r-sm); background: var(--surface-2); min-width: 0; }
+.duel-list li.is-bench { opacity: 0.5; }
+.duel-list .pchip { display: flex; width: 100%; }
+.duel-list .pchip-end { font-weight: 650; font-size: var(--fs-sm); padding-left: 8px; }
+.duel-you .duel-list .pchip-end { color: var(--green-text); }
+.duel-rival .duel-list .pchip-end { color: var(--red-text); }
+.duel-shared { margin-top: 12px; color: var(--text-2); font-size: var(--fs-sm); }
+.duel-shared .eyebrow { margin-right: 6px; }
+
+.radar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.radar-col { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.radar-head { display: grid; line-height: 1.3; }
+.radar-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.radar-list li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(90px, 140px); align-items: center; gap: 12px; padding: 6px 8px; border-radius: var(--r-sm); background: var(--surface-2); }
+.radar-eo { display: grid; grid-template-columns: 1fr 40px; align-items: center; gap: 8px; }
+.radar-eo b { text-align: right; font-size: var(--fs-sm); }
+.radar-only { grid-column: 1 / -1; justify-self: end; font-size: var(--fs-xs); font-weight: 650; color: var(--green-text); }
+.radar-toggle { margin-top: 12px; }
+
+@media (max-width: 960px) {
+  .league-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .race-row { grid-template-columns: 20px minmax(0, 1fr) 40px 46px; }
+  .race-track { grid-column: 2 / -1; grid-row: 2; }
+  .radar-grid { grid-template-columns: 1fr; }
+  /* Keep the duel side by side on phones: names only, smaller kits. */
+  .duel-grid { gap: 8px; }
+  .duel-list li { padding: 5px 6px; }
+  .duel-list .pchip { gap: 6px; }
+  .duel-list .pchip-text small { display: none; }
+  .duel-list .pchip-text strong { font-size: var(--fs-xs); }
+  .duel-list .pchip-kit svg { width: 22px; height: 22px; }
+  .duel-score strong { font-size: 1.5rem; }
+  .duel-captains { grid-template-columns: 1fr 1fr; }
+  .duel-captains .pill { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
 }

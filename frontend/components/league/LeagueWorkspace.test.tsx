@@ -42,18 +42,24 @@ function serve(fetchSpy: ReturnType<typeof mockApi>) {
   });
 }
 
-test("the smallest league opens with gaps, threats and a head-to-head", async () => {
+test("the smallest league opens with the race, a default duel and the league radar", async () => {
   serve(mockApi());
   render(<TeamProvider><LeagueWorkspace /></TeamProvider>);
   expect(await screen.findByRole("heading", { name: "Pils, betting og poeng" })).toBeInTheDocument();
-  // Gap to the leader and to the next place above.
-  expect(screen.getByText("145 pts")).toBeInTheDocument();
-  expect(screen.getByText("128 pts")).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Threats" }));
-  expect(screen.getByText("Saka")).toBeInTheDocument();
-  expect(screen.queryByText("Mine")).not.toBeInTheDocument();
-  const leader = screen.getByText("No Salad").closest("tr")!;
-  await userEvent.click(within(leader).getByRole("button", { name: "Compare" }));
-  expect(await screen.findByText(/Unique starters project 6.5 xP for you and 5.1 xP for No Salad/)).toBeInTheDocument();
-  expect(screen.getByText(/Your captains differ/)).toBeInTheDocument();
+  // One-line status: rank, gap to the leader and to the place above.
+  expect(screen.getByText("3rd")).toBeInTheDocument();
+  expect(screen.getByText("145")).toBeInTheDocument();
+  expect(screen.getByText("128")).toBeInTheDocument();
+  // The duel opens against the manager directly above you.
+  expect(await screen.findByRole("heading", { name: "You vs Ballerotellitubby" })).toBeInTheDocument();
+  // Radar: a threat you do not own and your differential, in separate lists.
+  const threats = screen.getByText("They have, you don't").closest(".radar-col") as HTMLElement;
+  expect(within(threats).getByText("Saka")).toBeInTheDocument();
+  const edge = screen.getByText("Your edge").closest(".radar-col") as HTMLElement;
+  expect(within(edge).getByText("Mine")).toBeInTheDocument();
+  // Tapping another manager switches the duel.
+  await userEvent.click(screen.getByRole("button", { name: "Compare with No Salad" }));
+  expect(await screen.findByRole("heading", { name: "You vs No Salad" })).toBeInTheDocument();
+  expect(await screen.findByText("Different captains")).toBeInTheDocument();
+  expect(screen.getByText("6.5 xP")).toBeInTheDocument();
 });
