@@ -4,6 +4,7 @@ import type {
   HorizonGameweek,
   LiveFixture,
   LivePick,
+  PlayerSummary,
   SquadHealthPlayer,
   TeamPick,
 } from "@/lib/contracts";
@@ -153,6 +154,66 @@ export function buildSquad(data: DashboardData): SquadPlayer[] {
     })
     .filter((player): player is SquadPlayer => player != null)
     .sort((left, right) => left.slot - right.slot);
+}
+
+/**
+ * A player the plan buys, shaped like a squad player so the recommended
+ * lineup (XI, bench, captain) can include him. Official facts come from the
+ * public market list when it is loaded; live facts do not exist yet.
+ */
+/** Slot marker for a player the plan buys (not in the official squad yet). */
+export const INCOMING_SLOT = 99;
+
+export function incomingSquadPlayer(model: DecisionPlayer, market?: PlayerSummary | null): SquadPlayer | null {
+  const position = normalizePosition(model.position ?? market?.position);
+  if (!position) return null;
+  const team = market?.team ?? model.team ?? "—";
+  return {
+    id: model.player_id,
+    name: market?.name ?? model.name,
+    position,
+    team,
+    teamShort: market?.team_short ?? team.slice(0, 3).toUpperCase(),
+    teamId: null,
+    slot: INCOMING_SLOT,
+    isStarter: false,
+    isCaptain: false,
+    isVice: false,
+    multiplier: null,
+    price: num(model.price) ?? num(market?.price),
+    sellingPrice: null,
+    form: num(market?.form),
+    ownership: num(market?.ownership),
+    seasonPoints: null,
+    starts: null,
+    goals: num(market?.goals),
+    assists: num(market?.assists),
+    bonus: num(market?.bonus),
+    xg: num(market?.expected_goals),
+    xa: num(market?.expected_assists),
+    ict: num(market?.ict_index),
+    status: market?.status ?? null,
+    chance: num(market?.chance_of_playing_next_round),
+    news: market?.news || null,
+    xp: num(model.predicted_points),
+    xmins: num(model.xmins),
+    startProbability: num(model.start_probability),
+    modelAvailability: model.availability || null,
+    rotationRisk: model.rotation_risk || null,
+    opponent: model.opponent ?? null,
+    home: typeof model.home === "boolean" ? model.home : null,
+    difficulty: num(model.difficulty),
+    risk: null,
+    horizon: [],
+    horizonTotal: null,
+    livePoints: null,
+    liveContribution: null,
+    liveMinutes: null,
+    liveExpected: null,
+    liveBps: null,
+    fixtureState: "unknown",
+    liveFixture: null,
+  };
 }
 
 export function startersOf(squad: SquadPlayer[]): SquadPlayer[] {

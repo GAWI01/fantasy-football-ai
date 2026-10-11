@@ -24,5 +24,5 @@ export function useCockpit({ withMarket = true }: { withMarket?: boolean } = {})
     [dashboard, squad, market.byId],
   );
   const live = useMemo(() => (dashboard ? buildLiveView(dashboard.data, squad, dashboard.meta.prediction_event ?? dashboard.data.team.prediction_event) : null), [dashboard, squad]);
-  return { ...team, state, squad, plan, live, marketLoading: market.loading };
+  return { ...team, state, squad, plan, live, market: market.byId, marketLoading: market.loading };
 }

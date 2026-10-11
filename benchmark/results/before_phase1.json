@@ -1,0 +1,341 @@
+[
+ {
+  "team": 895045,
+  "ft_override": null,
+  "free_transfers": 1,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Szoboszlai>Rashford"
+  ],
+  "shown_transfers": [
+   "Schade>Groß"
+  ],
+  "consistent": false,
+  "hit_cost": 0.0,
+  "sells_bench_gk": false,
+  "sells_bench_player": false,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 895045,
+  "ft_override": 0,
+  "free_transfers": 0,
+  "action": "HOLD",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Szoboszlai>Rashford"
+  ],
+  "shown_transfers": [
+   "Schade>Groß"
+  ],
+  "consistent": false,
+  "hit_cost": 4.0,
+  "sells_bench_gk": false,
+  "sells_bench_player": false,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 895045,
+  "ft_override": 2,
+  "free_transfers": 2,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Forster>Pickford",
+   "Palmer>Rashford"
+  ],
+  "shown_transfers": [
+   "Forster>Kelleher",
+   "Szoboszlai>Groß"
+  ],
+  "consistent": false,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 895045,
+  "ft_override": 3,
+  "free_transfers": 3,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Forster>Tzolakis",
+   "Palmer>Groß",
+   "Slater>Rashford"
+  ],
+  "shown_transfers": [
+   "Forster>Kelleher",
+   "Palmer>Groß",
+   "Slater>Rashford"
+  ],
+  "consistent": false,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 4182037,
+  "ft_override": null,
+  "free_transfers": 1,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Semenyo>Rashford"
+  ],
+  "shown_transfers": [
+   "Semenyo>Rashford"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": false,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": "WILDCARD",
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 5151567,
+  "ft_override": null,
+  "free_transfers": 1,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Bogle>Tarkowski"
+  ],
+  "shown_transfers": [
+   "Bogle>Tarkowski"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": false,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 1,
+  "ft_override": null,
+  "free_transfers": 2,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Button>Tzolakis",
+   "O'Reilly>Branthwaite"
+  ],
+  "shown_transfers": [
+   "Button>Tzolakis",
+   "O'Reilly>Branthwaite"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Saka",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 2,
+  "ft_override": null,
+  "free_transfers": 3,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Dubravka>Pickford",
+   "Konsa>Tarkowski",
+   "Palmer>Rashford"
+  ],
+  "shown_transfers": [
+   "Dubravka>Pickford",
+   "Konsa>Tarkowski",
+   "Palmer>Rashford"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Saka",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 6658075,
+  "ft_override": null,
+  "free_transfers": 0,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Ajayi>Tarkowski"
+  ],
+  "shown_transfers": [
+   "Konsa>Gabriel"
+  ],
+  "consistent": false,
+  "hit_cost": 4.0,
+  "sells_bench_gk": false,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 145931,
+  "ft_override": null,
+  "free_transfers": 2,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Dubravka>Pickford",
+   "Palmer>Rashford"
+  ],
+  "shown_transfers": [
+   "Dubravka>Pickford",
+   "Palmer>Rashford"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 2312895,
+  "ft_override": null,
+  "free_transfers": 2,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Button>Pickford",
+   "Palmer>Rashford"
+  ],
+  "shown_transfers": [
+   "Button>Pickford",
+   "Palmer>Rashford"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Saka",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 5841371,
+  "ft_override": null,
+  "free_transfers": 3,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Hughes>Janelt",
+   "Semenyo>Rashford",
+   "Kusi-Asare>McBurnie"
+  ],
+  "shown_transfers": [
+   "Hughes>Iwobi",
+   "Semenyo>Barnes",
+   "Kusi-Asare>Barry"
+  ],
+  "consistent": false,
+  "hit_cost": 0.0,
+  "sells_bench_gk": false,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Mbeumo",
+  "chip": "WILDCARD",
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 1482,
+  "ft_override": null,
+  "free_transfers": 2,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Dovin>Pickford",
+   "Palmer>Rashford"
+  ],
+  "shown_transfers": [
+   "Dovin>Pickford",
+   "Palmer>Rashford"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Tarkowski",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 5416316,
+  "ft_override": null,
+  "free_transfers": 2,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Lecomte>Tzolakis",
+   "Cherki>Rashford"
+  ],
+  "shown_transfers": [
+   "Lecomte>Kelleher",
+   "Cherki>Rashford"
+  ],
+  "consistent": false,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "Haaland",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ },
+ {
+  "team": 639449,
+  "ft_override": null,
+  "free_transfers": 1,
+  "action": "MULTI_TRANSFER",
+  "confidence": "HIGH",
+  "engine_transfers": [
+   "Forster>Pickford"
+  ],
+  "shown_transfers": [
+   "Forster>Pickford"
+  ],
+  "consistent": true,
+  "hit_cost": 0.0,
+  "sells_bench_gk": true,
+  "sells_bench_player": true,
+  "captain": "B.Fernandes",
+  "vice": "Rogers",
+  "chip": null,
+  "wildcard_signal": 1.0
+ }
+]

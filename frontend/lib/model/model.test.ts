@@ -32,18 +32,24 @@ test("derives the decision, live and settled phases from the envelope and fails 
   expect(deriveGameState(missing).actionsOpen).toBe(false);
 });
 
-test("builds a transfer plan with honest next-GW, horizon and hit numbers", () => {
+test("presents the backend's canonical plan numbers without recomputing them", () => {
   const data = makeDashboard({ verdict: "TRANSFER" }).data;
   const squad = buildSquad(data);
   const plan = buildPlan(data, squad, market)!;
   expect(plan.verdict).toBe("TRANSFER");
+  expect(plan.action).toBe("SINGLE_TRANSFER");
   expect(plan.recommended.moves[0]).toMatchObject({ outName: "Ekström", inName: "Castellano", inTeamShort: "TOT" });
-  expect(plan.recommended.nextGwGain).toBeCloseTo(5.9 - 3.2);
+  expect(plan.recommended.nextGwGain).toBeCloseTo(2.7);
   expect(plan.recommended.hit).toBe(0);
-  expect(plan.recommended.horizonNet).toBeCloseTo(11.2);
+  expect(plan.recommended.horizonNet).toBeCloseTo(9.4);
+  expect(plan.recommended.rollValue).toBeCloseTo(2);
+  expect(plan.recommended.modelScore).toBeCloseTo(7.4);
   const double = plan.alternatives.find((scenario) => scenario.moves.length === 2)!;
   expect(double.hit).toBe(4);
-  expect(double.horizonNet).toBeCloseTo(15.5);
+  expect(double.horizonNet).toBeCloseTo(11.0);
+  // The shown plan is the backend's recommended_transfers, never a frontend pick.
+  const engine = data.decision!.transfers!.recommended_transfers!.map((move) => move.player_in_id);
+  expect(plan.recommended.moves.map((move) => move.inId)).toEqual(engine);
   expect(plan.projectedScore).toBeCloseTo((plan.xiPoints ?? 0) + 8.1);
   expect(plan.mainRisk.title).toContain("Varga");
 });
@@ -63,6 +69,9 @@ test("a HOLD verdict keeps the best evaluated move as context, not as the recomm
   expect(plan.verdict).toBe("HOLD");
   expect(plan.recommended.moves).toHaveLength(0);
   expect(plan.bestRejected?.moves[0].inName).toBe("Castellano");
+  // The rejected move is shown with why it lost: its gain is below the roll value.
+  expect(plan.bestRejected!.horizonGain).toBeLessThan(plan.bestRejected!.rollValue);
+  expect(plan.hold.moves).toHaveLength(0);
   expect(planSnapshot(plan, 7, "v1", "2026-10-03T09:00:00Z").action).toBe("Hold");
 });
 
@@ -119,7 +128,7 @@ test("lineup swaps keep formations legal and armbands on starters", () => {
   expect(projection.points).toBeCloseTo(SQUAD_XI_POINTS + 8.1);
 
   const plan = buildPlan(makeDashboard().data, squad, market)!;
-  expect(modelLineup(squad, plan.modelXI, plan.bench, plan.captain, plan.vice)?.captain).toBe(107);
+  expect(modelLineup(squad, plan.owned.xi, plan.owned.bench, plan.owned.captain, plan.owned.vice)?.captain).toBe(107);
 });
 
 const SQUAD_XI_POINTS = [4.4, 5.3, 5.1, 3.9, 3.7, 6.4, 8.1, 4.6, 3.2, 7.6, 4.9].reduce((total, value) => total + value, 0);
@@ -192,4 +201,25 @@ test("the live Gameweek's own forecast from the live endpoint drives the expecta
   const active = data.live!.picks.filter((pick) => (pick.multiplier ?? 0) > 0);
   const expected = active.reduce((total, pick) => total + 2 * (pick.multiplier ?? 0), 0);
   expect(buildLiveView(data, buildSquad(data))?.projectedXI).toBeCloseTo(expected);
+});
+
+test("the recommended lineup and captain come from the squad after the transfer", () => {
+  const data = makeDashboard({ verdict: "TRANSFER" }).data;
+  const decision = data.decision!;
+  // Backend lineup after Ekström (109) -> Castellano (201); Castellano captains.
+  const castellano = { player_id: 201, name: "Castellano", position: "MID", team: "Spurs", predicted_points: 5.9, price: 7.0 };
+  const ownedXI = decision.starting_xi!.players;
+  decision.owned_lineup = { starting_xi: ownedXI, bench: decision.bench!.players, captain: decision.captain!, vice_captain: decision.vice_captain! };
+  decision.starting_xi = { ...decision.starting_xi!, players: ownedXI.map((player) => (player.player_id === 109 ? castellano : player)) };
+  decision.captain = castellano;
+  decision.lineup_source = "after_recommended_transfers";
+  const squad = buildSquad(data);
+  const plan = buildPlan(data, squad, market)!;
+  expect(plan.lineupAfterTransfers).toBe(true);
+  expect(plan.captain?.name).toBe("Castellano");
+  expect(plan.modelXI.map((player) => player.id)).toContain(201);
+  expect(plan.modelXI.map((player) => player.id)).not.toContain(109);
+  // My Team edits the squad owned now: its model lineup has no incoming player.
+  expect(plan.owned.xi.map((player) => player.id)).toContain(109);
+  expect(plan.owned.captain?.id).toBe(decision.owned_lineup.captain.player_id);
 });

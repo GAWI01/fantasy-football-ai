@@ -223,6 +223,14 @@ def derive_free_transfers(
     return {"free_transfers": remaining, "known": True}
 
 
+def get_manager_transfer_records(team_id: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """A manager's public transfers and played chips (both cached upstream reads)."""
+    _validate_team_id(team_id)
+    history = _get_json(f"entry/{team_id}/history/")
+    chips = history.get("chips") if isinstance(history, dict) else None
+    return get_manager_transfers(team_id), [c for c in (chips or []) if isinstance(c, dict)]
+
+
 def get_manager_transfer_state(
     team_id: int,
     target_event: int,

@@ -21,7 +21,8 @@ def test_optimizer_returns_feasible_transfer_plan():
     result=optimize_transfers(team(),data(),TransferOptimizationConfig(max_transfers=1))
     assert result["transfers_used"]==1
     assert result["recommended_transfers"][0]["player_in_id"]==16
-    assert result["net_gain"]==5.0
+    # +5 in the XI and +5 as the new captain.
+    assert result["net_gain"]==10.0
 
 
 def test_transfer_optimizer_accepts_multi_gw_predictions():

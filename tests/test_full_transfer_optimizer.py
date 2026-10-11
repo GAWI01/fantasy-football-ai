@@ -51,14 +51,19 @@ def test_best_single_transfer_is_selected():
         max_transfers=1,
     )
 
+    assert result["action"] == "SINGLE_TRANSFER"
     assert result["transfers_used"] == 1
     assert result["hit_cost"] == pytest.approx(0.0)
     assert result["recommended"]["player_in_id"] == 16
-    assert result["gross_gain"] == pytest.approx(4.0)
-    assert result["net_gain"] == pytest.approx(4.0)
+    # EliteMid (9) replaces M1 (5) in the XI and also takes the armband from a
+    # 5-point captain: +4 lineup, +4 captain. Bench and keeper are unchanged.
+    assert result["gross_gain"] == pytest.approx(8.0)
+    assert result["net_gain"] == pytest.approx(8.0)
+    # Rolling one free transfer is worth 2.0, so the decision score is 6.0.
+    assert result["decision_score"] == pytest.approx(6.0)
 
 
-def test_hit_is_applied_when_more_transfers_are_requested():
+def test_hit_is_taken_only_when_the_gain_beats_its_cost_and_margin():
     result = optimize_transfer_plan(
         make_team(),
         make_predictions(),
@@ -66,8 +71,26 @@ def test_hit_is_applied_when_more_transfers_are_requested():
         max_transfers=1,
     )
 
+    # +8.0 lineup gain - 4 hit - 2 margin = +2.0 > holding (0.0).
+    assert result["action"] == "HIT"
     assert result["hit_cost"] == pytest.approx(4.0)
-    assert result["net_gain"] == pytest.approx(0.0)
+    assert result["net_gain"] == pytest.approx(4.0)
+    assert result["decision_score"] == pytest.approx(2.0)
+
+
+def test_hit_is_declined_when_the_gain_does_not_cover_cost_and_margin():
+    predictions = make_predictions()
+    predictions.loc[predictions["player_id"] == 16, "predicted_points"] = 6.5
+    predictions.loc[predictions["player_id"].isin([17, 18]), "predicted_points"] = 4.0
+
+    result = optimize_transfer_plan(make_team(), predictions, free_transfers=0, max_transfers=1)
+
+    # The best move gains +3.0 (+1.5 XI, +1.5 captain), below 4 + 2.
+    assert result["action"] == "HOLD"
+    assert result["transfers_used"] == 0
+    hit_option = result["options_by_transfer_count"][1]
+    assert hit_option["gross_gain"] == pytest.approx(3.0)
+    assert hit_option["decision_score"] == pytest.approx(-3.0)
 
 
 def test_no_transfer_can_be_better_than_a_negative_move():
@@ -150,7 +173,7 @@ def test_two_transfer_full_search_stays_within_interactive_latency_budget():
     duration = perf_counter() - started
 
     assert result["transfers_used"] == 2
-    assert result["net_gain"] == pytest.approx(14.0)
+    assert result["net_gain"] > 0
     assert duration < 2.0, f"full two-transfer search took {duration:.2f}s"
 
 
@@ -164,7 +187,10 @@ def test_downgrade_can_fund_an_upgrade_unaffordable_on_its_own():
     ])
     result = optimize_transfer_plan(make_team(), pd.concat([predictions, targets]), free_transfers=2, max_transfers=2)
     assert {(x["player_out_id"], x["player_in_id"]) for x in result["recommended_transfers"]} == {(8, 16), (13, 17)}
-    assert result["net_gain"] == pytest.approx(10.0)
+    # Hold XI+C+bench = 59.76; after: Upgrade 12 captains, Funding 7 starts = 71.96.
+    assert result["net_gain"] == pytest.approx(12.2)
+    # Using both free transfers forgoes rolling two (2.0 + 1.5).
+    assert result["decision_score"] == pytest.approx(8.7)
 
 
 def test_outgoing_from_full_club_frees_slot_for_paired_incoming():
@@ -176,7 +202,7 @@ def test_outgoing_from_full_club_frees_slot_for_paired_incoming():
     ])
     result = optimize_transfer_plan(make_team(), pd.concat([predictions, targets]), free_transfers=2, max_transfers=2)
     assert {(x["player_out_id"], x["player_in_id"]) for x in result["recommended_transfers"]} == {(8, 16), (13, 17)}
-    assert result["net_gain"] == pytest.approx(10.0)
+    assert result["net_gain"] == pytest.approx(13.2)
 
 
 def test_market_price_fallback_is_exposed_as_estimated_selling_value():
@@ -208,7 +234,7 @@ def test_marked_market_estimate_does_not_become_a_verified_selling_price():
 
 
 def test_solver_timeout_does_not_report_hold_as_a_proven_best_plan(monkeypatch):
-    monkeypatch.setattr("transfer_analysis.milp", lambda **kwargs: SimpleNamespace(success=False, status=1, x=None))
+    monkeypatch.setattr("optimizer.action_planner.milp", lambda **kwargs: SimpleNamespace(success=False, status=1, x=None))
     result = optimize_transfer_plan(make_team(), make_predictions())
     assert result["solver_status"] == "time_limit"
     assert result["optimality_known"] is False

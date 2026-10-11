@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .fpl_gateway import FplGatewayError, default_gateway
+from .fpl_gateway import FplGatewayError, FplNotFoundError, default_gateway
 
 
 FPL_TEAM_URL = "https://fantasy.premierleague.com/api/entry/{team_id}/"
@@ -15,6 +15,10 @@ class TeamServiceError(Exception):
     """Raised when a public FPL team cannot be loaded or normalized."""
 
 
+class TeamNotFoundError(TeamServiceError):
+    """No public FPL team exists with the requested Team ID."""
+
+
 def _require_mapping(payload: Any, field_name: str) -> dict:
     if not isinstance(payload, dict):
         raise TeamServiceError(f"{field_name} must be a JSON object")
@@ -25,6 +29,8 @@ def _get_json(url: str) -> dict:
     ttl_seconds = 300 if url == FPL_BOOTSTRAP_URL else 60
     try:
         payload = default_gateway.get_json(url, ttl_seconds).data
+    except FplNotFoundError as exc:
+        raise TeamNotFoundError(str(exc)) from exc
     except FplGatewayError as exc:
         raise TeamServiceError(str(exc)) from exc
 

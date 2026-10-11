@@ -63,7 +63,7 @@ def test_build_decision_contains_complete_decision_sections():
     assert result["captain"]["player_id"] != result["vice_captain"]["player_id"]
 
 
-def test_lineup_and_captains_are_selected_only_from_the_owned_squad():
+def test_lineup_and_captains_come_from_the_squad_after_the_recommended_transfers():
     result = build_decision(
         make_team(),
         make_predictions(),
@@ -72,12 +72,15 @@ def test_lineup_and_captains_are_selected_only_from_the_owned_squad():
         max_transfers=1,
     )
 
-    owned = set(range(1, 16))
-    assert {player["player_id"] for player in result["starting_xi"]["players"]} <= owned
-    assert {player["player_id"] for player in result["bench"]["players"]} <= owned
-    assert result["captain"]["player_id"] in owned
-    assert result["vice_captain"]["player_id"] in owned
-    assert 16 not in {player["player_id"] for player in result["starting_xi"]["players"]}
+    moves = result["transfers"]["recommended_transfers"]
+    sold = {move["player_out_id"] for move in moves}
+    bought = {move["player_in_id"] for move in moves}
+    plan_squad = (set(range(1, 16)) - sold) | bought
+    lineup = {player["player_id"] for player in result["starting_xi"]["players"] + result["bench"]["players"]}
+    assert lineup == plan_squad
+    assert result["captain"]["player_id"] in plan_squad - sold
+    assert result["vice_captain"]["player_id"] in plan_squad - sold
+    assert result["lineup_source"] == ("after_recommended_transfers" if moves else "owned_squad")
 
 
 def test_decision_uses_transfer_optimizer_and_preserves_post_transfer_squad():
@@ -152,8 +155,12 @@ def test_chip_budget_preserves_supplied_owned_selling_values():
     team["bank"] = 3.0
     team["picks"] = [{"player_id": i, "selling_price": 4.0} for i in range(1, 16)]
     result = build_decision(team, make_predictions(), chip_state={"wildcard_available": True})
+    # Bank 3.0 + 15 owned players at their supplied 4.0 selling value. The
+    # Wildcard is valued by the action planner with this budget.
+    assert result["transfers"]["budget"] == 63.0
+    assert result["transfers"]["selling_prices_known"] is True
+    assert result["intelligence"]["wildcard_signal"]["evaluated"] is True
     scenarios = result["intelligence"]["chip_scenarios"]
-    assert scenarios["budget"] == 63.0
     assert scenarios["selling_prices_known"] is True
 
 
@@ -163,9 +170,12 @@ def test_chip_captain_matches_the_owned_captain_recommendation():
     values["availability"] = "AVAILABLE"
     values.loc[values.player_id == 8, ["predicted_points", "start_probability", "availability"]] = [10.0, 0.2, "RISK"]
     values.loc[values.player_id == 9, "predicted_points"] = 8.0
-    result = build_decision(make_team(), values, chip_state={"triple_captain_available": True, "double_gameweek": True})
-    assert result["captain"]["player_id"] == 9
-    assert result["intelligence"]["chip_scenarios"]["scenarios"][0]["score"] == 8.0
+    result = build_decision(make_team(), values, chip_state={"triple_captain_available": True, "double_gameweek": True},
+                            max_transfers=0)
+    # Projected points already include minutes and availability: the armband
+    # goes to the higher expected value without discounting it again.
+    assert result["captain"]["player_id"] == 8
+    assert result["intelligence"]["chip_scenarios"]["scenarios"][0]["score"] == 10.0
 
 
 def test_chip_gains_use_the_recommended_owned_lineup_not_last_gameweeks_picks():

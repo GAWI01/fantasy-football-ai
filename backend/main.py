@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from pathlib import Path
 from datetime import datetime, timezone
+from threading import RLock
+import copy
+import hashlib
+import json
 import os
 
 import pandas as pd
@@ -9,6 +14,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_contract import api_envelope, source_meta
+from .availability import official_multiplier
+from .selling_prices import attach_selling_prices
+from .league_service import (
+    LeagueNotFoundError,
+    LeagueServiceError,
+    build_league,
+    compare_rival,
+    manager_leagues,
+)
 from .api_models import (
     DashboardEnvelopeModel,
     FixtureEnvelopeModel,
@@ -33,7 +47,7 @@ from .fpl_gateway import (
     default_gateway,
     end_gateway_trace,
 )
-from .team_service import TeamServiceError, fetch_public_team
+from .team_service import TeamNotFoundError, TeamServiceError, fetch_public_team
 from .fixture_service import (
     FixtureServiceError,
     get_fixture_matrix,
@@ -52,6 +66,7 @@ from .live_service import (
     get_live_players,
     get_manager_chip_state,
     get_manager_transfers,
+    get_manager_transfer_records,
     get_manager_transfer_state,
     get_team_history,
     latest_finished_event,
@@ -66,6 +81,8 @@ from .review_service import (
 )
 
 from decision_engine import build_decision
+from transfer_analysis import evaluate_transfer_moves
+from optimizer.action_planner import DEFAULT_POLICY
 
 
 app = FastAPI(
@@ -153,9 +170,9 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
             result.at[index, "team"] = club["name"]
         status = player.get("status")
         chance = player.get("chance_of_playing_next_round")
-        unavailable = status in {"s", "u", "n"} or chance == 0 or (status == "i" and chance is None)
+        multiplier = official_multiplier(status, chance)
+        unavailable = multiplier <= 0
         if if_available:
-            multiplier = 0.0 if unavailable else min(1.0, max(0.0, float(chance) / 100)) if chance is not None else 1.0
             result.at[index, "availability_multiplier"] = multiplier
             result.at[index, "predicted_points"] = float(row["ml_prediction"]) * multiplier
             result.at[index, "xmins"] = float(row["xmins_available"]) * multiplier
@@ -176,6 +193,7 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
             result.at[index, "start_probability"] = 0.0
         result.at[index, "status"] = status
         result.at[index, "chance_of_playing_next_round"] = chance
+        result.at[index, "news"] = str(player.get("news") or "")
         if "price" in result.columns and pd.notna(result.at[index, "price"]):
             price = float(result.at[index, "price"])
             result.at[index, "value"] = float(result.at[index, "predicted_points"]) / price if price > 0 else 0.0
@@ -183,20 +201,35 @@ def _apply_official_player_state(predictions: pd.DataFrame, bootstrap: dict) -> 
 
 
 def _live_event_expectations(event: int) -> dict[int, float] | None:
-    """Pre-deadline forecasts for the Gameweek being played, if that is the served artifact.
+    """Pre-deadline forecasts for the Gameweek being played.
 
-    While a Gameweek is live the next forecast is not published yet, so the
-    manifest still names the live Gameweek's artifact. Any other event (or any
-    unreadable artifact) gives no expectation rather than a mismatched one.
+    Once the next Gameweek's provisional forecast is published, the manifest
+    no longer names the live Gameweek, so the live Gameweek's artifact is
+    selected like the post-Gameweek review does: the latest one published
+    before its deadline. Optional context: live points never fail because of it.
     """
     try:
-        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
-        if manifest.prediction_event != event:
-            return None
-        predictions = _apply_official_player_state(load_predictions(), get_bootstrap_data())
-    except Exception:  # Optional context: live points must never fail because of it.
+        bootstrap = get_bootstrap_data()
+        target = next((item for item in bootstrap.get("events") or [] if item.get("id") == event), None)
+        path = select_review_prediction_file(
+            PREDICTIONS_DIR, event, deadline_time=(target or {}).get("deadline_time"))
+        predictions = pd.read_csv(path)
+    except Exception:
         return None
-    return {int(row.player_id): float(row.predicted_points) for row in predictions.itertuples(index=False)}
+    return {
+        int(row.player_id): float(row.predicted_points)
+        for row in predictions.itertuples(index=False)
+        if pd.notna(row.predicted_points)
+    }
+
+
+def _forecast_stage(manifest) -> dict:
+    """Final or provisional forecast (see historical_data.current_data.predict_gw)."""
+    provenance = manifest.model_provenance or {}
+    return {
+        "forecast_stage": provenance.get("forecast_stage", "final"),
+        "history_cutoff_gw": provenance.get("history_cutoff_gw", manifest.prediction_event - 1),
+    }
 
 
 @app.get("/api/v1/status", response_model=StatusEnvelopeModel)
@@ -252,6 +285,7 @@ def get_status_v1():
                 manifest.prediction_event == target_event if target_event is not None else None
             ),
             "validation_state": _model_validation_state(manifest),
+            **_forecast_stage(manifest),
         }
         meta["model"] = source_meta(
             "model",
@@ -882,6 +916,139 @@ def load_predictions() -> pd.DataFrame:
     return df
 
 
+class _DecisionCache:
+    """Small LRU of finished decisions keyed by every input that shapes them.
+
+    The dashboard is polled every minute; recomputing the action planner
+    (several MILP solves) is only needed when the squad, bank, transfers,
+    chips, forecast or official prices/availability actually change.
+    """
+
+    def __init__(self, max_entries: int = 256):
+        self._entries: OrderedDict[str, dict] = OrderedDict()
+        self._max = max_entries
+        self._lock = RLock()
+
+    def get(self, key: str) -> dict | None:
+        with self._lock:
+            value = self._entries.get(key)
+            if value is not None:
+                self._entries.move_to_end(key)
+            return value
+
+    def put(self, key: str, value: dict) -> None:
+        with self._lock:
+            self._entries[key] = value
+            self._entries.move_to_end(key)
+            while len(self._entries) > self._max:
+                self._entries.popitem(last=False)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._entries.clear()
+
+
+_DECISION_CACHE = _DecisionCache()
+
+
+def _decision_cache_key(team: dict, bootstrap: dict, manifest, chip_state: dict,
+                        predictions: pd.DataFrame, **options) -> str:
+    official = [
+        (e.get("id"), e.get("now_cost"), e.get("status"), e.get("chance_of_playing_next_round"), e.get("news"))
+        for e in bootstrap.get("elements") or []
+    ]
+    payload = {
+        "team": {key: team.get(key) for key in ("team_id", "bank", "picks", "started_event")},
+        "forecast": [getattr(manifest, "prediction_file", None), str(getattr(manifest, "generated_at", ""))],
+        # The served projections after the official overlay, exactly as optimised.
+        "projections": int(pd.util.hash_pandas_object(predictions, index=False).sum()),
+        "chips": chip_state,
+        "options": options,
+        "official": official,
+        "fixtures": [(e.get("id"), e.get("deadline_time")) for e in bootstrap.get("events") or []],
+    }
+    encoded = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _decision_inputs(team_id: int, free_transfers: int | None, max_transfers: int | None) -> dict:
+    """Everything a decision for `team_id` is computed from (official data,
+    served forecast, horizon, transfer and chip state)."""
+    team = get_team_data(team_id)
+    predictions = load_predictions()
+    manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+    bootstrap = get_bootstrap_data()
+    try:
+        _validate_prediction_target(manifest, bootstrap)
+    except DataLoaderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    predictions = _apply_official_player_state(predictions, bootstrap)
+    fixtures = load_current_fixtures()
+    teams = load_current_teams()
+    try:
+        transfer_state = get_manager_transfer_state(
+            team_id,
+            manifest.prediction_event,
+            int(team.get("started_event") or 1),
+        )
+    except LiveDataServiceError:
+        transfer_state = {"known": False, "free_transfers": 0}
+    try:
+        # Selling prices follow from public purchase prices; untraceable
+        # players keep the labelled market-price estimate.
+        transfer_records, played_chips = get_manager_transfer_records(team_id)
+        team = {**team, "picks": attach_selling_prices(
+            team["picks"], transfers=transfer_records, chips=played_chips,
+            elements=bootstrap.get("elements") or [],
+            started_event=team.get("started_event"))}
+    except LiveDataServiceError:
+        pass
+    effective_free_transfers = (
+        free_transfers
+        if free_transfers is not None
+        else int(transfer_state["free_transfers"])
+    )
+    # Search hold, every free transfer and up to two hits; the planner
+    # chooses among them (rolling is always a candidate).
+    effective_max_transfers = (
+        max_transfers
+        if max_transfers is not None
+        else min(15, effective_free_transfers + DEFAULT_POLICY.max_hits)
+    )
+    effective_horizon = min(5, 39 - manifest.prediction_event)
+    horizon_predictions = build_fixture_scaled_horizon(
+        predictions,
+        fixtures,
+        teams,
+        prediction_event=manifest.prediction_event,
+        horizon=effective_horizon,
+    )
+    try:
+        chip_state = get_manager_chip_state(
+            team_id,
+            manifest.prediction_event,
+            started_event=team.get("started_event"),
+        )
+    except LiveDataServiceError:
+        chip_state = normalize_manager_chip_state(
+            manifest.prediction_event,
+            {},
+            started_event=team.get("started_event"),
+        )
+    chip_state.update(
+        gameweek_flags(fixtures, teams, manifest.prediction_event)
+    )
+    chip_state["free_transfers"] = effective_free_transfers
+    chip_state["free_transfers_known"] = bool(transfer_state["known"])
+
+    return {
+        "team": team, "predictions": predictions, "manifest": manifest, "bootstrap": bootstrap,
+        "transfer_state": transfer_state, "free_transfers": effective_free_transfers,
+        "max_transfers": effective_max_transfers, "horizon": effective_horizon,
+        "horizon_predictions": horizon_predictions, "chip_state": chip_state,
+    }
+
+
 @app.get("/api/decision/{team_id}")
 def get_decision(
     team_id: int,
@@ -907,71 +1074,30 @@ def get_decision(
         )
 
     try:
-        team = get_team_data(team_id)
-        predictions = load_predictions()
-        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
-        bootstrap = get_bootstrap_data()
-        try:
-            _validate_prediction_target(manifest, bootstrap)
-        except DataLoaderError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        predictions = _apply_official_player_state(predictions, bootstrap)
-        fixtures = load_current_fixtures()
-        teams = load_current_teams()
-        try:
-            transfer_state = get_manager_transfer_state(
-                team_id,
-                manifest.prediction_event,
-                int(team.get("started_event") or 1),
+        inputs = _decision_inputs(team_id, free_transfers, max_transfers)
+        team, predictions, manifest, bootstrap = (
+            inputs["team"], inputs["predictions"], inputs["manifest"], inputs["bootstrap"])
+        transfer_state, chip_state = inputs["transfer_state"], inputs["chip_state"]
+        effective_free_transfers, effective_max_transfers = inputs["free_transfers"], inputs["max_transfers"]
+        effective_horizon, horizon_predictions = inputs["horizon"], inputs["horizon_predictions"]
+        cache_key = _decision_cache_key(
+            team, bootstrap, manifest, chip_state, predictions,
+            budget=budget, free_transfers=effective_free_transfers, max_transfers=effective_max_transfers,
+        )
+        decision = _DECISION_CACHE.get(cache_key)
+        if decision is None:
+            decision = build_decision(
+                team,
+                predictions,
+                budget=budget,
+                free_transfers=effective_free_transfers,
+                max_transfers=effective_max_transfers,
+                horizon_predictions=horizon_predictions,
+                horizon=effective_horizon,
+                chip_state=chip_state,
             )
-        except LiveDataServiceError:
-            transfer_state = {"known": False, "free_transfers": 0}
-        effective_free_transfers = (
-            free_transfers
-            if free_transfers is not None
-            else int(transfer_state["free_transfers"])
-        )
-        effective_max_transfers = (
-            max_transfers
-            if max_transfers is not None
-            else min(5, max(1, effective_free_transfers))
-        )
-        effective_horizon = min(5, 39 - manifest.prediction_event)
-        horizon_predictions = build_fixture_scaled_horizon(
-            predictions,
-            fixtures,
-            teams,
-            prediction_event=manifest.prediction_event,
-            horizon=effective_horizon,
-        )
-        try:
-            chip_state = get_manager_chip_state(
-                team_id,
-                manifest.prediction_event,
-                started_event=team.get("started_event"),
-            )
-        except LiveDataServiceError:
-            chip_state = normalize_manager_chip_state(
-                manifest.prediction_event,
-                {},
-                started_event=team.get("started_event"),
-            )
-        chip_state.update(
-            gameweek_flags(fixtures, teams, manifest.prediction_event)
-        )
-        chip_state["free_transfers"] = effective_free_transfers
-        chip_state["free_transfers_known"] = bool(transfer_state["known"])
-
-        decision = build_decision(
-            team,
-            predictions,
-            budget=budget,
-            free_transfers=effective_free_transfers,
-            max_transfers=effective_max_transfers,
-            horizon_predictions=horizon_predictions,
-            horizon=effective_horizon,
-            chip_state=chip_state,
-        )
+            _DECISION_CACHE.put(cache_key, decision)
+        decision = copy.deepcopy(decision)
         # Public FPL data cannot see every transfer rule, so tell clients
         # whether the count came from the user or was derived.
         decision["transfers"]["free_transfers_source"] = (
@@ -1009,7 +1135,15 @@ def get_dashboard_v1(team_id: int, free_transfers: int | None = None):
         decision=lambda value: get_decision(value, free_transfers=free_transfers),
     )
     try:
-        payload = build_dashboard(team_id, dependencies)
+        try:
+            payload = build_dashboard(team_id, dependencies)
+        except TeamNotFoundError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No FPL team found with ID {team_id}. Check the number in your team's web address.",
+            ) from exc
+        except (TeamServiceError, LiveDataServiceError) as exc:
+            raise HTTPException(status_code=502, detail=f"Official FPL data is unavailable: {exc}") from exc
         try:
             manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
             bootstrap = get_bootstrap_data()
@@ -1021,6 +1155,7 @@ def get_dashboard_v1(team_id: int, free_transfers: int | None = None):
             payload["meta"].update(planning_state)
             payload["meta"]["prediction_version"] = manifest.prediction_file
             payload["meta"]["model_validation_state"] = _model_validation_state(manifest)
+            payload["meta"].update(_forecast_stage(manifest))
             if _model_validation_state(manifest) != "validated":
                 payload["meta"]["degraded"] = True
                 payload["errors"].append({
@@ -1071,6 +1206,117 @@ def get_plan_v1(team_id: int):
     )
     meta["event"] = manifest.prediction_event
     return api_envelope(get_decision(team_id), meta)
+
+
+def _id_list(value: str, label: str) -> list[int]:
+    try:
+        ids = [int(part) for part in value.split(",") if part.strip()]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"{label} must be comma-separated player IDs") from exc
+    if not 1 <= len(ids) <= 5:
+        raise HTTPException(status_code=400, detail=f"{label} must name between 1 and 5 players")
+    return ids
+
+
+@app.get("/api/v1/evaluate/{team_id}")
+def evaluate_transfers_v1(team_id: int, sell: str, buy: str, free_transfers: int | None = None):
+    """Score the manager's own transfers against holding and the recommendation.
+
+    Uses the same inputs, horizon and planner as the recommendation, so the
+    numbers are directly comparable.
+    """
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="team_id must be positive")
+    if free_transfers is not None and not 0 <= free_transfers <= 5:
+        raise HTTPException(status_code=400, detail="free_transfers must be between 0 and 5")
+    sell_ids, buy_ids = _id_list(sell, "sell"), _id_list(buy, "buy")
+    try:
+        inputs = _decision_inputs(team_id, free_transfers, None)
+        frames = [inputs["horizon_predictions"][key] for key in sorted(inputs["horizon_predictions"])]
+        weights = [max(0.4, 1.0 - 0.15 * index) for index in range(len(frames))]
+        result = evaluate_transfer_moves(
+            inputs["team"], inputs["predictions"], sell=sell_ids, buy=buy_ids,
+            free_transfers=inputs["free_transfers"], horizon_predictions=frames, horizon_weights=weights)
+        recommendation = get_decision(team_id, free_transfers=free_transfers)["transfers"]
+    except HTTPException:
+        raise
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"No FPL team found with ID {team_id}.") from exc
+    except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except (DataLoaderError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    result["recommended"] = {
+        "action": recommendation.get("action"),
+        "transfers": recommendation.get("recommended_transfers", []),
+        "decision_score": recommendation.get("decision_score"),
+        "net_gain": recommendation.get("net_gain"),
+    }
+    result["free_transfers"] = inputs["free_transfers"]
+    meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
+    meta["event"] = inputs["manifest"].prediction_event
+    return api_envelope(result, meta)
+
+
+def _next_gw_projections(bootstrap: dict) -> dict[int, float] | None:
+    """Next-Gameweek model points, when the served forecast targets it."""
+    try:
+        manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
+        _validate_prediction_target(manifest, bootstrap)
+        predictions = _apply_official_player_state(load_predictions(), bootstrap)
+    except Exception:  # Optional context: league views never fail because of it.
+        return None
+    return {int(row.player_id): float(row.predicted_points) for row in predictions.itertuples(index=False)}
+
+
+def _league_errors(call):
+    trace_token = begin_gateway_trace()
+    try:
+        data = call()
+    except LeagueNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (LeagueServiceError, LiveDataServiceError) as exc:
+        raise HTTPException(status_code=502, detail=f"Official FPL data is unavailable: {exc}") from exc
+    finally:
+        official_trace = end_gateway_trace(trace_token)
+    return api_envelope(data, _gateway_source_meta("official", official_trace))
+
+
+@app.get("/api/v1/leagues/{team_id}")
+def get_leagues_v1(team_id: int):
+    """The manager's private mini-leagues."""
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="team_id must be positive")
+    return _league_errors(lambda: {"team_id": team_id, "leagues": manager_leagues(team_id)})
+
+
+@app.get("/api/v1/league/{league_id}")
+def get_league_v1(league_id: int, team_id: int):
+    """Standings, gaps and league effective ownership from the latest public squads."""
+    if league_id <= 0 or team_id <= 0:
+        raise HTTPException(status_code=400, detail="league_id and team_id must be positive")
+
+    def build():
+        bootstrap = get_bootstrap_data()
+        return build_league(team_id, league_id, bootstrap=bootstrap, projections=_next_gw_projections(bootstrap))
+    return _league_errors(build)
+
+
+@app.get("/api/v1/league/{league_id}/rival/{rival_id}")
+def get_rival_v1(league_id: int, rival_id: int, team_id: int):
+    """Shared and unique players against one rival in a league."""
+    if min(league_id, rival_id, team_id) <= 0:
+        raise HTTPException(status_code=400, detail="IDs must be positive")
+    if rival_id == team_id:
+        raise HTTPException(status_code=400, detail="Choose another manager to compare with")
+
+    def build():
+        bootstrap = get_bootstrap_data()
+        league = build_league(team_id, league_id, bootstrap=bootstrap)
+        if all(row["team_id"] != rival_id for row in league["standings"]):
+            raise LeagueNotFoundError(f"Manager {rival_id} is not in league {league_id}")
+        return compare_rival(team_id, rival_id, bootstrap=bootstrap, projections=_next_gw_projections(bootstrap))
+    return _league_errors(build)
 
 
 def get_enriched_player_rankings(

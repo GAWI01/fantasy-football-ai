@@ -9,6 +9,7 @@ import {
   Repeat2,
   Settings,
   Shirt,
+  Trophy,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
   overview: LayoutDashboard,
   team: Shirt,
   plan: Repeat2,
+  league: Trophy,
   players: Users,
   fixtures: CalendarRange,
   review: History,

@@ -6,7 +6,8 @@ import { useMemo, useState } from "react";
 
 import { Kit } from "@/components/kit/Kit";
 import { clubCode } from "@/lib/fpl/kits";
-import { MoveRow, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
+import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
+import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { DataState } from "@/components/states/DataState";
@@ -80,7 +81,7 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
           <b>Hit check:</b> best plan with a hit nets {signed(withHit.horizonNet)} over five Gameweeks{noHit ? `, versus ${signed(noHit.horizonNet)} for the best free move` : ""}. {plan.recommended.hit ? "The engine accepts this hit." : "The engine does not take the hit."}
         </p>
       ) : null}
-      <p className="card-note">Next GW uses each player’s native model projection. 5-GW gain is the model’s minutes-adjusted horizon before hits; 5-GW net subtracts the hit. Options are ranked by the engine’s weighted multi-GW score.</p>
+      <p className="card-note">Next GW is the change in your best XI and captain’s projected points this Gameweek; bench players count only as cover. 5-GW gain is the same over five Gameweeks, later ones weighted less; 5-GW net subtracts the hit. The engine ranks options by 5-GW net minus the value of the free transfers they use, so holding wins when no move beats rolling.</p>
     </Card>
   );
 }
@@ -92,7 +93,7 @@ function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlaye
   const max = Math.max(1, ...options.map((option) => option.player.xp ?? 0));
   const delta = active?.xp != null && plan.captain?.xp != null ? active.xp - plan.captain.xp : null;
   return (
-    <Card title="Captaincy" eyebrow="Owned players only" icon={<Crown size={16} />} source="model">
+    <Card title="Captaincy" eyebrow={plan.lineupAfterTransfers ? "Your squad after the plan" : "Owned players only"} icon={<Crown size={16} />} source="model">
       <div className="cap-list" role="radiogroup" aria-label="Captain options">
         {options.map(({ player, captainScore }) => (
           <button type="button" role="radio" aria-checked={active?.id === player.id} key={player.id} className={`cap-row${plan.captain?.id === player.id ? " is-recommended" : ""}`} onClick={() => setPick(player.id)}>
@@ -104,7 +105,7 @@ function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlaye
       </div>
       {active && plan.captain && active.id !== plan.captain.id ? (
         <p className="card-note">Captaining <b>{active.name}</b> instead of {plan.captain.name}: <Delta value={delta} unit=" xP" /> expected from the armband. <SourceBadge kind="derived" /></p>
-      ) : <p className="card-note">The model selected this captain from your owned players. Vice: <b>{plan.vice?.name ?? "—"}</b>.</p>}
+      ) : <p className="card-note">{plan.lineupAfterTransfers ? "Chosen from your squad after the recommended transfers" : "Chosen from your owned players"}: the highest projected points (minutes and availability are already in the projection). Vice: <b>{plan.vice?.name ?? "—"}</b>.</p>}
     </Card>
   );
 }
@@ -117,7 +118,7 @@ function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
       <div className="chip-call">
         <span className="eyebrow">{locked ? "Locked for this deadline" : "Recommendation"}</span>
         <strong className={plan.chip.recommended ? "tone-warn" : undefined}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold your chips"}</strong>
-        <p className="muted">{plan.chip.recommended ? `The ${CHIP_LABEL[plan.chip.recommended]} case cleared the engine's threshold (score ${fixed(plan.chip.score, 2)}). Check team news before committing.` : "No chip clears the evidence bar this week. Chips are worth most in doubles, blanks or a squad crisis, so the engine defaults to holding."}</p>
+        <p className="muted">{plan.chip.recommended ? `${plan.chip.reason ?? `The ${CHIP_LABEL[plan.chip.recommended]} case beats its evidence bar.`} Check team news before committing.` : "No chip clears its evidence bar this week. A chip being available is not a reason to play it: the Wildcard needs a rebuild that clearly beats your best normal move, and Bench Boost or Triple Captain need a double Gameweek with enough projected points."}</p>
         {plan.chipBudgetIsEstimate ? <p className="card-note">Chip squad affordability is estimated from market prices. Check your actual selling prices in FPL.</p> : null}
       </div>
       <div className="chip-grid">
@@ -174,7 +175,7 @@ function HorizonGrid({ squad }: { squad: SquadPlayer[] }) {
           </tbody>
         </table>
       </div>
-      <p className="card-note">Darker cells mean more expected points. Totals are minutes-adjusted. Bench players are dimmed.</p>
+      <p className="card-note">Darker cells mean more expected points. Totals are the sum of the five Gameweeks shown. Bench players are dimmed.</p>
     </Card>
   );
 }
@@ -198,7 +199,7 @@ function RiskCard({ squad }: { squad: SquadPlayer[] }) {
 }
 
 export function PlanWorkspace() {
-  const { ready, teamId, dashboard, loading, error, refresh, state, squad, plan, marketLoading } = useCockpit();
+  const { ready, teamId, dashboard, loading, error, refresh, state, squad, plan, market, marketLoading } = useCockpit();
   const snapshot = useMemo(
     () => (plan && state.actionsOpen && dashboard ? planSnapshot(plan, state.targetEvent, state.modelVersion, dashboard.meta.generated_at) : null),
     [plan, state.actionsOpen, state.targetEvent, state.modelVersion, dashboard],
@@ -226,12 +227,13 @@ export function PlanWorkspace() {
         <div>
           <span className="eyebrow">Plan & Transfers · Gameweek {state.targetEvent ?? "—"}</span>
           <h1>{isTransfer ? transferHeadline(plan) : "Hold this week"}</h1>
-          <p>{isTransfer ? "The engine found a move that clears its threshold after cost and uncertainty." : "No transfer clears the threshold. Rolling banks the transfer for next week's team news."}</p>
+          <p>{isTransfer ? "This move beats rolling the free transfer, after any hit and the value of banking the transfer." : "No move beats the value of rolling the free transfer. Rolling banks it for next week's team news."}</p>
         </div>
         <div className="page-head-actions">
           {plan.confidence ? <span className={`pill ${plan.confidence.label === "HIGH" ? "pill-pos" : plan.confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(plan.confidence.label)} confidence</span> : null}
           <span className="pill">{plan.freeTransfers == null || plan.freeTransfersSource === "unknown" ? "Free transfers unknown" : `${plan.freeTransfers} FT${plan.freeTransfersSource === "user" ? "" : " (est.)"}`}</span>
           <span className="pill">Bank {price(plan.bank)}</span>
+          {state.forecastProvisional && state.historyCutoff != null ? <ProvisionalPill cutoff={state.historyCutoff} event={state.targetEvent} /> : null}
         </div>
       </header>
 
@@ -244,7 +246,7 @@ export function PlanWorkspace() {
           <div className="verdict verdict-inline">
             <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>{isTransfer ? "Transfer" : "Hold"}</strong>
             {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
-              <div className="rejected"><span className="eyebrow">Best move found, below threshold</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
+              <div className="rejected"><span className="eyebrow">Best move found · rolling is worth more</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
             ) : <p className="muted">No evaluated transfer improves the squad.</p>}
             {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
           </div>
@@ -255,6 +257,7 @@ export function PlanWorkspace() {
           <ChipCard plan={plan} locked={locked} />
         </div>
         <ScenarioCompare plan={plan} />
+        {teamId && !locked ? <OwnMoveCard teamId={teamId} plan={plan} squad={squad} market={market} /> : null}
         <div className="plan-wide"><HorizonGrid squad={squad} /></div>
         <Card id="why" title="Why this plan" icon={<Lightbulb size={16} />} className="plan-why">
           <ExplainPlan plan={plan} modelVersion={state.modelVersion} />
