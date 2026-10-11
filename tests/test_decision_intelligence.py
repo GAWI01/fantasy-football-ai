@@ -13,15 +13,24 @@ def test_hold_when_no_positive_transfer():
     )
     assert out["action"]=="HOLD"
 
-def test_risky_captain_is_downgraded():
+def test_captain_availability_is_not_discounted_twice():
+    # Risky's 6.0 already includes his 60% chance of playing (10 x 0.6).
     p=pd.DataFrame([
-        {"player_id":1,"name":"Risky","predicted_points":10,"xmins":45,"start_probability":.5,"availability":"RISK","difficulty":3},
-        {"player_id":2,"name":"Safe","predicted_points":8,"xmins":90,"start_probability":1,"availability":"AVAILABLE","difficulty":2},
+        {"player_id":1,"name":"Risky","predicted_points":6.0,"xmins":54,"start_probability":.6,"availability":"RISK","difficulty":3},
+        {"player_id":2,"name":"Safe","predicted_points":5.5,"xmins":90,"start_probability":1,"availability":"AVAILABLE","difficulty":2},
     ])
-    team={"players":[
-        {**dict(p.iloc[0]),"rotation_risk":"HIGH"},
-        {**dict(p.iloc[1]),"rotation_risk":"LOW"},
-    ]}
+    team={"players":[dict(p.iloc[0]),dict(p.iloc[1])]}
+    out=build_intelligence(current_team=team,predictions=p,starting_xi=p,transfer_result={"net_gain":0,"gross_gain":0,"transfers_used":0,"hit_cost":0})
+    assert out["captain_decision"]["captain"]["player_id"]==1
+    assert out["captain_decision"]["captain"]["captain_score"]==6.0
+
+
+def test_equal_captain_values_prefer_the_surer_starter():
+    p=pd.DataFrame([
+        {"player_id":1,"name":"Doubt","predicted_points":5.0,"start_probability":.7,"availability":"RISK"},
+        {"player_id":2,"name":"Nailed","predicted_points":5.0,"start_probability":1.0,"availability":"AVAILABLE"},
+    ])
+    team={"players":[dict(p.iloc[0]),dict(p.iloc[1])]}
     out=build_intelligence(current_team=team,predictions=p,starting_xi=p,transfer_result={"net_gain":0,"gross_gain":0,"transfers_used":0,"hit_cost":0})
     assert out["captain_decision"]["captain"]["player_id"]==2
 
@@ -157,3 +166,19 @@ def test_hold_insight_names_the_rejected_move_and_reports_real_numbers():
     assert out["action"]=="HOLD"
     assert "One → Sixteen" in transfer["reason"] and "+1.2" in transfer["reason"]
     assert transfer["evidence"]["net_gain"]==0.0
+
+
+def test_captain_within_the_tie_band_goes_to_the_surer_starter():
+    p=pd.DataFrame([
+        {"player_id":1,"name":"Doubt","predicted_points":5.6,"start_probability":.79,"availability":"AVAILABLE"},
+        {"player_id":2,"name":"Nailed","predicted_points":5.5,"start_probability":1.0,"availability":"AVAILABLE"},
+        {"player_id":3,"name":"Other","predicted_points":4.0,"start_probability":1.0,"availability":"AVAILABLE"},
+    ])
+    team={"players":[dict(p.iloc[i]) for i in range(3)]}
+    out=build_intelligence(current_team=team,predictions=p,starting_xi=p,transfer_result={"net_gain":0,"gross_gain":0,"transfers_used":0,"hit_cost":0})
+    assert out["captain_decision"]["captain"]["player_id"]==2
+    assert out["captain_decision"]["vice_captain"]["player_id"]==1
+    # A clear expected-value lead still wins.
+    p.loc[p.player_id==1,"predicted_points"]=6.5
+    out=build_intelligence(current_team=team,predictions=p,starting_xi=p,transfer_result={"net_gain":0,"gross_gain":0,"transfers_used":0,"hit_cost":0})
+    assert out["captain_decision"]["captain"]["player_id"]==1

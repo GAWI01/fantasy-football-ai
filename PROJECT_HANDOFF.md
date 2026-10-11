@@ -6,6 +6,22 @@ Milestone: Phase 1 decision correctness after the 2026-10-11 practical audit
 (`docs/audit/PRACTICAL_PRODUCT_AUDIT_2026-10-11.md`). Full report, root causes
 and before/after benchmark: `docs/audit/PHASE1_DECISION_CORRECTNESS.md`.
 
+## Phase 2 status (2026-10-11)
+
+Branch `feature/decision-quality-phase2` (on top of Phase 1). See
+`docs/audit/PHASE2_DECISION_QUALITY.md`.
+
+DONE: derived selling prices; lineup, captain and bench from the squad after
+the recommended transfers (owned-squad lineup kept for My Team); captain by
+expected points with a 0.3-point tie band; decision cache; new "Test your own
+move" (`/api/v1/evaluate/{team_id}`).
+VERIFIED: pytest 531 passed, frontend 112 passed, lint/tsc/build clean;
+benchmark 15/15 known selling prices, 0 sold captains or lineup players; live
+browser check (GW6 live, provisional GW7).
+NOT VERIFIED: derived selling prices against private FPL values; Docker/hosted.
+REMAINING: multi-week planning, chip timing, mini-league/EO, team-news feed,
+model calibration, policy backtest.
+
 ## Phase 1 status (2026-10-11)
 
 DONE

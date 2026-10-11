@@ -682,3 +682,9 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 .ft-link { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--violet-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .ft-link:hover { color: var(--text); }
 .ft-link:focus-visible { outline: 2px solid var(--violet-text); outline-offset: 2px; border-radius: 2px; }
+
+/* Test your own move */
+.own-move { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.own-move .select-label { flex-direction: column; align-items: stretch; gap: 4px; flex: 1 1 220px; min-width: 0; }
+.own-move .select-label select { width: 100%; min-width: 0; }
+.own-move-result { margin-top: 12px; }

@@ -7,7 +7,7 @@ from optimizer.starting_xi import select_starting_xi
 from optimizer.squad_optimizer import optimize_squad
 from optimizer.transfer_optimizer import TransferOptimizationConfig, optimize_transfers
 from optimizer.multi_gw import MultiGWConfig
-from decision_intelligence import build_intelligence
+from decision_intelligence import build_intelligence, captain_intelligence
 
 def _player_records(df: pd.DataFrame) -> list[dict[str, Any]]:
     records=[]
@@ -91,12 +91,24 @@ def build_decision(
         ),
     )
 
-    # The intelligence layer is additive. Existing callers remain compatible:
-    # horizon_predictions/chip_state are optional.
+    # The lineup this plan recommends: the squad after the recommended
+    # transfers. Captain, vice, XI and bench must never include a player the
+    # plan sells (or ignore one it buys).
+    outs={int(t["player_out_id"]) for t in transfers.get("recommended_transfers",[])}
+    ins=[int(t["player_in_id"]) for t in transfers.get("recommended_transfers",[])]
+    plan_ids=[pid for pid in owned_ids if pid not in outs]+ins
+    plan_squad=predictions.set_index("player_id").loc[plan_ids].reset_index()
+    plan_xi=select_starting_xi(plan_squad) if ins else xi
+
+    # The intelligence layer explains the plan; chips are judged on the owned
+    # squad's lineup (a chip is played on the squad you will field).
     intelligence=build_intelligence(
         current_team=current,
         predictions=predictions,
-        starting_xi=current_squad.loc[
+        starting_xi=plan_squad.loc[
+            plan_squad["player_id"].isin([int(p["player_id"]) for p in plan_xi["starting_xi"]])
+        ].copy(),
+        owned_starting_xi=current_squad.loc[
             current_squad["player_id"].isin([int(p["player_id"]) for p in xi["starting_xi"]])
         ].copy(),
         transfer_result=transfers,
@@ -110,10 +122,16 @@ def build_decision(
     # Use the intelligence captain/vice only when both are valid XI members.
     intelligent_captain=intelligence["captain_decision"]["captain"]
     intelligent_vice=intelligence["captain_decision"]["vice_captain"]
-    xi_ids={int(p["player_id"]) for p in xi["starting_xi"]}
+    xi_ids={int(p["player_id"]) for p in plan_xi["starting_xi"]}
     if int(intelligent_captain["player_id"]) not in xi_ids or int(intelligent_vice["player_id"]) not in xi_ids:
-        intelligent_captain=xi["captain"]
-        intelligent_vice=xi["vice_captain"]
+        intelligent_captain=plan_xi["captain"]
+        intelligent_vice=plan_xi["vice_captain"]
+    owned_xi=xi
+    owned_xi_frame=current_squad.loc[
+        current_squad["player_id"].isin([int(p["player_id"]) for p in owned_xi["starting_xi"]])
+    ].copy()
+    owned_captains=captain_intelligence(owned_xi_frame)
+    xi=plan_xi
 
     result={
         "current_team":current,
@@ -128,6 +146,16 @@ def build_decision(
             "projected_points":float(xi["starting_xi_base_points"]),
         },
         "bench":{"players":xi["bench"]},
+        "lineup_source":"after_recommended_transfers" if ins else "owned_squad",
+        # The best lineup of the squad owned now (for lineup editing before
+        # any transfer is made). Equal to the lineup above when holding.
+        "owned_lineup":{
+            "formation":owned_xi["formation"],
+            "starting_xi":owned_xi["starting_xi"],
+            "bench":owned_xi["bench"],
+            "captain":owned_captains["captain"],
+            "vice_captain":owned_captains["vice_captain"],
+        },
         "captain":{
             "player_id":int(intelligent_captain["player_id"]),
             "name":str(intelligent_captain["name"]),

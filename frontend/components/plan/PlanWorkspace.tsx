@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { Kit } from "@/components/kit/Kit";
 import { clubCode } from "@/lib/fpl/kits";
 import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
+import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { DataState } from "@/components/states/DataState";
@@ -92,7 +93,7 @@ function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlaye
   const max = Math.max(1, ...options.map((option) => option.player.xp ?? 0));
   const delta = active?.xp != null && plan.captain?.xp != null ? active.xp - plan.captain.xp : null;
   return (
-    <Card title="Captaincy" eyebrow="Owned players only" icon={<Crown size={16} />} source="model">
+    <Card title="Captaincy" eyebrow={plan.lineupAfterTransfers ? "Your squad after the plan" : "Owned players only"} icon={<Crown size={16} />} source="model">
       <div className="cap-list" role="radiogroup" aria-label="Captain options">
         {options.map(({ player, captainScore }) => (
           <button type="button" role="radio" aria-checked={active?.id === player.id} key={player.id} className={`cap-row${plan.captain?.id === player.id ? " is-recommended" : ""}`} onClick={() => setPick(player.id)}>
@@ -104,7 +105,7 @@ function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlaye
       </div>
       {active && plan.captain && active.id !== plan.captain.id ? (
         <p className="card-note">Captaining <b>{active.name}</b> instead of {plan.captain.name}: <Delta value={delta} unit=" xP" /> expected from the armband. <SourceBadge kind="derived" /></p>
-      ) : <p className="card-note">The model selected this captain from your owned players. Vice: <b>{plan.vice?.name ?? "—"}</b>.</p>}
+      ) : <p className="card-note">{plan.lineupAfterTransfers ? "Chosen from your squad after the recommended transfers" : "Chosen from your owned players"}: the highest projected points (minutes and availability are already in the projection). Vice: <b>{plan.vice?.name ?? "—"}</b>.</p>}
     </Card>
   );
 }
@@ -198,7 +199,7 @@ function RiskCard({ squad }: { squad: SquadPlayer[] }) {
 }
 
 export function PlanWorkspace() {
-  const { ready, teamId, dashboard, loading, error, refresh, state, squad, plan, marketLoading } = useCockpit();
+  const { ready, teamId, dashboard, loading, error, refresh, state, squad, plan, market, marketLoading } = useCockpit();
   const snapshot = useMemo(
     () => (plan && state.actionsOpen && dashboard ? planSnapshot(plan, state.targetEvent, state.modelVersion, dashboard.meta.generated_at) : null),
     [plan, state.actionsOpen, state.targetEvent, state.modelVersion, dashboard],
@@ -256,6 +257,7 @@ export function PlanWorkspace() {
           <ChipCard plan={plan} locked={locked} />
         </div>
         <ScenarioCompare plan={plan} />
+        {teamId && !locked ? <OwnMoveCard teamId={teamId} plan={plan} squad={squad} market={market} /> : null}
         <div className="plan-wide"><HorizonGrid squad={squad} /></div>
         <Card id="why" title="Why this plan" icon={<Lightbulb size={16} />} className="plan-why">
           <ExplainPlan plan={plan} modelVersion={state.modelVersion} />

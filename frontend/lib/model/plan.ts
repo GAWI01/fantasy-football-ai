@@ -7,7 +7,7 @@ import type {
   RecommendedTransfer,
   TransferScenario,
 } from "@/lib/contracts";
-import { isFlagged, type SquadPlayer } from "@/lib/model/squad";
+import { INCOMING_SLOT, incomingSquadPlayer, isFlagged, type SquadPlayer } from "@/lib/model/squad";
 
 export type Verdict = "TRANSFER" | "HOLD";
 
@@ -81,11 +81,15 @@ export type GameweekPlan = {
   bank: number | null;
   budgetIsEstimate: boolean;
   chipBudgetIsEstimate: boolean;
+  /** The lineup comes from the squad after the recommended transfers. */
+  lineupAfterTransfers: boolean;
   captain: SquadPlayer | null;
   vice: SquadPlayer | null;
   captainOptions: Array<{ player: SquadPlayer; captainScore: number | null }>;
   bench: SquadPlayer[];
   modelXI: SquadPlayer[];
+  /** Best lineup of the squad owned now (before transfers), for lineup editing. */
+  owned: { xi: SquadPlayer[]; bench: SquadPlayer[]; captain: SquadPlayer | null; vice: SquadPlayer | null };
   formation: string | null;
   xiPoints: number | null;
   /** Derived: model XI base points plus the captain's extra multiplier. */
@@ -163,7 +167,9 @@ export function mainRiskFor(squad: SquadPlayer[], captain: SquadPlayer | null): 
   const flagged = starters.filter(isFlagged).sort((left, right) => riskRank(right) - riskRank(left));
   const top = flagged[0];
   if (!top) {
-    if (!starters.length || !starters.every((player) => player.risk && player.xmins != null && player.startProbability != null)) {
+    // Players the plan buys have no squad-health row yet; their minutes and
+    // start probability still come from the model.
+    if (!starters.length || !starters.every((player) => (player.risk || player.slot === INCOMING_SLOT) && player.xmins != null && player.startProbability != null)) {
       return { tone: "calm", title: "Risk model unavailable", detail: "Official availability shows no flagged starters.", playerId: null };
     }
     return { tone: "calm", title: "No major starter risk", detail: "No flagged starters in the available risk and minutes data.", playerId: null };
@@ -224,30 +230,57 @@ export function buildPlan(
     .filter((scenario) => scenario.transfers?.length)
     .map((scenario, index) => scenarioView(`alt-${index + 1}`, `Option ${index + 1}`, scenario, squadById, market));
 
-  const ownedIds = new Set(squad.map((player) => player.id));
+  // The recommended lineup is the squad after the plan's transfers: sold
+  // players leave it, bought players join it. Nothing outside it is shown.
+  const planById = new Map(squadById);
+  for (const move of selected.transfers) planById.delete(move.player_out_id);
+  const boughtIds = new Set(selected.transfers.map((move) => move.player_in_id));
+  for (const player of [...(decision.starting_xi?.players ?? []), ...(decision.bench?.players ?? [])]) {
+    if (planById.has(player.player_id) || !boughtIds.has(player.player_id)) continue;
+    const incoming = incomingSquadPlayer(player, market.get(player.player_id));
+    if (incoming) planById.set(player.player_id, incoming);
+  }
   const captainPool: DecisionPlayer[] = [
     decision.captain,
     decision.vice_captain,
     ...(intelligence?.captain_decision.alternatives ?? []),
-  ].filter((player): player is DecisionPlayer => Boolean(player && ownedIds.has(player.player_id)));
+  ].filter((player): player is DecisionPlayer => Boolean(player && planById.has(player.player_id)));
   const seen = new Set<number>();
   const captainOptions = captainPool.flatMap((candidate) => {
     if (seen.has(candidate.player_id)) return [];
     seen.add(candidate.player_id);
-    const player = squadById.get(candidate.player_id);
+    const player = planById.get(candidate.player_id);
     return player ? [{ player, captainScore: num(candidate.captain_score) }] : [];
   });
-  // Captaincy must only ever recommend owned players.
-  const captain = decision.captain && ownedIds.has(decision.captain.player_id) ? squadById.get(decision.captain.player_id) ?? null : null;
-  const vice = decision.vice_captain && ownedIds.has(decision.vice_captain.player_id) ? squadById.get(decision.vice_captain.player_id) ?? null : null;
+  // Captaincy only ever names a player in the squad the plan leaves you with.
+  const captain = decision.captain ? planById.get(decision.captain.player_id) ?? null : null;
+  const vice = decision.vice_captain ? planById.get(decision.vice_captain.player_id) ?? null : null;
 
   const bench = [...(decision.bench?.players ?? [])]
     .sort((left, right) => left.bench_order - right.bench_order)
-    .map((player) => squadById.get(player.player_id))
+    .map((player) => planById.get(player.player_id))
     .filter((player): player is SquadPlayer => Boolean(player));
   const modelXI = (decision.starting_xi?.players ?? [])
+    .map((player) => planById.get(player.player_id))
+    .filter((player): player is SquadPlayer => Boolean(player));
+  const ownedSource = decision.owned_lineup;
+  const resolveOwned = (players: DecisionPlayer[]) => players
     .map((player) => squadById.get(player.player_id))
     .filter((player): player is SquadPlayer => Boolean(player));
+  const owned = ownedSource
+    ? {
+      xi: resolveOwned(ownedSource.starting_xi),
+      bench: resolveOwned([...ownedSource.bench].sort((left, right) => left.bench_order - right.bench_order)),
+      captain: squadById.get(ownedSource.captain.player_id) ?? null,
+      vice: squadById.get(ownedSource.vice_captain.player_id) ?? null,
+    }
+    // Older payloads (or holding): the decision lineup is the owned lineup.
+    : {
+      xi: resolveOwned(decision.starting_xi?.players ?? []),
+      bench: resolveOwned([...(decision.bench?.players ?? [])].sort((left, right) => left.bench_order - right.bench_order)),
+      captain: decision.captain ? squadById.get(decision.captain.player_id) ?? null : null,
+      vice: decision.vice_captain ? squadById.get(decision.vice_captain.player_id) ?? null : null,
+    };
   const xiPoints = num(decision.starting_xi?.projected_points);
   const captainXp = num(decision.captain?.predicted_points);
   const chipScore = num(intelligence?.chip_advisor.score) ?? 0;
@@ -267,11 +300,13 @@ export function buildPlan(
     budgetIsEstimate: decision.transfers?.budget_is_estimate === true,
     chipBudgetIsEstimate: intelligence?.chip_scenarios?.budget_is_estimate === true,
     bank: num(data.team.bank) ?? num(decision.current_team?.bank),
+    lineupAfterTransfers: verdict === "TRANSFER" && selected.transfers.length > 0,
     captain,
     vice,
     captainOptions,
     bench,
     modelXI,
+    owned,
     formation: decision.starting_xi?.formation ?? null,
     xiPoints,
     projectedScore: xiPoints != null && captainXp != null ? xiPoints + captainXp : xiPoints,
@@ -282,7 +317,8 @@ export function buildPlan(
       state: intelligence?.chip_state ?? null,
     },
     confidence: intelligence?.confidence ?? null,
-    mainRisk: mainRiskFor(squad, captain),
+    // Risk is judged on the lineup the plan leaves you with.
+    mainRisk: mainRiskFor(modelXI.length === 11 ? modelXI.map((player) => ({ ...player, isStarter: true })) : squad, captain),
     insights: (intelligence?.insights ?? []).map(({ type, severity, reason }) => ({ type, severity, reason })),
   };
 }

@@ -45,9 +45,13 @@ def summarise(payload: dict) -> dict:
         "shown_transfers": _moves(strategy.get("selected_transfers")),
         "consistent": _moves(transfers.get("recommended_transfers")) == _moves(strategy.get("selected_transfers")),
         "hit_cost": transfers.get("hit_cost"),
+        "selling_prices_known": transfers.get("selling_prices_known"),
         "sells_bench_gk": any(players[i]["position"] in {"GK", "GKP"} and i in bench_ids for i in out_ids),
         "sells_bench_player": any(i in bench_ids for i in out_ids),
         "captain": decision["captain"]["name"],
+        "captain_is_sold": decision["captain"]["player_id"] in {t["player_out_id"] for t in transfers.get("recommended_transfers") or []},
+        "lineup_has_sold_player": bool({p["player_id"] for p in decision["starting_xi"]["players"] + decision["bench"]["players"]}
+                                       & {t["player_out_id"] for t in transfers.get("recommended_transfers") or []}),
         "vice": decision["vice_captain"]["name"],
         "chip": intelligence["chip_advisor"].get("recommended_chip"),
         "wildcard_advantage": (intelligence.get("wildcard_signal") or {}).get("advantage"),

@@ -1,5 +1,6 @@
 import type {
   DashboardEnvelope,
+  EvaluationEnvelope,
   FixtureMatrixEnvelope,
   PlayerMarketEnvelope,
   ReviewEnvelope,
@@ -148,4 +149,22 @@ export async function fetchPlayers(
     { cache: "no-store", signal },
   );
   return readJson<PlayerMarketEnvelope>(response);
+}
+
+
+/** Score the manager's own transfers on the same scale as the recommendation. */
+export async function fetchEvaluation(
+  teamId: string,
+  sell: number[],
+  buy: number[],
+  freeTransfers?: number | null,
+  signal?: AbortSignal,
+): Promise<EvaluationEnvelope> {
+  const normalized = teamId.trim();
+  if (!/^\d+$/.test(normalized)) throw new Error("Enter a numeric FPL Team ID");
+  if (!sell.length || sell.length !== buy.length) throw new Error("Choose a player to sell and a player to buy");
+  const params = new URLSearchParams({ sell: sell.join(","), buy: buy.join(",") });
+  if (freeTransfers != null) params.set("free_transfers", String(freeTransfers));
+  const response = await fetch(`${API_BASE_URL}/api/v1/evaluate/${normalized}?${params}`, { cache: "no-store", signal });
+  return readJson<EvaluationEnvelope>(response);
 }

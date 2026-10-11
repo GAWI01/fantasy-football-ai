@@ -16,17 +16,19 @@ from decision_strategy import (
     decision_confidence,
 )
 
+# Expected-points gap below which two captain options count as equal.
+CAPTAIN_TIE_BAND = 0.3
+
+
 def _captain_score(row: Mapping[str, Any]) -> float:
-    points = max(0.0, float(row.get("predicted_points", 0.0) or 0.0))
-    start = max(0.0, min(1.0, float(row.get("start_probability", 1.0) or 0.0)))
-    availability = str(row.get("availability", "AVAILABLE")).upper()
-    availability_factor = {
-        "AVAILABLE": 1.0, "NEWS": .92, "MINOR_RISK": .82,
-        "RISK": .65, "MAJOR_RISK": .45, "UNAVAILABLE": 0.0,
-    }.get(availability, .85)
-    difficulty = float(row.get("difficulty", 3.0) or 3.0)
-    fixture_factor = max(.85, min(1.10, 1.10 - (difficulty - 1.0) * .05))
-    return points * (.55 + .45 * start) * availability_factor * fixture_factor
+    """The armband's expected value: the player's projected points.
+
+    Projected points already include expected minutes and the official
+    availability multiplier, so neither is discounted again here (the old
+    score penalised a doubtful player two or three times). A captain who does
+    not play passes the armband to the vice, which caps the downside further.
+    """
+    return max(0.0, float(row.get("predicted_points", 0.0) or 0.0))
 
 
 def _actual_gameweeks(predictions_by_gw: Mapping[int, pd.DataFrame]) -> list[int]:
@@ -48,11 +50,21 @@ def captain_intelligence(starting_xi: pd.DataFrame, top_n: int = 5) -> dict[str,
         record = row.to_dict()
         record["captain_score"] = round(_captain_score(record), 3)
         rows.append(record)
-    rows.sort(key=lambda r: (
-        -float(r["captain_score"]),
-        -float(r.get("predicted_points", 0.0) or 0.0),
-        int(r["player_id"]),
-    ))
+    rows.sort(key=lambda r: (-float(r["captain_score"]), int(r["player_id"])))
+    # Projections are not precise to a few tenths of a point. Within that
+    # band the armband goes to the surer starter: same expected value, less
+    # chance the captaincy falls to the vice.
+    def start(r):
+        value = r.get("start_probability")
+        return float(value) if value is not None and value == value else 1.0
+    best = rows[0]
+    for row in rows[1:]:
+        if float(best["captain_score"]) - float(row["captain_score"]) > CAPTAIN_TIE_BAND:
+            break
+        if start(row) > start(best) + 0.05:
+            best = row
+    rows.remove(best)
+    rows.insert(0, best)
     def public(r):
         return {
             k: r.get(k) for k in (
@@ -250,8 +262,13 @@ def build_intelligence(
     horizon: int = 3,
     chip_state: Mapping[str, Any] | None = None,
     manager_picks: list[dict[str, Any]] | None = None,
+    owned_starting_xi: pd.DataFrame | None = None,
 ) -> dict[str, Any]:
     """Explain the canonical decision; never choose a different one.
+
+    `starting_xi` is the lineup the plan recommends (after its transfers);
+    the captain is chosen from it. `owned_starting_xi` (default: the same)
+    is the owned squad's lineup that chip values are measured against.
 
     `transfer_result` is the action planner's output (via
     `transfer_analysis.optimize_transfer_plan`). Its chosen action and its
@@ -333,8 +350,9 @@ def build_intelligence(
     current_frame = pd.DataFrame(team_players)
     # Chip gains are measured against the owned XI and captain this plan
     # recommends, so the chip numbers match the lineup the manager is shown.
-    chip_xi_ids = [int(player_id) for player_id in starting_xi["player_id"]]
-    chip_captain_id = int(captain["captain"]["player_id"])
+    chip_lineup = owned_starting_xi if owned_starting_xi is not None else starting_xi
+    chip_xi_ids = [int(player_id) for player_id in chip_lineup["player_id"]]
+    chip_captain_id = int(captain_intelligence(chip_lineup)["captain"]["player_id"])
     if manager_picks:
         picks_by_id = {int(pick["player_id"]): pick for pick in manager_picks}
         for field in ("purchase_price", "selling_price", "selling_price_source"):
