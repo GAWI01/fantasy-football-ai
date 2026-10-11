@@ -1,5 +1,9 @@
 import type {
   DashboardEnvelope,
+  EvaluationEnvelope,
+  LeagueEnvelope,
+  LeaguesEnvelope,
+  RivalEnvelope,
   FixtureMatrixEnvelope,
   PlayerMarketEnvelope,
   ReviewEnvelope,
@@ -148,4 +152,50 @@ export async function fetchPlayers(
     { cache: "no-store", signal },
   );
   return readJson<PlayerMarketEnvelope>(response);
+}
+
+
+/** Score the manager's own transfers on the same scale as the recommendation. */
+export async function fetchEvaluation(
+  teamId: string,
+  sell: number[],
+  buy: number[],
+  freeTransfers?: number | null,
+  signal?: AbortSignal,
+): Promise<EvaluationEnvelope> {
+  const normalized = teamId.trim();
+  if (!/^\d+$/.test(normalized)) throw new Error("Enter a numeric FPL Team ID");
+  if (!sell.length || sell.length !== buy.length) throw new Error("Choose a player to sell and a player to buy");
+  const params = new URLSearchParams({ sell: sell.join(","), buy: buy.join(",") });
+  if (freeTransfers != null) params.set("free_transfers", String(freeTransfers));
+  const response = await fetch(`${API_BASE_URL}/api/v1/evaluate/${normalized}?${params}`, { cache: "no-store", signal });
+  return readJson<EvaluationEnvelope>(response);
+}
+
+
+function numericId(value: string | number, label: string): string {
+  const text = String(value).trim();
+  if (!/^\d+$/.test(text)) throw new Error(`Enter a numeric ${label}`);
+  return text;
+}
+
+export async function fetchLeagues(teamId: string, signal?: AbortSignal): Promise<LeaguesEnvelope> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/leagues/${numericId(teamId, "FPL Team ID")}`, { cache: "no-store", signal });
+  return readJson<LeaguesEnvelope>(response);
+}
+
+export async function fetchLeague(leagueId: number, teamId: string, signal?: AbortSignal): Promise<LeagueEnvelope> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/league/${numericId(leagueId, "league ID")}?team_id=${numericId(teamId, "FPL Team ID")}`,
+    { cache: "no-store", signal },
+  );
+  return readJson<LeagueEnvelope>(response);
+}
+
+export async function fetchRival(leagueId: number, rivalId: number, teamId: string, signal?: AbortSignal): Promise<RivalEnvelope> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/league/${numericId(leagueId, "league ID")}/rival/${numericId(rivalId, "rival ID")}?team_id=${numericId(teamId, "FPL Team ID")}`,
+    { cache: "no-store", signal },
+  );
+  return readJson<RivalEnvelope>(response);
 }

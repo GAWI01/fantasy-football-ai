@@ -1,6 +1,81 @@
 # FPL-AI handoff
 
-Updated: 2026-10-04
+Updated: 2026-10-11
+Branch: `fix/decision-correctness-phase1`, based on `master` at `5306fdc`.
+Milestone: Phase 1 decision correctness after the 2026-10-11 practical audit
+(`docs/audit/PRACTICAL_PRODUCT_AUDIT_2026-10-11.md`). Full report, root causes
+and before/after benchmark: `docs/audit/PHASE1_DECISION_CORRECTNESS.md`.
+
+## Mini-leagues (2026-10-11)
+
+Branch `feature/mini-league` (on top of Phase 2). New page `/league` and API
+`/api/v1/leagues/{team_id}`, `/api/v1/league/{league_id}?team_id=`,
+`/api/v1/league/{league_id}/rival/{rival_id}?team_id=` (`backend/league_service.py`).
+Private leagues only; squads from the latest deadline that has passed (FPL does
+not publish next-deadline squads); top 30 managers analysed per league to stay
+within the upstream request budget. Rivals' EO excludes you; threat = ≥50%
+rival EO you do not own; differential = your starter under 25% rival EO.
+VERIFIED: tests (pytest 535, frontend 113), lint/tsc/build; browser check on a
+real 7-manager private league (desktop and 390 px).
+
+## Phase 2 status (2026-10-11)
+
+Branch `feature/decision-quality-phase2` (on top of Phase 1). See
+`docs/audit/PHASE2_DECISION_QUALITY.md`.
+
+DONE: derived selling prices; lineup, captain and bench from the squad after
+the recommended transfers (owned-squad lineup kept for My Team); captain by
+expected points with a 0.3-point tie band; decision cache; new "Test your own
+move" (`/api/v1/evaluate/{team_id}`).
+VERIFIED: pytest 531 passed, frontend 112 passed, lint/tsc/build clean;
+benchmark 15/15 known selling prices, 0 sold captains or lineup players; live
+browser check (GW6 live, provisional GW7).
+NOT VERIFIED: derived selling prices against private FPL values; Docker/hosted.
+REMAINING: multi-week planning, chip timing, mini-league/EO, team-news feed,
+model calibration, policy backtest.
+
+## Phase 1 status (2026-10-11)
+
+DONE
+- Next-GW planning during a live GW: provisional forecast for GW N+1 once GW N's
+  deadline passes (history to N-1), final once N is data-checked; live points
+  keep comparing against GW N's pre-deadline forecast; UI shows "Provisional".
+- One canonical action planner (`optimizer/action_planner.py`): starting XI +
+  captain per horizon GW, bench as autosub cover only, hold/roll, 1..FT free
+  transfers and up to two hits on one scale, roll value for banked FTs.
+- One transfer recommendation per response; intelligence explains, never re-ranks.
+- 5-GW gain counted once; no extra minutes discount on model points.
+- Gameweek-specific availability (`backend/availability.py`): return dates in
+  official news, recovery assumptions, blanks do not zero later GWs.
+- Action labels HOLD / SINGLE_TRANSFER / MULTI_TRANSFER / HIT (WILDCARD /
+  FREE_HIT only when recommended); margin-vs-uncertainty confidence (or UNKNOWN);
+  evidence-based chips; truthful UI copy (no threshold claim, hits real).
+- Unknown Team ID: 404 JSON with CORS, no upstream retry.
+- Recorded real-team decision benchmark (`benchmark/`, `python -m benchmark.run`).
+
+VERIFIED
+- `python -m pytest tests backend/tests`: 522 passed, 1 skipped.
+- Frontend: `pnpm test` 109 passed, `pnpm lint`, `tsc --noEmit`, `pnpm build` clean.
+- Benchmark on 12 recorded real teams (+ FT 0/2/3): 15/15 consistent plans,
+  0 bench-goalkeeper transfers, 0 wrong MULTI labels, 0 automatic Wildcards.
+- Real refresh pipeline (scratch copy, 2026-10-11, GW6 live) published a
+  provisional GW7 forecast; the real API served a GW7 plan; browser check of
+  overview and plan page on desktop and 390 px.
+
+NOT VERIFIED
+- Docker image build (no Docker locally); hosted deployment; the scheduled
+  GitHub Action publishing a provisional forecast on `master`.
+- Policy constants are documented assumptions, not backtested.
+
+REMAINING (see the phase report): model calibration (minutes risk, compressed
+range, ranking), per-GW forecasts, captain ceiling/double counting, post-transfer
+XI display, derived selling prices, FT rule after WC/FH, decision caching and
+latency, chip timing across GWs, earlier audit items (quota, legacy code).
+
+---
+
+# Earlier handoff (2026-10-04)
+
 Branch: `fix/audit-corrections`, based on `master` at `13bf200`.
 Milestone: four audited correction groups, then a retrained and certified model
 with automatic Gameweek refresh; Next.js + FastAPI + CSV serving is preserved.

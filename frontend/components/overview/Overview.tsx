@@ -83,7 +83,7 @@ export function Overview() {
       ) : (
         <>
           {plan ? (
-            <GameweekPlanCard plan={plan} event={state.targetEvent} modelVersion={state.modelVersion} locked={!state.actionsOpen} />
+            <GameweekPlanCard plan={plan} event={state.targetEvent} modelVersion={state.modelVersion} locked={!state.actionsOpen} provisionalCutoff={state.forecastProvisional ? state.historyCutoff : null} />
           ) : (
             <DataState tone="unavailable" title="No model plan right now">
               {state.failedAreas.has("decision")
@@ -98,7 +98,7 @@ export function Overview() {
           ) : null}
 
           <div className="overview-grid">
-            <Card title="Best XI" eyebrow="Model lineup from your squad" icon={<Shirt size={16} />} source="model" action={<Link className="link" href="/team">Edit lineup <ArrowRight size={13} aria-hidden="true" /></Link>} className="overview-pitch">
+            <Card title="Best XI" eyebrow={plan?.lineupAfterTransfers ? "Model lineup after the recommended transfers" : "Model lineup from your squad"} icon={<Shirt size={16} />} source="model" action={<Link className="link" href="/team">Edit lineup <ArrowRight size={13} aria-hidden="true" /></Link>} className="overview-pitch">
               {plan?.modelXI.length === 11 ? (
                 <>
                   <PitchSurface compact label="Model starting eleven with projected points">

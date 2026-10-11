@@ -8,25 +8,27 @@ from decision_horizon import (
     player_horizon_projection,
     evaluate_transfer_horizon,
 )
-from decision_risk import player_risk, squad_health, risk_adjusted_points
+from decision_risk import squad_health, risk_adjusted_points
 from decision_strategy import (
-    choose_transfer_action,
-    confidence_score,
-    transfer_pressure,
+    MINUTES_DOUBT_START_PROBABILITY,
     chip_advisor,
+    classify_action,
+    decision_confidence,
 )
 
+# Expected-points gap below which two captain options count as equal.
+CAPTAIN_TIE_BAND = 0.3
+
+
 def _captain_score(row: Mapping[str, Any]) -> float:
-    points = max(0.0, float(row.get("predicted_points", 0.0) or 0.0))
-    start = max(0.0, min(1.0, float(row.get("start_probability", 1.0) or 0.0)))
-    availability = str(row.get("availability", "AVAILABLE")).upper()
-    availability_factor = {
-        "AVAILABLE": 1.0, "NEWS": .92, "MINOR_RISK": .82,
-        "RISK": .65, "MAJOR_RISK": .45, "UNAVAILABLE": 0.0,
-    }.get(availability, .85)
-    difficulty = float(row.get("difficulty", 3.0) or 3.0)
-    fixture_factor = max(.85, min(1.10, 1.10 - (difficulty - 1.0) * .05))
-    return points * (.55 + .45 * start) * availability_factor * fixture_factor
+    """The armband's expected value: the player's projected points.
+
+    Projected points already include expected minutes and the official
+    availability multiplier, so neither is discounted again here (the old
+    score penalised a doubtful player two or three times). A captain who does
+    not play passes the armband to the vice, which caps the downside further.
+    """
+    return max(0.0, float(row.get("predicted_points", 0.0) or 0.0))
 
 
 def _actual_gameweeks(predictions_by_gw: Mapping[int, pd.DataFrame]) -> list[int]:
@@ -48,11 +50,21 @@ def captain_intelligence(starting_xi: pd.DataFrame, top_n: int = 5) -> dict[str,
         record = row.to_dict()
         record["captain_score"] = round(_captain_score(record), 3)
         rows.append(record)
-    rows.sort(key=lambda r: (
-        -float(r["captain_score"]),
-        -float(r.get("predicted_points", 0.0) or 0.0),
-        int(r["player_id"]),
-    ))
+    rows.sort(key=lambda r: (-float(r["captain_score"]), int(r["player_id"])))
+    # Projections are not precise to a few tenths of a point. Within that
+    # band the armband goes to the surer starter: same expected value, less
+    # chance the captaincy falls to the vice.
+    def start(r):
+        value = r.get("start_probability")
+        return float(value) if value is not None and value == value else 1.0
+    best = rows[0]
+    for row in rows[1:]:
+        if float(best["captain_score"]) - float(row["captain_score"]) > CAPTAIN_TIE_BAND:
+            break
+        if start(row) > start(best) + 0.05:
+            best = row
+    rows.remove(best)
+    rows.insert(0, best)
     def public(r):
         return {
             k: r.get(k) for k in (
@@ -66,147 +78,155 @@ def captain_intelligence(starting_xi: pd.DataFrame, top_n: int = 5) -> dict[str,
         "alternatives": [public(r) for r in rows[2:top_n]],
     }
 
-def _transfer_plan_from_item(item: Mapping[str, Any]) -> list[dict[str, Any]]:
-    transfers = item.get("transfers")
+def _number(value: Any, default: float = 0.0) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return number if number == number else default
+
+
+def _moves(item: Mapping[str, Any]) -> list[dict[str, Any]]:
+    transfers = item.get("transfers", item.get("recommended_transfers"))
     if not isinstance(transfers, list):
         return []
     return [
-        x for x in transfers
+        dict(x) for x in transfers
         if isinstance(x, Mapping)
         and x.get("player_out_id") is not None
         and x.get("player_in_id") is not None
     ]
 
-def _horizon_candidate(
-    transfers: list[dict[str, Any]],
-    current_net: float,
+
+def _with_player_detail(
+    moves: list[dict[str, Any]],
     predictions_by_gw: Mapping[int, pd.DataFrame],
     horizon: int,
+) -> tuple[list[dict[str, Any]], float]:
+    """Attach each moved player's per-Gameweek projection for display.
+
+    The detail explains a decision; it never changes it. The plan's value is
+    the canonical lineup gain from the action planner.
+    """
+    if not moves:
+        return [], 1.0
+    detail = evaluate_transfer_horizon(moves, predictions_by_gw, horizon)
+    rows = []
+    for move, extra in zip(moves, detail["transfers"]):
+        rows.append({
+            **move,
+            "in_projection": extra["in_projection"],
+            "out_projection": extra["out_projection"],
+            "player_horizon_difference": extra["horizon_gain"],
+        })
+    return rows, detail["coverage"]
+
+
+def _option_view(
+    option: Mapping[str, Any],
+    predictions_by_gw: Mapping[int, pd.DataFrame],
+    horizon: int,
+    free_transfers: int,
 ) -> dict[str, Any]:
-    future = evaluate_transfer_horizon(transfers, predictions_by_gw, horizon)
-    # Keep the named transfer rows (name, price, position) and add the
-    # per-transfer horizon detail to them, rather than replacing them.
-    detailed = [{**transfer, **detail} for transfer, detail in zip(transfers, future["transfers"])]
+    moves, coverage = _with_player_detail(_moves(option), predictions_by_gw, horizon)
+    count = int(option.get("transfers_used", len(moves)) or 0)
+    hit = _number(option.get("hit_cost"))
+    net = _number(option.get("net_gain"), _number(option.get("gross_gain")) - hit)
+    score = _number(option.get("decision_score"), net)
     return {
-        **future,
-        "transfers": detailed,
-        "current_net_gain": current_net,
-        "combined_score": current_net + future["horizon_gain"],
+        "action": classify_action(count, hit),
+        "transfers": moves,
+        "transfers_used": count,
+        "next_gw_gain": option.get("next_gw_gain"),
+        "horizon_gain": round(_number(option.get("gross_gain")), 3),
+        "hit_cost": round(hit, 3),
+        "net_gain": round(net, 3),
+        "roll_value_forgone": round(_number(option.get("roll_value_forgone")), 3),
+        "risk_margin": round(_number(option.get("risk_margin")), 3),
+        "decision_score": round(score, 3),
+        # Deprecated aliases kept for older clients.
+        "combined_score": round(score, 3),
+        "current_net_gain": round(net, 3),
+        "uncertainty": option.get("uncertainty"),
+        "coverage": coverage,
+        "free_transfers_left": max(0, free_transfers - count),
     }
 
-def _select_horizon_transfer(
-    transfer_result: Mapping[str, Any],
-    predictions_by_gw: Mapping[int, pd.DataFrame],
-    horizon: int,
-) -> dict[str, Any]:
-    candidates = []
-    best_transfers = _transfer_plan_from_item({
-        "transfers": transfer_result.get("recommended_transfers", [])
-    })
-    if best_transfers:
-        current_net = float(transfer_result.get("net_gain", 0.0))
-        candidates.append(_horizon_candidate(best_transfers, current_net, predictions_by_gw, horizon))
 
-    for alt in transfer_result.get("alternatives", []) or []:
-        transfers = _transfer_plan_from_item(alt)
-        if not transfers:
-            continue
-        current_net = float(alt.get("net_gain", alt.get("gross_gain", 0.0)) or 0.0)
-        candidates.append(_horizon_candidate(transfers, current_net, predictions_by_gw, horizon))
+def _names(moves: list[Mapping[str, Any]]) -> str:
+    return ", ".join(f"{m.get('player_out', m['player_out_id'])} → {m.get('player_in', m['player_in_id'])}" for m in moves)
 
-    if not candidates:
-        return {
-            "selected": [],
-            "horizon_gain": 0.0,
-            "current_net_gain": 0.0,
-            "combined_score": 0.0,
-            "coverage": 0.0,
-            "alternatives": [],
-        }
 
-    candidates.sort(key=lambda x: (
-        -x["combined_score"],
-        -x["current_net_gain"],
-        len(x["transfers"]),
-        tuple((int(t["player_in_id"]), int(t["player_out_id"])) for t in x["transfers"]),
-    ))
-    selected = candidates[0]
-    return {
-        "selected": selected["transfers"],
-        "horizon_gain": round(selected["horizon_gain"], 3),
-        "current_net_gain": round(selected["current_net_gain"], 3),
-        "combined_score": round(selected["combined_score"], 3),
-        "coverage": selected["coverage"],
-        "alternatives": [
-            {
-                "transfers": x["transfers"],
-                "horizon_gain": round(x["horizon_gain"], 3),
-                "current_net_gain": round(x["current_net_gain"], 3),
-                "combined_score": round(x["combined_score"], 3),
-                "coverage": x["coverage"],
-            }
-            for x in candidates[1:6]
-        ],
-    }
+def _signed(value: Any) -> str:
+    number = _number(value)
+    return f"{number:+.1f}"
 
-def _wildcard_pressure(
-    current_team: list[dict[str, Any]],
-    optimal_squad: pd.DataFrame | None,
-    predictions_by_gw: Mapping[int, pd.DataFrame],
-    horizon: int,
-) -> float:
-    if optimal_squad is None or optimal_squad.empty:
-        return 0.0
-    current_ids = {int(p["player_id"]) for p in current_team}
-    optimal_ids = {int(x) for x in optimal_squad["player_id"]}
-    if not current_ids:
-        return 0.0
-    turnover = len(current_ids - optimal_ids) / 15.0
-    return max(0.0, min(1.0, turnover * 1.5))
 
 def _insights(
     action: str,
-    transfer: Mapping[str, Any],
+    strategy: Mapping[str, Any],
     health: Mapping[str, Any],
     captain: Mapping[str, Any],
     horizon: Mapping[str, Any],
+    chips: Mapping[str, Any],
+    weeks: int,
 ) -> list[dict[str, Any]]:
-    insights = []
-    if action == "HOLD":
-        insights.append({
-            "type": "TRANSFER",
-            "severity": "INFO",
-            "reason": "No transfer clears the tested decision threshold after costs and available evidence.",
-            "evidence": {
-                "net_gain": transfer.get("net_gain", 0.0),
-                "horizon_gain": transfer.get("horizon_gain", 0.0),
-            },
-        })
+    insights: list[dict[str, Any]] = []
+    chosen_moves = strategy.get("selected_transfers") or []
+    runner_up = (strategy.get("alternatives") or [None])[0]
+    evidence = {
+        "next_gw_gain": strategy.get("next_gw_gain"),
+        "horizon_gain": strategy.get("horizon_gain"),
+        "hit_cost": strategy.get("hit_cost"),
+        "net_gain": strategy.get("net_gain"),
+        "roll_value_forgone": strategy.get("roll_value_forgone"),
+        "decision_score": strategy.get("decision_score"),
+    }
+    if not chosen_moves:
+        if runner_up and runner_up.get("transfers"):
+            reason = (
+                f"Hold and roll. The best move found ({_names(runner_up['transfers'])}) adds "
+                f"{_signed(runner_up.get('horizon_gain'))} weighted points over {weeks} Gameweeks"
+                + (f" after a {runner_up['hit_cost']:.0f}-point hit" if runner_up.get("hit_cost") else "")
+                + f", which does not beat keeping the free transfer (worth {_number(runner_up.get('roll_value_forgone')):.1f})."
+            )
+            evidence = {**evidence, "best_move": runner_up["transfers"], "best_move_score": runner_up.get("decision_score")}
+        else:
+            reason = "Hold and roll: no legal move improves the projected lineup."
+        insights.append({"type": "TRANSFER", "severity": "INFO", "reason": reason, "evidence": evidence})
     else:
-        insights.append({
-            "type": "TRANSFER",
-            "severity": "ACTION",
-            "reason": "The selected transfer plan has the strongest combined current and horizon value among evaluated plans.",
-            "evidence": {
-                "net_gain": transfer.get("net_gain", 0.0),
-                "horizon_gain": transfer.get("horizon_gain", 0.0),
-            },
-        })
+        reason = (
+            f"{_names(chosen_moves)}: {_signed(strategy.get('next_gw_gain'))} next Gameweek and "
+            f"{_signed(strategy.get('horizon_gain'))} weighted points over {weeks} Gameweeks for your best XI and captain"
+        )
+        if _number(strategy.get("hit_cost")):
+            reason += f", after a {strategy['hit_cost']:.0f}-point hit"
+        if _number(strategy.get("roll_value_forgone")):
+            reason += f"; worth more than rolling the free transfer ({_number(strategy.get('roll_value_forgone')):.1f})"
+        insights.append({"type": "TRANSFER", "severity": "ACTION", "reason": reason + ".", "evidence": evidence})
+    if chips.get("recommended_chip"):
+        insights.append({"type": "CHIP", "severity": "ACTION", "reason": chips.get("reason", ""),
+                         "evidence": {"chip": chips["recommended_chip"], "score": chips.get("score")}})
     if health.get("status") != "HEALTHY":
         insights.append({
             "type": "SQUAD_HEALTH",
             "severity": "WARNING",
-            "reason": "Availability or rotation risk is elevated in the current squad.",
+            "reason": "Availability or minutes risk is elevated in the current squad.",
             "evidence": {
                 "unavailable_count": health.get("unavailable_count", 0),
                 "high_risk_count": health.get("high_risk_count", 0),
             },
         })
+    pick, vice = captain.get("captain", {}), captain.get("vice_captain", {})
     insights.append({
         "type": "CAPTAIN",
         "severity": "INFO",
-        "reason": "Captain ranking combines predicted points with expected minutes, availability and fixture difficulty.",
-        "evidence": captain.get("captain", {}),
+        "reason": (
+            f"Captain {pick.get('name')} ({_number(pick.get('predicted_points')):.1f} xP); "
+            f"vice {vice.get('name')} ({_number(vice.get('predicted_points')):.1f} xP). "
+            "Ranked on projected points, adjusted for expected minutes, availability and fixture."
+        ),
+        "evidence": pick,
     })
     if horizon.get("coverage", 1.0) < 1.0:
         insights.append({
@@ -216,6 +236,20 @@ def _insights(
             "evidence": {"coverage": horizon.get("coverage", 0.0)},
         })
     return insights
+
+
+def _minutes_doubts(moves: list[Mapping[str, Any]], predictions: pd.DataFrame) -> list[str]:
+    if "start_probability" not in predictions.columns:
+        return []
+    starts = dict(zip(pd.to_numeric(predictions["player_id"], errors="coerce"),
+                      pd.to_numeric(predictions["start_probability"], errors="coerce")))
+    doubts = []
+    for move in moves:
+        probability = starts.get(int(move["player_in_id"]))
+        if probability is not None and probability == probability and probability < MINUTES_DOUBT_START_PROBABILITY:
+            doubts.append(f"{move.get('player_in', move['player_in_id'])} starts with {probability:.0%} probability")
+    return doubts
+
 
 def build_intelligence(
     *,
@@ -228,7 +262,19 @@ def build_intelligence(
     horizon: int = 3,
     chip_state: Mapping[str, Any] | None = None,
     manager_picks: list[dict[str, Any]] | None = None,
+    owned_starting_xi: pd.DataFrame | None = None,
 ) -> dict[str, Any]:
+    """Explain the canonical decision; never choose a different one.
+
+    `starting_xi` is the lineup the plan recommends (after its transfers);
+    the captain is chosen from it. `owned_starting_xi` (default: the same)
+    is the owned squad's lineup that chip values are measured against.
+
+    `transfer_result` is the action planner's output (via
+    `transfer_analysis.optimize_transfer_plan`). Its chosen action and its
+    transfers are reported as-is in `transfer_strategy`, so every part of the
+    response names the same move.
+    """
     predictions_by_gw = normalize_horizon_predictions(predictions, horizon_predictions, horizon)
     team_players = list(current_team.get("players", []))
     health = squad_health(team_players)
@@ -238,51 +284,7 @@ def build_intelligence(
         player_horizon_projection(int(p["player_id"]), predictions_by_gw, horizon)
         for p in team_players
     ]
-    pressure = []
-    for player, projection in zip(team_players, horizon_team):
-        pressure.append({
-            "player_id": int(player["player_id"]),
-            "name": player.get("name"),
-            "pressure": round(transfer_pressure(player, projection), 3),
-        })
-    pressure.sort(key=lambda x: (-x["pressure"], x["player_id"]))
-    max_pressure = pressure[0]["pressure"] if pressure else 0.0
 
-    horizon_transfer = _select_horizon_transfer(
-        transfer_result, predictions_by_gw, horizon
-    )
-
-    transfer_net = float(transfer_result.get("net_gain", 0.0) or 0.0)
-    transfer_gross = float(transfer_result.get("gross_gain", 0.0) or 0.0)
-    hit_cost = float(transfer_result.get("hit_cost", 0.0) or 0.0)
-    transfers_used = int(transfer_result.get("transfers_used", 0) or 0)
-
-    avg_risk = (
-        sum(player_risk(p)["score"] for p in team_players) / len(team_players)
-        if team_players else 0.0
-    )
-    confidence = confidence_score(
-        decision_margin=min(1.0, abs(transfer_net) / 6.0),
-        minutes_certainty=max(0.0, 1.0 - avg_risk),
-        fixture_certainty=horizon_transfer.get("coverage", 1.0),
-        signal_agreement=1.0 if (
-            transfer_net > 0 and horizon_transfer.get("horizon_gain", 0.0) >= 0
-        ) or transfer_net <= 0 else 0.5,
-    )
-
-    action = choose_transfer_action(
-        transfer_net,
-        transfer_gross,
-        transfers_used,
-        horizon_gain=float(horizon_transfer.get("horizon_gain", 0.0)),
-        confidence=confidence["score"],
-        transfer_pressure=max_pressure,
-        hit_cost=hit_cost,
-    )
-
-    wildcard_pressure = _wildcard_pressure(
-        team_players, optimal_squad, predictions_by_gw, horizon
-    )
     state = dict(chip_state or {
         "known": False,
         "wildcard_available": False,
@@ -291,25 +293,66 @@ def build_intelligence(
         "triple_captain_available": False,
         "used_in_period": [],
     })
-    chips = chip_advisor(
-        free_transfers=int(state.get("free_transfers", 1)),
-        net_gain=transfer_net,
-        squad_health_status=health["status"],
-        wildcard_available=bool(state.get("wildcard_available", False)),
-        free_hit_available=bool(state.get("free_hit_available", False)),
-        bench_boost_available=bool(state.get("bench_boost_available", False)),
-        triple_captain_available=bool(state.get("triple_captain_available", False)),
-        double_gameweek=bool(state.get("double_gameweek", False)),
-        blank_gameweek=bool(state.get("blank_gameweek", False)),
-        wildcard_pressure=wildcard_pressure,
+    free_transfers = int(transfer_result.get("free_transfers", state.get("free_transfers", 1)) or 0)
+
+    chosen = _option_view({**transfer_result, "transfers": transfer_result.get("recommended_transfers", [])},
+                          predictions_by_gw, horizon, free_transfers)
+    alternatives = [
+        _option_view(option, predictions_by_gw, horizon, free_transfers)
+        for option in transfer_result.get("alternatives", []) or []
+        if isinstance(option, Mapping)
+    ]
+    options = [
+        _option_view(option, predictions_by_gw, horizon, free_transfers)
+        for option in transfer_result.get("options_by_transfer_count", []) or []
+        if isinstance(option, Mapping)
+    ]
+    transfer_action = transfer_result.get("action") or chosen["action"]
+    transfer_block = {
+        "action": transfer_action,
+        "selected_transfers": chosen["transfers"],
+        "transfers_used": chosen["transfers_used"],
+        "next_gw_gain": chosen["next_gw_gain"],
+        "horizon_gain": chosen["horizon_gain"],
+        "hit_cost": chosen["hit_cost"],
+        "net_gain": chosen["net_gain"],
+        "roll_value_forgone": chosen["roll_value_forgone"],
+        "risk_margin": chosen["risk_margin"],
+        "decision_score": chosen["decision_score"],
+        "combined_score": chosen["decision_score"],
+        "current_net_gain": chosen["net_gain"],
+        "gross_gain": chosen["horizon_gain"],
+        "uncertainty": chosen["uncertainty"],
+        "coverage": chosen["coverage"],
+        "alternatives": alternatives,
+        "options_by_transfer_count": options,
+        "gain_basis": transfer_result.get("gain_basis", "weighted_horizon_lineup"),
+        "horizon_weights": transfer_result.get("horizon_weights"),
+        "policy": transfer_result.get("policy"),
+    }
+
+    confidence = decision_confidence(
+        {**chosen, "decision_score": chosen["decision_score"]},
+        alternatives[0] if alternatives else None,
+        minutes_doubts=_minutes_doubts(chosen["transfers"], predictions),
     )
+
+    wildcard = transfer_result.get("wildcard") if isinstance(transfer_result.get("wildcard"), Mapping) else None
+    wildcard_signal = {
+        "available": bool(state.get("wildcard_available", False)),
+        "evaluated": bool(wildcard and wildcard.get("evaluated")),
+        **({key: wildcard.get(key) for key in (
+            "rebuild_gain", "best_action_score", "advantage", "threshold", "players_changed", "recommended",
+        )} if wildcard else {"recommended": False}),
+    }
+    wildcard_signal["recommended"] = bool(wildcard_signal["available"] and wildcard_signal.get("recommended"))
 
     current_frame = pd.DataFrame(team_players)
     # Chip gains are measured against the owned XI and captain this plan
     # recommends, so the chip numbers match the lineup the manager is shown.
-    # The previous Gameweek's published picks are not this Gameweek's choice.
-    chip_xi_ids = [int(player_id) for player_id in starting_xi["player_id"]]
-    chip_captain_id = int(captain["captain"]["player_id"])
+    chip_lineup = owned_starting_xi if owned_starting_xi is not None else starting_xi
+    chip_xi_ids = [int(player_id) for player_id in chip_lineup["player_id"]]
+    chip_captain_id = int(captain_intelligence(chip_lineup)["captain"]["player_id"])
     if manager_picks:
         picks_by_id = {int(pick["player_id"]): pick for pick in manager_picks}
         for field in ("purchase_price", "selling_price", "selling_price_source"):
@@ -320,7 +363,8 @@ def build_intelligence(
         current_frame,
         predictions,
         available_chips={
-            "WILDCARD": bool(state.get("wildcard_available", False)),
+            # The Wildcard is evaluated by the action planner over the horizon.
+            "WILDCARD": False,
             "FREE_HIT": bool(state.get("free_hit_available", False)),
             "BENCH_BOOST": bool(state.get("bench_boost_available", False)),
             "TRIPLE_CAPTAIN": bool(state.get("triple_captain_available", False)),
@@ -331,7 +375,23 @@ def build_intelligence(
         starting_xi_ids=chip_xi_ids,
         captain_id=chip_captain_id,
     )
+    chips = chip_advisor(
+        wildcard_available=bool(state.get("wildcard_available", False)),
+        free_hit_available=bool(state.get("free_hit_available", False)),
+        bench_boost_available=bool(state.get("bench_boost_available", False)),
+        triple_captain_available=bool(state.get("triple_captain_available", False)),
+        wildcard_signal=wildcard_signal,
+        scenario_scores={item["chip"]: float(item["score"]) for item in chip_scenarios.get("scenarios", [])},
+        double_gameweek=bool(state.get("double_gameweek", False)),
+        blank_gameweek=bool(state.get("blank_gameweek", False)),
+    )
+    # One recommendation: the scenario table reports values, the advisor decides.
+    chip_scenarios["recommended_chip"] = chips["recommended_chip"]
+    chip_scenarios["score"] = chips["score"]
     chip_scenarios["lineup_source"] = "recommended_owned_lineup"
+
+    action = chips["recommended_chip"] if chips["recommended_chip"] in {"WILDCARD", "FREE_HIT"} else transfer_action
+
     risk_details = [
         risk_adjusted_points(player) | {
             "player_id": int(player["player_id"]),
@@ -368,25 +428,13 @@ def build_intelligence(
         ),
         "team_player_projections": sorted(
             horizon_team,
-            key=lambda x: (-x["minutes_adjusted_points"], x["player_id"]),
+            key=lambda x: (-x["predicted_points"], x["player_id"]),
         ),
-    }
-
-    transfer_block = {
-        "action": action,
-        "current_net_gain": round(transfer_net, 3),
-        "gross_gain": round(transfer_gross, 3),
-        "hit_cost": round(hit_cost, 3),
-        "horizon_gain": horizon_transfer["horizon_gain"],
-        "combined_score": horizon_transfer["combined_score"],
-        "coverage": horizon_transfer["coverage"],
-        "selected_transfers": horizon_transfer["selected"],
-        "alternatives": horizon_transfer["alternatives"],
-        "transfer_pressure": pressure[:5],
     }
 
     return {
         "action": action,
+        "transfer_action": transfer_action,
         "confidence": confidence,
         "captain_decision": captain,
         "squad_health": health,
@@ -396,8 +444,8 @@ def build_intelligence(
         "chip_state": state,
         "chip_scenarios": chip_scenarios,
         "risk_summary": risk_summary,
-        "wildcard_pressure": round(wildcard_pressure, 3),
+        "wildcard_signal": wildcard_signal,
         "insights": _insights(
-            action, transfer_block, health, captain, horizon_block
+            action, transfer_block, health, captain, horizon_block, chips, len(predictions_by_gw)
         ),
     }

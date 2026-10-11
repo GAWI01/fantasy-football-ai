@@ -2,9 +2,15 @@
 
 The forecast for Gameweek G is produced by the shared forecasting path
 (`historical_data.forecast`): the season's completed history plus G's
-fixtures, through the same feature code as training and validation. It only
-runs when every Gameweek before G is finished and data-checked, which is the
-input the model was validated on.
+fixtures, through the same feature code as training and validation.
+
+Two stages exist, so managers can plan G while G-1 is still being played:
+
+* final: every Gameweek before G is finished and data-checked - the input the
+  model was validated on;
+* provisional: G-1 is past its deadline but not final yet. The forecast then
+  uses history up to G-2 (each player's last five completed Gameweeks end one
+  Gameweek earlier) and is replaced by the final forecast once G-1 is checked.
 
 Each player's row stores the model's points if available (`ml_prediction`)
 and minutes if available (`xmins_available`). `predicted_points` applies the
@@ -104,8 +110,16 @@ def _is_true(value) -> bool:
     return value is True or str(value).strip().lower() in {"true", "1", "1.0"}
 
 
-def target_gameweek(gameweeks: pd.DataFrame) -> tuple[int, str]:
-    """The next Gameweek and its season; every earlier Gameweek must be final."""
+FINAL, PROVISIONAL = "final", "provisional"
+
+
+def target_gameweek(gameweeks: pd.DataFrame) -> tuple[int, str, int, str]:
+    """The next Gameweek, its season, the history cutoff and the forecast stage.
+
+    Final when every earlier Gameweek is final. Provisional when only the
+    Gameweek directly before the target is still pending (being played or
+    awaiting its data check): the cutoff is then the Gameweek before that.
+    """
     upcoming = gameweeks[gameweeks["is_next"].map(_is_true)]
     if len(upcoming) != 1:
         raise RuntimeError("Exactly one next Gameweek is required")
@@ -124,28 +138,54 @@ def target_gameweek(gameweeks: pd.DataFrame) -> tuple[int, str]:
     if season_for_date(next_deadline) != season:
         raise FeatureContractError("Source Gameweeks span incompatible seasons")
     earlier = gameweeks[pd.to_numeric(gameweeks["id"], errors="raise") < gw]
-    pending = [int(row["id"]) for _, row in earlier.iterrows()
-               if not (_is_true(row.get("finished")) and _is_true(row.get("data_checked")))]
-    if pending:
-        raise HistoryIncompleteError(
-            f"GW{gw} forecasts wait for final scores in GW{', GW'.join(map(str, pending))}")
-    return gw, season
+    pending = sorted(int(row["id"]) for _, row in earlier.iterrows()
+                     if not (_is_true(row.get("finished")) and _is_true(row.get("data_checked"))))
+    if not pending:
+        return gw, season, gw - 1, FINAL
+    if pending == [gw - 1] and gw >= 2:
+        return gw, season, gw - 2, PROVISIONAL
+    raise HistoryIncompleteError(
+        f"GW{gw} forecasts wait for final scores in GW{', GW'.join(map(str, pending))}")
 
 
 def _rounded(value: float, digits: int = 3) -> float:
     return float(round(float(value), digits))
 
 
+def _neutral_fixture_points(model, rows: pd.DataFrame) -> pd.Series:
+    """Per-player points for an average fixture (difficulty 3, home and away averaged).
+
+    Lets the planning horizon project a player whose club blanks in the
+    target Gameweek; it is never served as that Gameweek's forecast.
+    """
+    summaries = rows.drop_duplicates("player_id").reset_index(drop=True)
+    if summaries.empty:
+        return pd.Series(dtype=float)
+    home = predict_fixture_points(model, summaries.assign(fixture_difficulty=3.0, was_home=1.0))
+    away = predict_fixture_points(model, summaries.assign(fixture_difficulty=3.0, was_home=0.0))
+    return pd.Series((home + away) / 2.0, index=summaries["player_id"].to_numpy())
+
+
 def generate_predictions(players: pd.DataFrame, teams: pd.DataFrame, fixtures: pd.DataFrame,
-                         history: pd.DataFrame, gw: int, model) -> pd.DataFrame:
-    """One row per current player: fixtures in `gw` summed, blanks scored zero."""
+                         history: pd.DataFrame, gw: int, model, *, history_cutoff: int | None = None) -> pd.DataFrame:
+    """One row per current player: fixtures in `gw` summed, blanks scored zero.
+
+    `history_cutoff` (default gw - 1) is the last completed Gameweek used; a
+    provisional forecast uses gw - 2 while gw - 1 is still being played.
+    """
     if players.empty or players["id"].duplicated().any():
         raise ValueError("A nonempty, unique current player pool is required")
-    missing = set(range(1, gw)) - set(pd.to_numeric(history["GW"], errors="raise")) if gw > 1 else set()
+    cutoff = gw - 1 if history_cutoff is None else int(history_cutoff)
+    if not 0 <= cutoff < gw:
+        raise ValueError("history_cutoff must precede the target Gameweek")
+    rounds = pd.to_numeric(history["GW"], errors="raise") if len(history) else pd.Series(dtype=float)
+    history = history[rounds <= cutoff] if len(history) else history
+    missing = set(range(1, cutoff + 1)) - set(rounds[rounds <= cutoff]) if cutoff >= 1 else set()
     if missing:
         raise HistoryIncompleteError(f"Season history lacks GW{sorted(missing)}")
     fixture_rows, blank_rows = live_feature_rows(history, players, fixtures, gw)
     fixture_rows = fixture_rows.assign(fixture_points=predict_fixture_points(model, fixture_rows))
+    neutral = _neutral_fixture_points(model, pd.concat([fixture_rows, blank_rows], ignore_index=True))
     team_names = dict(zip(pd.to_numeric(teams["id"]).astype(int), teams["name"]))
     summaries = pd.concat([fixture_rows, blank_rows], ignore_index=True).drop_duplicates("player_id")
     summaries = summaries.set_index("player_id")
@@ -190,13 +230,14 @@ def generate_predictions(players: pd.DataFrame, teams: pd.DataFrame, fixtures: p
             "status": official["status"],
             "chance_of_playing_next_round": official["chance_of_playing_next_round"],
             "ml_prediction": _rounded(ml),
+            "ml_per_fixture": _rounded(neutral.get(player_id, 0.0)),
             "predicted_points": _rounded(predicted),
             "value": _rounded(predicted / price) if price > 0 else 0.0,
             "history_gw_count": int(summary["history_gw_count"]),
             "history_cutoff_gw": int(summary["history_cutoff_gw"]),
             "feature_contract_version": int(summary["feature_contract_version"]),
             "xp_source": summary["xp_source"],
-            "history_complete": True,
+            "history_complete": cutoff == gw - 1,
             "prediction_event": gw,
         })
     result = pd.DataFrame(rows)
@@ -233,8 +274,9 @@ def target_schedule_digest(fixtures: pd.DataFrame, gw: int) -> str:
     return _schedule_digest(fixtures, gw, "\n")
 
 
-def published_forecast(gw: int, model_sha256: str | None, fixtures: pd.DataFrame) -> Path | None:
-    """The served artifact if it already forecasts `gw` with this model and schedule."""
+def published_forecast(gw: int, model_sha256: str | None, fixtures: pd.DataFrame,
+                       history_cutoff: int | None = None) -> Path | None:
+    """The served artifact if it already forecasts `gw` with this model, schedule and history."""
     try:
         manifest = load_current_manifest(CURRENT_DIR / "manifest.json")
     except ValueError:
@@ -242,8 +284,11 @@ def published_forecast(gw: int, model_sha256: str | None, fixtures: pd.DataFrame
     provenance = manifest.model_provenance or {}
     # GW6 v12 was published on Windows, where the digest used CRLF line endings.
     schedules = {target_schedule_digest(fixtures, gw), _schedule_digest(fixtures, gw, "\r\n")}
+    # Forecasts published before stages existed used all earlier Gameweeks.
+    served_cutoff = provenance.get("history_cutoff_gw", gw - 1)
+    cutoff = gw - 1 if history_cutoff is None else history_cutoff
     if (manifest.prediction_event == gw and provenance.get("model_sha256") == model_sha256
-            and provenance.get("target_schedule_sha256") in schedules):
+            and provenance.get("target_schedule_sha256") in schedules and served_cutoff == cutoff):
         return manifest.prediction_path
     return None
 
@@ -266,12 +311,12 @@ def main(force: bool = False) -> Path:
     """
     model, provenance = load_prediction_model()
     gameweeks = pd.read_csv(GAMEWEEKS_PATH)
-    gw, season = target_gameweek(gameweeks)
+    gw, season, cutoff, stage = target_gameweek(gameweeks)
     season_dir = HISTORY_DIR / season
     history_path, fixtures_path = season_dir / "merged_gw.csv", season_dir / "fixtures.csv"
     if history_path.is_file():
         history = pd.read_csv(history_path)
-    elif gw == 1:
+    elif cutoff == 0:
         history = pd.DataFrame(columns=["element", "fixture", "GW", "value", "position", "was_home",
                                         "opponent_team", "minutes", "total_points"])
     else:
@@ -279,16 +324,18 @@ def main(force: bool = False) -> Path:
     players, teams = pd.read_csv(PLAYERS_PATH), pd.read_csv(TEAMS_PATH)
     fixtures = pd.read_csv(fixtures_path)
     schedule = target_schedule_digest(fixtures, gw)
-    existing = None if force else published_forecast(gw, provenance.get("model_sha256"), fixtures)
+    existing = None if force else published_forecast(gw, provenance.get("model_sha256"), fixtures, cutoff)
     if existing is not None:
         print(f"GW{gw}: already published as {existing.name}")
         return existing
-    result = generate_predictions(players, teams, fixtures, history, gw, model)
+    result = generate_predictions(players, teams, fixtures, history, gw, model, history_cutoff=cutoff)
     result["prediction_season"] = season
     inputs = [path for path in (PLAYERS_PATH, TEAMS_PATH, GAMEWEEKS_PATH, history_path, fixtures_path)
               if path.is_file()]
     provenance["prediction_season"] = season
     provenance["target_schedule_sha256"] = schedule
+    provenance["forecast_stage"] = stage
+    provenance["history_cutoff_gw"] = cutoff
     provenance["input_sha256"] = _digest(inputs)
     provenance["input_files"] = {path.name if path.parent == CURRENT_DIR else f"{season}/{path.name}":
                                  hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs}
@@ -306,7 +353,8 @@ def main(force: bool = False) -> Path:
     manifest = publish_prediction_artifact(
         output_path, content, season=season, prediction_event=gw,
         player_count=len(result), model_provenance=provenance)
-    print(f"GW{gw}: {len(result)} players published to {output_path.name}; manifest: {manifest}")
+    print(f"GW{gw} ({stage}, history to GW{cutoff}): {len(result)} players published to "
+          f"{output_path.name}; manifest: {manifest}")
     return output_path
 
 

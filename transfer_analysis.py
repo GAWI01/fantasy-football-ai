@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping, Sequence
 
 import pandas as pd
 import numpy as np
-from scipy.optimize import Bounds, LinearConstraint, milp
 
 from fpl_rules import detect_club_changes, validate_transfer_squad
+from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, evaluate_moves, plan_action
 
 
 class TransferAnalysisError(ValueError):
@@ -621,12 +621,25 @@ def optimize_transfer_plan(
     max_transfers: int = 1,
     bank: float | None = None,
     hit_cost: float = 4.0,
+    *,
+    horizon_predictions: Sequence[pd.DataFrame] | None = None,
+    horizon_weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+    evaluate_wildcard: bool = False,
 ) -> dict[str, Any]:
-    """Find the best feasible one- or multi-transfer plan.
+    """Choose the best Gameweek action: hold/roll, free transfers or a hit.
 
-    The existing SciPy MILP backend evaluates complete replacement sets with
-    shared budget, position and club constraints. Multi-GW values can be
-    supplied through the existing transfer-optimizer wrapper.
+    This is the one transfer decision in the product. Every action from
+    holding up to `max_transfers` transfers is evaluated by the canonical
+    planner (`optimizer.action_planner`): complete squads under budget,
+    position and club rules, valued by the starting XI and captain they can
+    field in each projected Gameweek, with bench players counting only as
+    autosub cover. Holding wins unless a move beats the value of rolling the
+    free transfer, and a hit must beat its cost plus a margin.
+
+    `predictions` is the target Gameweek. `horizon_predictions` optionally
+    supplies the target and later Gameweeks (index 0 = target), weighted by
+    `horizon_weights`.
     """
     if not isinstance(max_transfers, int) or max_transfers < 0:
         raise TransferAnalysisError("max_transfers must be a non-negative integer")
@@ -636,6 +649,7 @@ def optimize_transfer_plan(
         supplied_picks = team.get("picks", []) if isinstance(team, dict) else []
         known_sales = len(supplied_picks) == 15 and all(selling_value(pick, 0.0)[2] for pick in supplied_picks)
         return {
+            "action": "HOLD",
             "recommended": None,
             "recommended_transfers": [],
             "transfers_used": 0,
@@ -643,7 +657,9 @@ def optimize_transfer_plan(
             "hit_cost": 0.0,
             "gross_gain": 0.0,
             "net_gain": 0.0,
+            "decision_score": 0.0,
             "alternatives": [],
+            "options_by_transfer_count": [],
             "selling_prices_known": known_sales,
             "budget_is_estimate": not known_sales,
             "solver_status": "not_required",
@@ -654,18 +670,32 @@ def optimize_transfer_plan(
     if len(picks) != 15:
         raise TransferAnalysisError("team must contain exactly 15 picks")
 
-    data = predictions.copy()
     required = {"player_id", "name", "position", "team", "price", "predicted_points"}
-    missing = required - set(data.columns)
-    if missing:
-        raise TransferAnalysisError(
-            "predictions is missing columns: " + ", ".join(sorted(missing))
-        )
 
-    data["price"] = pd.to_numeric(data["price"], errors="coerce")
-    data["predicted_points"] = pd.to_numeric(data["predicted_points"], errors="coerce")
-    data = data.dropna(subset=["price", "predicted_points"]).copy()
-    data["position"] = data["position"].astype(str).str.upper().replace({"GKP": "GK"})
+    def prepared(frame: pd.DataFrame, label: str) -> pd.DataFrame:
+        missing = required - set(frame.columns)
+        if missing:
+            raise TransferAnalysisError(f"{label} is missing columns: " + ", ".join(sorted(missing)))
+        result = frame.copy()
+        result["player_id"] = pd.to_numeric(result["player_id"], errors="coerce")
+        result["price"] = pd.to_numeric(result["price"], errors="coerce")
+        result["predicted_points"] = pd.to_numeric(result["predicted_points"], errors="coerce")
+        result = result.dropna(subset=["player_id", "price", "predicted_points"]).copy()
+        result["player_id"] = result["player_id"].astype(int)
+        result["position"] = result["position"].astype(str).str.upper().replace({"GKP": "GK"})
+        return result
+
+    data = prepared(predictions, "predictions")
+    if data["player_id"].duplicated().any():
+        raise TransferAnalysisError("predictions must contain unique player IDs")
+    frames = [data]
+    if horizon_predictions:
+        frames = [prepared(frame, "horizon_predictions") for frame in horizon_predictions]
+        # The target Gameweek's identity, price and club come from `predictions`.
+        frames[0] = data
+    weights = list(horizon_weights) if horizon_weights is not None else [1.0] * len(frames)
+    if len(weights) != len(frames):
+        raise TransferAnalysisError("horizon_weights must match horizon_predictions")
 
     owned_ids = {int(p["player_id"]) for p in picks}
     owned = data[data["player_id"].isin(owned_ids)].copy()
@@ -675,180 +705,111 @@ def optimize_transfer_plan(
             "current players missing from predictions: "
             + ", ".join(map(str, sorted(missing_ids)))
         )
+    expected_positions = {"GK": 2, "DEF": 5, "MID": 5, "FWD": 3}
+    if owned["position"].value_counts().to_dict() != expected_positions:
+        raise TransferAnalysisError("team must contain 2 GK, 5 DEF, 5 MID and 3 FWD")
 
     club_changes = []
     if previous_predictions is not None:
         previous_data = previous_predictions.copy()
-
-        required_previous = {"player_id", "team"}
-        missing_previous = required_previous - set(previous_data.columns)
+        missing_previous = {"player_id", "team"} - set(previous_data.columns)
         if missing_previous:
             raise TransferAnalysisError(
                 "previous_predictions is missing columns: "
                 + ", ".join(sorted(missing_previous))
             )
-
         club_changes = detect_club_changes(
-            current_squad=[
-                {"player_id": int(player_id)}
-                for player_id in owned_ids
-            ],
+            current_squad=[{"player_id": int(player_id)} for player_id in owned_ids],
             previous_predictions=previous_data.to_dict("records"),
             current_predictions=data.to_dict("records"),
         )
     if bank is None:
-        bank = float(team.get("bank", 0.0))
+        bank = float(team.get("bank", 0.0) or 0.0)
     bank = float(bank)
     if bank < 0:
         raise TransferAnalysisError("bank cannot be negative")
 
-    base_points = float(owned["predicted_points"].sum())
     pick_by_id = {int(pick["player_id"]): pick for pick in picks}
     sales = {
         int(row["player_id"]): selling_value(pick_by_id[int(row["player_id"])], float(row["price"]))
         for _, row in owned.iterrows()
     }
     selling_prices_known = all(value[2] for value in sales.values())
-    data = data.sort_values("player_id", kind="stable").reset_index(drop=True)
-    if data["player_id"].duplicated().any():
-        raise TransferAnalysisError("predictions must contain unique player IDs")
-    expected_positions = {"GK": 2, "DEF": 5, "MID": 5, "FWD": 3}
-    if owned["position"].value_counts().to_dict() != expected_positions:
-        raise TransferAnalysisError("team must contain 2 GK, 5 DEF, 5 MID and 3 FWD")
-    n = len(data)
-    # Selected owned players cost their sale value: retaining them is not a
-    # repurchase. New players cost the current market price. This is equivalent
-    # to bank + proceeds from only those players actually sold.
-    costs = np.array([
-        sales[int(row["player_id"])][0] if int(row["player_id"]) in owned_ids else float(row["price"])
-        for _, row in data.iterrows()
-    ])
-    newcomers = (~data["player_id"].isin(owned_ids)).astype(float).to_numpy()
-    points = data["predicted_points"].to_numpy(dtype=float)
-    constraints = [
-        LinearConstraint(np.r_[np.ones(n), 0.0], 15, 15),
-        LinearConstraint(np.r_[costs, 0.0], -np.inf, bank + sum(sale[0] for sale in sales.values())),
-        LinearConstraint(np.r_[newcomers, 0.0], 0, min(max_transfers, 15)),
-        LinearConstraint(np.r_[newcomers, -1.0], -np.inf, free_transfers),
-    ]
-    for position, count in expected_positions.items():
-        constraints.append(LinearConstraint(np.r_[(data["position"] == position).astype(float), 0.0], count, count))
-    for club in data["team"].astype(str).unique():
-        constraints.append(LinearConstraint(np.r_[(data["team"].astype(str) == club).astype(float), 0.0], 0, 3))
-
-    # The extra integer variable represents paid transfers. A small secondary
-    # preference retains the existing rule that a positive gross gain wins a
-    # tie in net gain; transfer count and player IDs make further ties stable.
-    objective = np.r_[-points * (1.0 + 1e-7) + newcomers * 1e-9, hit_cost]
-    all_plans = []
-    solver_status = "optimal"
-    optimality_known = False
-    alternatives_complete = True
-    by_id = data.set_index("player_id")
-    # Only six ranked solutions are consumed by callers. Exclusion constraints
-    # find those alternatives without enumerating outgoing subsets or products.
-    for _ in range(6):
-        solution = milp(
-            c=objective,
-            integrality=np.ones(n + 1),
-            bounds=Bounds(np.zeros(n + 1), np.r_[np.ones(n), 15.0]),
-            constraints=constraints,
-            options={"disp": False, "time_limit": 2.0},
-        )
-        if not solution.success:
-            status = {1: "time_limit", 2: "infeasible", 3: "unbounded"}.get(solution.status, "solver_error")
-            alternatives_complete = solution.status == 2
-            if not all_plans:
-                solver_status = status
-                optimality_known = solution.status == 2
-            break
-        optimality_known = True
-        selected_mask = solution.x[:n] >= 0.5
-        selected_ids = set(data.loc[selected_mask, "player_id"].astype(int))
-        out_ids = owned_ids - selected_ids
-        in_ids = selected_ids - owned_ids
-        transfers = []
-        for position in expected_positions:
-            outs = sorted(pid for pid in out_ids if by_id.loc[pid, "position"] == position)
-            ins = sorted(pid for pid in in_ids if by_id.loc[pid, "position"] == position)
-            for out_id, in_id in zip(outs, ins, strict=True):
-                outgoing, incoming = by_id.loc[out_id], by_id.loc[in_id]
-                sale, sale_source, _ = sales[out_id]
-                transfers.append({
-                    "player_out_id": out_id, "player_out": outgoing["name"],
-                    "player_in_id": in_id, "player_in": incoming["name"],
-                    "position": position, "price": float(incoming["price"]),
-                    "predicted_points": float(incoming["predicted_points"]),
-                    "gain": float(incoming["predicted_points"] - outgoing["predicted_points"]),
-                    "selling_price": sale, "selling_price_source": sale_source,
-                })
-        gross = float(sum(transfer["gain"] for transfer in transfers))
-        cost = float(max(0, len(transfers) - free_transfers) * hit_cost)
-        all_plans.append({"count": len(transfers), "transfers": transfers, "gross": gross, "hit_cost": cost, "net": gross - cost})
-        constraints.append(LinearConstraint(np.r_[selected_mask.astype(float), 0.0], 0, 14))
-
-    # No feasible positive/neutral move is still a valid "roll" decision.
-    roll = {
-        "count": 0,
-        "transfers": [],
-        "gross": 0.0,
-        "hit_cost": 0.0,
-        "net": 0.0,
-    }
-    all_plans.append(roll)
-
-    all_plans.sort(
-        key=lambda p: (
-            p["net"],
-            p["gross"],
-            -p["count"],
-            tuple(
-                (x["player_in_id"], x["player_out_id"])
-                for x in p["transfers"]
-            ),
-        ),
-        reverse=True,
-    )
-    best = all_plans[0]
-
-    alternatives = []
-    seen = {tuple(sorted((x["player_out_id"], x["player_in_id"]) for x in best["transfers"]))}
-    for plan in all_plans[1:]:
-        key = tuple(
-            sorted((x["player_out_id"], x["player_in_id"]) for x in plan["transfers"])
-        )
-        if key in seen:
-            continue
-        seen.add(key)
-        alternatives.append({
-            "transfers": plan["transfers"],
-            "transfers_used": plan["count"],
-            "gross_gain": plan["gross"],
-            "hit_cost": plan["hit_cost"],
-            "net_gain": plan["net"],
-        })
-        if len(alternatives) >= 5:
-            break
-
-    transfers = best["transfers"]
-    post_transfer_squad = _apply_transfer_plan(owned, data, transfers, club_changes)
-    return {
-        "recommended": transfers[0] if len(transfers) == 1 else None,
-        "recommended_transfers": transfers,
-        "transfers_used": best["count"],
+    base = {
         "free_transfers": free_transfers,
         "selling_prices_known": selling_prices_known,
         "budget_is_estimate": not selling_prices_known,
-        "solver_status": solver_status,
-        "optimality_known": optimality_known,
-        "alternatives_complete": alternatives_complete,
-        "optimization_warning": None if optimality_known else "Transfer search did not finish; the best plan is unknown.",
-        "hit_cost": best["hit_cost"],
-        "gross_gain": best["gross"],
-        "net_gain": best["net"],
-        "alternatives": alternatives,
-        "base_projected_points": base_points,
-        "projected_points_after_transfers": base_points + best["gross"],
+    }
+    active_policy = policy or DecisionPolicy(hit_cost=float(hit_cost))
+    try:
+        plan = plan_action(
+            frames,
+            owned_ids=sorted(owned_ids),
+            sale_info=sales,
+            bank=bank,
+            free_transfers=free_transfers,
+            max_transfers=max_transfers,
+            weights=weights,
+            policy=active_policy,
+            evaluate_wildcard=evaluate_wildcard,
+        )
+    except SolverUnavailable as exc:
+        return {
+            **base,
+            "action": "HOLD",
+            "recommended": None,
+            "recommended_transfers": [],
+            "transfers_used": 0,
+            "hit_cost": 0.0,
+            "gross_gain": 0.0,
+            "net_gain": 0.0,
+            "decision_score": 0.0,
+            "alternatives": [],
+            "options_by_transfer_count": [],
+            "solver_status": exc.status,
+            "optimality_known": False,
+            "alternatives_complete": False,
+            "optimization_warning": "Transfer search did not finish; the best plan is unknown.",
+        }
+    except ActionPlanningError as exc:
+        raise TransferAnalysisError(str(exc)) from exc
+
+    chosen = plan["chosen"]
+    transfers = chosen["transfers"]
+
+    def public(option: Mapping[str, Any]) -> dict[str, Any]:
+        return {key: value for key, value in option.items() if key not in {"squad"}}
+
+    post_transfer_squad = _apply_transfer_plan(owned, data, transfers, club_changes)
+    return {
+        **base,
+        "action": plan["action"],
+        "recommended": transfers[0] if len(transfers) == 1 else None,
+        "recommended_transfers": transfers,
+        "transfers_used": chosen["transfers_used"],
+        "hit_cost": chosen["hit_cost"],
+        "gross_gain": chosen["gross_gain"],
+        "net_gain": chosen["net_gain"],
+        "next_gw_gain": chosen["next_gw_gain"],
+        "roll_value_forgone": chosen["roll_value_forgone"],
+        "risk_margin": chosen["risk_margin"],
+        "decision_score": chosen["decision_score"],
+        "uncertainty": chosen["uncertainty"],
+        "lineup": chosen["lineup"],
+        "options_by_transfer_count": [public(option) for option in plan["options_by_transfer_count"]],
+        "alternatives": [public(option) for option in plan["alternatives"][:5]],
+        "alternatives_complete": True,
+        "max_transfers_searched": plan["max_transfers_searched"],
+        "budget": plan["budget"],
+        "horizon_weights": plan["weights"],
+        "policy": plan["policy"],
+        "wildcard": plan.get("wildcard"),
+        "solver_status": plan["solver_status"],
+        "optimality_known": plan["optimality_known"],
+        "optimization_warning": None if plan["optimality_known"] else "Part of the transfer search hit its time limit.",
+        "gain_basis": "weighted_horizon_lineup",
+        "base_projected_points": plan["hold"]["lineup_value"],
+        "projected_points_after_transfers": chosen["lineup_value"],
         "post_transfer_squad": [
             {
                 "player_id": int(row["player_id"]),
@@ -861,3 +822,37 @@ def optimize_transfer_plan(
             for _, row in post_transfer_squad.sort_values("player_id").iterrows()
         ],
     }
+
+
+def evaluate_transfer_moves(
+    team: dict[str, Any],
+    predictions: pd.DataFrame,
+    *,
+    sell: Sequence[int],
+    buy: Sequence[int],
+    free_transfers: int,
+    horizon_predictions: Sequence[pd.DataFrame] | None = None,
+    horizon_weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+) -> dict[str, Any]:
+    """Score the manager's own transfers on the same scale as the recommendation."""
+    picks = _validate_inputs(team, predictions)
+    frames = list(horizon_predictions) if horizon_predictions else [predictions]
+    frames = [frame.assign(position=frame["position"].astype(str).str.upper().replace({"GKP": "GK"}))
+              for frame in frames]
+    weights = list(horizon_weights) if horizon_weights is not None else [1.0] * len(frames)
+    prices = dict(zip(pd.to_numeric(frames[0]["player_id"]).astype(int), pd.to_numeric(frames[0]["price"])))
+    sales = {int(pick["player_id"]): selling_value(pick, float(prices[int(pick["player_id"])])) for pick in picks}
+    try:
+        result = evaluate_moves(
+            frames, owned_ids=list(sales), sale_info=sales, bank=float(team.get("bank") or 0.0),
+            free_transfers=free_transfers, sell=sell, buy=buy, weights=weights, policy=policy)
+    except SolverUnavailable as exc:
+        raise TransferAnalysisError(str(exc)) from exc
+    except ActionPlanningError as exc:
+        return {"legal": False, "reason": str(exc)}
+    if result["legal"]:
+        for key in ("option", "hold"):
+            result[key] = {k: v for k, v in result[key].items() if k != "squad"}
+    result["selling_prices_known"] = all(value[2] for value in sales.values())
+    return result

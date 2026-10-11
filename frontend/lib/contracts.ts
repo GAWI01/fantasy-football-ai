@@ -245,6 +245,9 @@ export type RecommendedTransfer = {
   price?: number | null;
   predicted_points?: number | null;
   gain?: number | null;
+  /** Each side's own projection for the target Gameweek. */
+  next_gw_points_in?: number | null;
+  next_gw_points_out?: number | null;
   selling_price?: number | null;
   position?: string | null;
 };
@@ -258,22 +261,35 @@ export type TransferPlanAlternative = {
 };
 
 export type Confidence = {
-  score: number;
-  label: "LOW" | "MEDIUM" | "HIGH" | string;
+  /** Null when the label is UNKNOWN. */
+  score: number | null;
+  label: "LOW" | "MEDIUM" | "HIGH" | "UNKNOWN" | string;
+  basis?: string;
   components: {
-    decision_margin: number;
-    minutes_certainty: number;
-    fixture_certainty: number;
-    signal_agreement: number;
+    decision_margin?: number | null;
+    uncertainty?: number | null;
+    ratio?: number | null;
   };
+  minutes_doubts?: string[];
 };
 
+/** One evaluated action from the backend's canonical action planner. */
 export type TransferScenario = {
+  action?: string;
   transfers: RecommendedTransfer[];
-  current_net_gain: number;
+  transfers_used?: number;
+  /** Change in the best XI + captain's projected points this Gameweek. */
+  next_gw_gain?: number | null;
+  /** Weighted multi-GW change in the best XI + captain (bench counts only as cover). */
   horizon_gain: number;
-  combined_score: number;
+  hit_cost?: number;
+  net_gain?: number;
+  roll_value_forgone?: number;
+  decision_score?: number;
   coverage: number;
+  /** Deprecated aliases. */
+  current_net_gain?: number;
+  combined_score?: number;
 };
 
 export type HorizonGameweek = {
@@ -340,25 +356,27 @@ export type DecisionIntelligence = {
     captain_projection?: HorizonPlayer;
     team_player_projections: HorizonPlayer[];
   };
-  transfer_strategy: {
+  transfer_strategy: Omit<TransferScenario, "transfers"> & {
     action: string;
-    current_net_gain: number;
-    gross_gain?: number;
-    hit_cost?: number;
-    horizon_gain: number;
-    combined_score: number;
-    coverage: number;
     selected_transfers: RecommendedTransfer[];
     alternatives: TransferScenario[];
-    transfer_pressure?: Array<{ player_id: number; name?: string; pressure: number }>;
+    options_by_transfer_count?: TransferScenario[];
   };
+  transfer_action?: string;
   chip_advisor: {
     recommended_chip: string | null;
     score: number;
-    alternatives: Array<{ chip: string; score: number }>;
+    reason?: string;
+    alternatives: Array<{ chip: string; score: number; reason?: string }>;
   };
   chip_state: ChipState;
-  wildcard_pressure?: number;
+  wildcard_signal?: {
+    available: boolean;
+    evaluated: boolean;
+    recommended: boolean;
+    advantage?: number | null;
+    threshold?: number | null;
+  };
   risk_summary: {
     average_risk: number;
     high_risk_players: number;
@@ -392,6 +410,16 @@ export type DashboardDecision = {
     projected_points: number;
   };
   bench?: { players: Array<DecisionPlayer & { bench_order: number }> };
+  /** "after_recommended_transfers" when starting_xi/bench/captain include the plan's transfers. */
+  lineup_source?: "after_recommended_transfers" | "owned_squad";
+  /** Best lineup of the squad owned now, before any transfer. */
+  owned_lineup?: {
+    formation?: string;
+    starting_xi: DecisionPlayer[];
+    bench: Array<DecisionPlayer & { bench_order: number }>;
+    captain: DecisionPlayer;
+    vice_captain: DecisionPlayer;
+  };
   captain?: DecisionPlayer;
   vice_captain?: DecisionPlayer;
   transfers?: {
@@ -401,9 +429,12 @@ export type DashboardDecision = {
     free_transfers?: number;
     /** "user" when the manager set it, "derived" from public transfer history, "unknown" when history failed. */
     free_transfers_source?: "user" | "derived" | "unknown";
+    action?: string;
     hit_cost?: number;
     gross_gain?: number;
     net_gain?: number;
+    next_gw_gain?: number;
+    decision_score?: number;
     budget_is_estimate?: boolean;
     selling_prices_known?: boolean;
     alternatives?: TransferPlanAlternative[];
@@ -437,6 +468,9 @@ export type DashboardEnvelope = {
     degraded: boolean;
     prediction_version?: string | null;
     model_validation_state?: string | null;
+    /** "provisional" while the previous Gameweek is still being played. */
+    forecast_stage?: "final" | "provisional" | null;
+    history_cutoff_gw?: number | null;
   };
   errors: AreaError[];
 };
@@ -594,4 +628,56 @@ export type FixtureMatrixEnvelope = {
   };
   meta: SourceMeta;
   errors: AreaError[];
+};
+
+
+/** The manager's own transfers scored by the backend planner (GET /api/v1/evaluate). */
+export type EvaluationEnvelope = {
+  data: {
+    legal: boolean;
+    reason?: string;
+    option?: TransferScenario & { gross_gain?: number };
+    hold?: TransferScenario;
+    recommended: { action?: string; transfers: RecommendedTransfer[]; decision_score?: number | null; net_gain?: number | null };
+    free_transfers: number;
+    selling_prices_known?: boolean;
+  };
+  meta: SourceMeta & { event?: number | null };
+  errors: AreaError[];
+};
+
+
+export type LeagueRole = "CAPTAIN" | "STARTER" | "BENCH" | null;
+
+export type ManagerLeague = { league_id: number; name: string; managers: number | null; rank: number | null; last_rank: number | null; analysed_managers: number };
+
+export type LeaguesEnvelope = { data: { team_id: number; leagues: ManagerLeague[] }; meta: SourceMeta; errors: AreaError[] };
+
+export type LeagueStanding = {
+  team_id: number; team_name: string; manager: string | null; rank: number | null; last_rank: number | null;
+  event_points: number | null; total: number | null; gap_to_you: number; active_chip: string | null; is_you: boolean;
+};
+
+export type LeaguePlayer = {
+  player_id: number; name: string; team_short: string; position: string | null;
+  owners: number; captains: number; ownership: number; eo: number; rival_eo: number;
+  you: LeagueRole; role: "THREAT" | "DIFFERENTIAL" | null; next_gw_points: number | null;
+};
+
+export type LeagueEnvelope = {
+  data: {
+    league_id: number; name: string; event: number | null; managers: number; analysed_managers: number; max_analysed_managers: number;
+    standings: LeagueStanding[]; players: LeaguePlayer[]; thresholds: { threat_eo: number; differential_eo: number }; basis: string;
+  };
+  meta: SourceMeta; errors: AreaError[];
+};
+
+export type RivalPlayer = { player_id: number; name: string; team_short: string; position: string | null; role: LeagueRole; rival_role?: LeagueRole; next_gw_points: number | null };
+
+export type RivalEnvelope = {
+  data: {
+    event: number; team_id: number; rival_id: number; only_you: RivalPlayer[]; only_rival: RivalPlayer[]; shared: RivalPlayer[];
+    same_captain: boolean; unique_next_gw_points: { you: number | null; rival: number | null }; basis: string;
+  };
+  meta: SourceMeta; errors: AreaError[];
 };

@@ -1,19 +1,12 @@
 "use client";
 
 import { Sheet } from "@/components/ui/Sheet";
-import { Meter, SourceBadge } from "@/components/ui/primitives";
+import { SourceBadge } from "@/components/ui/primitives";
 import { sentenceCase } from "@/lib/format";
 import type { GameweekPlan } from "@/lib/model/plan";
 
-const COMPONENT_COPY: Record<string, { label: string; hint: string }> = {
-  decision_margin: { label: "Decision margin", hint: "How clearly the chosen action beats the next best one." },
-  minutes_certainty: { label: "Minutes certainty", hint: "How settled your squad's expected minutes are." },
-  fixture_certainty: { label: "Fixture coverage", hint: "How much of the five-GW horizon has fixture data." },
-  signal_agreement: { label: "Signal agreement", hint: "Whether next-GW and multi-GW signals point the same way." },
-};
-
-function signalStrength(value: number): string {
-  return value >= 0.75 ? "Strong" : value >= 0.5 ? "Moderate" : "Weak";
+function points(value: number | null | undefined): string {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(1) : "—";
 }
 
 export function ExplainPlan({ plan, modelVersion }: { plan: GameweekPlan; modelVersion: string | null }) {
@@ -36,24 +29,27 @@ export function ExplainPlan({ plan, modelVersion }: { plan: GameweekPlan; modelV
       {confidence ? (
         <section>
           <h3 className="why-title">Confidence: {sentenceCase(confidence.label)}</h3>
-          <p className="faint">A rule-based summary of the four signals below, not a probability that the move pays off.</p>
-          <div className="why-meters">
-            {Object.entries(confidence.components).map(([key, value]) => (
-              <div key={key} className="why-meter">
-                <div className="row"><strong>{COMPONENT_COPY[key]?.label ?? sentenceCase(key)}</strong><span className="spacer" /><span>{signalStrength(value)}</span></div>
-                <Meter value={value} label={COMPONENT_COPY[key]?.label ?? key} tone={value >= 0.75 ? "pos" : value >= 0.5 ? "accent" : "warn"} />
-                <small className="faint">{COMPONENT_COPY[key]?.hint}</small>
-              </div>
-            ))}
-          </div>
+          <p className="faint">
+            {confidence.label === "UNKNOWN"
+              ? confidence.basis ?? "There was no alternative action to compare against."
+              : "How clearly this action beats the next-best one, measured against the projection uncertainty of the players involved. A heuristic, not a probability that the move pays off."}
+          </p>
+          {confidence.label !== "UNKNOWN" ? (
+            <dl className="metrics">
+              <div><dt>Margin over next best</dt><dd>{points(confidence.components.decision_margin)} xP</dd></div>
+              <div><dt>Projection uncertainty</dt><dd>±{points(confidence.components.uncertainty)} xP</dd></div>
+            </dl>
+          ) : null}
+          {confidence.minutes_doubts?.length ? <p className="card-note">Minutes doubt: {confidence.minutes_doubts.join("; ")}.</p> : null}
         </section>
       ) : null}
       <section className="why-method">
         <h3 className="why-title">How to read the numbers</h3>
         <ul>
-          <li><b>Next GW</b> is the native model projection for the coming Gameweek. Projections are forecasts, never results.</li>
-          <li><b>5-GW gain</b> adds four further Gameweeks by scaling next GW&rsquo;s forecast to each later fixture&rsquo;s official difficulty and home/away. It is a planning guide, not four separate model forecasts.</li>
-          <li><b>Hits</b> cost 4 points per transfer beyond your free transfers. The engine only proposes a hit when the multi-GW edge clearly exceeds it.</li>
+          <li><b>Next GW</b> is the change in the projected points of your best starting XI and captain for the coming Gameweek. Bench players count only as cover for absences. Projections are forecasts, never results.</li>
+          <li><b>5-GW gain</b> is the same change over five Gameweeks, later Gameweeks weighted less. Later Gameweeks scale the model&rsquo;s forecast to each fixture&rsquo;s official difficulty and home/away, with each Gameweek&rsquo;s own availability (a one-match ban only costs one Gameweek). It is a planning guide, not five separate model forecasts.</li>
+          <li><b>Holding is always an option.</b> An unused free transfer is worth points next week, so a move is only recommended when it beats rolling the transfer.</li>
+          <li><b>Hits</b> cost 4 points per transfer beyond your free transfers. The engine takes a hit only when the five-Gameweek gain beats the hit plus a safety margin.</li>
           <li>Captain and vice-captain are always chosen from players you own.</li>
         </ul>
         {modelVersion ? <p className="faint">Model artifact: <span className="mono">{modelVersion}</span></p> : null}

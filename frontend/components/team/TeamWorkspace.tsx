@@ -46,7 +46,7 @@ export function TeamWorkspace() {
   }
   const current = lineup ?? official;
   const byId = useMemo(() => new Map(squad.map((player) => [player.id, player])), [squad]);
-  const model = useMemo(() => (plan ? modelLineup(squad, plan.modelXI, plan.bench, plan.captain, plan.vice) : null), [plan, squad]);
+  const model = useMemo(() => (plan ? modelLineup(squad, plan.owned.xi, plan.owned.bench, plan.owned.captain, plan.owned.vice) : null), [plan, squad]);
   const targets = useMemo(() => (selected != null ? validTargets(current, selected, squad) : new Set<number>()), [current, selected, squad]);
   const liveAvailable = Boolean(dashboard?.data.live?.picks?.length) && state.liveActive;
   const activeMode: ValueMode = mode ?? (liveAvailable ? "live" : "projected");
@@ -205,8 +205,8 @@ export function TeamWorkspace() {
                 );
               })}
             </div>
-            {plan?.captain && current.captain !== plan.captain.id ? (
-              <p className="card-note">Model captain: <b>{plan.captain.name}</b> ({fixed(plan.captain.xp)} xP).</p>
+            {plan?.owned.captain && current.captain !== plan.owned.captain.id ? (
+              <p className="card-note">Model captain: <b>{plan.owned.captain.name}</b> ({fixed(plan.owned.captain.xp)} xP).</p>
             ) : plan?.captain ? <p className="card-note">Matches the model captain.</p> : null}
           </Card>
 
