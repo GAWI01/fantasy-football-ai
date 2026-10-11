@@ -151,7 +151,7 @@ load the root example file. Run the documented README commands unchanged.
 The root PORT example is for the backend; Next dev/start defaults to port 3000.
 For Compose, keep API port 8000 and set NEXT_PUBLIC_API_URL to a browser-reachable
 origin at build time. Then run `docker compose up --build`.
-The existing render.yaml remains an alternative two-service deployment.
+The app runs on Railway (API) and Vercel (web app) only; the old Render blueprint was removed.
 
 ## Verification before hosting
 
@@ -209,3 +209,17 @@ hosted cold/warm latency. Check unauthenticated outsiders cannot reach either
 service. Review may be unavailable without an appropriate certified artifact.
 
 No push, hosting operation or rights clearance is implied by this runbook.
+
+## CI and uptime
+
+- **CI** (`.github/workflows/ci.yml`) runs on every pull request and every push
+  to `master`: the Python test suite, an import check of the API, and the
+  frontend's tests, lint, type check and production build. Merge only when it
+  is green. To enforce that, protect `master` in GitHub: Settings → Rules →
+  Rulesets → New branch ruleset → target `master` → "Require status checks to
+  pass" (select both CI jobs) and "Block force pushes".
+- **Uptime** (`.github/workflows/uptime.yml`) checks the web app, the API's
+  `/health` and the served forecast every hour. A failed run makes GitHub
+  email the repository owner. A forecast that does not match the next
+  Gameweek is only a warning, because it is normal for up to three hours after
+  a deadline.
