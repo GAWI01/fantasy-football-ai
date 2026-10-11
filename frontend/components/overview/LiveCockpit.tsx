@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowRightLeft, Crown, Goal, Hourglass, Radio, Sparkles, Trophy } from "lucide-react";
+import { Activity, ArrowRightLeft, Clock, Crown, Goal, Hourglass, Radio, Sparkles, Trophy } from "lucide-react";
 
 import { Kit } from "@/components/kit/Kit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
@@ -29,6 +29,13 @@ const NEGATIVE_EVENTS = new Set<LiveEvent["event_type"]>(["YELLOW_CARD", "RED_CA
 export function eventLabel(event: LiveEvent) {
   const [singular, plural] = EVENT_COPY[event.event_type];
   return `${event.count} ${event.count === 1 ? singular : plural}`;
+}
+
+/** One row per player, keeping the feed's order of first appearance. */
+export function groupEventsByPlayer(events: LiveEvent[]): Array<{ playerId: number; events: LiveEvent[] }> {
+  const groups = new Map<number, LiveEvent[]>();
+  for (const event of events) groups.set(event.player_id, [...(groups.get(event.player_id) ?? []), event]);
+  return [...groups].map(([playerId, grouped]) => ({ playerId, events: grouped }));
 }
 
 function FixtureScore({ fixture }: { fixture: LiveFixture }) {
@@ -115,6 +122,9 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
             {live.yetToPlay.length ? (
               <li><Hourglass size={15} aria-hidden="true" className="tone-accent" /><span>{plural(live.yetToPlay.length, "starter")} still to finish: {live.yetToPlay.map((player) => player.name).join(", ")}.</span></li>
             ) : <li><Hourglass size={15} aria-hidden="true" /><span>All your starters have finished or have no match.</span></li>}
+            {live.fixtures.some((fixture) => fixture.bonus_pending) ? (
+              <li><Clock size={15} aria-hidden="true" /><span>Full time, but bonus points are provisional until FPL confirms them (usually about an hour after the final whistle).</span></li>
+            ) : null}
             {live.autoSubWatch.map(({ out, in: incoming }) => (
               <li key={out.id}><ArrowRightLeft size={15} aria-hidden="true" className="tone-warn" /><span><b>{out.name}</b> played 0 minutes.{incoming ? <> If FPL auto-subs, <b>{incoming.name}</b> is first in your bench order who fits the formation.</> : " No eligible bench player fits the formation."}</span></li>
             ))}
@@ -124,12 +134,20 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
         <Card title="Owned player returns" icon={<Activity size={16} />} source={source}>
           {live.events.length ? (
             <ul className="events">
-              {live.events.slice(0, 10).map((event) => {
-                const player = squad.find((item) => item.id === event.player_id);
+              {groupEventsByPlayer(live.events).slice(0, 10).map(({ playerId, events }) => {
+                const first = events[0];
+                const player = squad.find((item) => item.id === playerId);
+                const negative = events.every((event) => NEGATIVE_EVENTS.has(event.event_type));
                 return (
-                  <li key={`${event.player_id}-${event.event_type}`} className={NEGATIVE_EVENTS.has(event.event_type) ? "event-neg" : "event-pos"}>
-                    <PlayerChip name={event.player_name} team={player?.team} teamShort={event.team_short} position={player?.position} size={26} meta={event.active ? "Starting XI" : "Bench"} />
-                    <span className="event-label">{eventLabel(event)}{event.provisional ? <em>provisional</em> : null}</span>
+                  <li key={playerId} className={negative ? "event-neg" : "event-pos"}>
+                    <PlayerChip name={first.player_name} team={player?.team} teamShort={first.team_short} position={player?.position} size={26} meta={first.active ? "Starting XI" : "Bench"} />
+                    <span className="event-label">
+                      {events.map((event) => (
+                        <span key={event.event_type} className={NEGATIVE_EVENTS.has(event.event_type) ? "tone-neg" : undefined}>
+                          {eventLabel(event)}{event.provisional ? <em>provisional</em> : null}
+                        </span>
+                      ))}
+                    </span>
                   </li>
                 );
               })}
