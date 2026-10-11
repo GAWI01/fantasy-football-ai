@@ -119,6 +119,14 @@ export function ProvisionalPill({ cutoff, event }: { cutoff: number; event: numb
   );
 }
 
+/** When holding: which chips you still have and the week that suits each. */
+export function chipHint(plan: GameweekPlan): string | null {
+  const available = plan.chip.outlook.filter((item) => item.available);
+  if (!plan.chip.outlook.length) return null;
+  if (!available.length) return "No chips left this half";
+  return available.map((item) => `${item.label}: ${item.best_window ? `best GW${item.best_window.gameweek}` : "no clear week yet"}`).join(" · ");
+}
+
 export function GameweekPlanCard({
   plan,
   event,
@@ -211,7 +219,7 @@ export function GameweekPlanCard({
             <div className="tile">
               <span className="tile-label"><Zap size={14} aria-hidden="true" />Chip</span>
               <strong className={`tile-word${plan.chip.recommended ? " tone-warn" : ""}`}>{plan.chip.recommended ? CHIP_LABEL[plan.chip.recommended] : "Hold chips"}</strong>
-              <small className="faint">{plan.chip.reason ?? (plan.chip.recommended ? "The chip case beats its evidence bar" : "No chip clears the evidence bar")}</small>
+              <small className="faint">{plan.chip.recommended ? plan.chip.reason ?? "The chip case beats its evidence bar" : chipHint(plan) ?? plan.chip.reason ?? "No chip clears the evidence bar"}</small>
               {plan.chipBudgetIsEstimate ? <small className="faint">Squad affordability estimated from market prices.</small> : null}
             </div>
             <div className="tile">

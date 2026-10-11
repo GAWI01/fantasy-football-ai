@@ -774,3 +774,12 @@ button.race-row:hover { background: var(--surface-hover); }
   .duel-captains { grid-template-columns: 1fr 1fr; }
   .duel-captains .pill { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
 }
+
+/* Chip outlook: one row per chip still available. */
+.chip-outlook { display: grid; gap: 10px; }
+.chip-row { display: grid; gap: 6px; padding: 12px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--surface-1); }
+.chip-row-use { border-color: rgba(251, 191, 36, 0.5); }
+.chip-row-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chip-row-head b { margin-right: auto; }
+.chip-row p { margin: 0; font-size: var(--fs-sm); color: var(--text-2); }
+.chip-meter { display: grid; gap: 4px; }

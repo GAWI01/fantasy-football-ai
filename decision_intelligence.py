@@ -12,6 +12,7 @@ from decision_risk import squad_health, risk_adjusted_points
 from decision_strategy import (
     MINUTES_DOUBT_START_PROBABILITY,
     chip_advisor,
+    chip_outlook,
     classify_action,
     decision_confidence,
 )
@@ -441,6 +442,15 @@ def build_intelligence(
         "horizon": horizon_block,
         "transfer_strategy": transfer_block,
         "chip_advisor": chips,
+        "chip_outlook": chip_outlook(
+            state=state,
+            advisor=chips,
+            wildcard_signal=wildcard_signal,
+            scenario_scores={item["chip"]: float(item["score"]) for item in chip_scenarios.get("scenarios", [])},
+            horizon_team=horizon_team,
+            starter_ids=chip_xi_ids,
+            names={int(p["player_id"]): str(p.get("name") or "") for p in team_players if p.get("player_id") is not None},
+        ),
         "chip_state": state,
         "chip_scenarios": chip_scenarios,
         "risk_summary": risk_summary,
