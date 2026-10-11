@@ -52,3 +52,11 @@ def test_request_middleware_preserves_request_id_and_logs_completion(caplog):
     assert record.path == "/health"
     assert record.status_code == 200
     assert record.duration_ms >= 0
+
+
+def test_logged_paths_never_contain_team_or_league_ids():
+    from backend.observability import _loggable_path
+
+    assert _loggable_path("/api/v1/dashboard/6658075") == "/api/v1/dashboard/{id}"
+    assert _loggable_path("/api/v1/league/77/rival/123") == "/api/v1/league/{id}/rival/{id}"
+    assert _loggable_path("/health") == "/health"

@@ -128,7 +128,9 @@ cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit
 | [API](docs/API.md) | Every endpoint |
 | [Deployment](docs/DEPLOYMENT.md) | Railway and Vercel; merging to `master` deploys |
 | [App icon](docs/APP_ICON.md) | How to swap the icon |
-| [Data sources](docs/DATA_SOURCES.md) | Where the data comes from and the conditions |
+| [Data sources](docs/DATA_SOURCES.md) | Where the data comes from, the conditions and personal data |
+| [Data notice](DATA_NOTICE.md) | Who owns the data, and how to ask for removal |
+| [Privacy and terms](https://fantasyfootball-ai.vercel.app/privacy) | The public privacy notice and terms of use |
 
 ## Data and credits
 

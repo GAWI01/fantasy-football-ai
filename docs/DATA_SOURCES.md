@@ -21,11 +21,20 @@ https://github.com/vaastav/Fantasy-Premier-League. That attribution is shown
 in the README ("Data and credits") and in the app's footer on every page. Keep
 both if either is reworded.
 
-The retained FPL seasons and Understat files are separate data dependencies. The upstream software licence does not establish permission from the original FPL/Understat data owners for downstream data reuse. No provider agreement, pinned source revision or complete retrieval/hash register is present in this repository.
+The retained FPL seasons are a separate data dependency. Vaastav's permission covers his repository; it does not establish permission from the original FPL data owners for downstream reuse. No provider agreement, pinned source revision or complete retrieval/hash register is present in this repository.
 
-Before regenerating a model for release, record the exact source revision, retrieval time, input checksums, attribution and applicable data-use permission. Understat player-name/ID mapping is currently an offline path; its football statistics are not established live model inputs. Do not describe these sources as approved until evidence exists.
+Before regenerating a model for release, record the exact source revision, retrieval time, input checksums, attribution and applicable data-use permission. Understat data and the scripts that fetched it were removed on 2026-10-11: Understat has no open licence and its data was never a model input. Do not describe these sources as approved until evidence exists.
 
 Historical scraped `xP` has an upstream lookahead warning and is never used. Feature contract v4 uses completed-Gameweek history only; the model was retrained and evaluated on that basis (docs/MODEL_PIPELINE.md). Its validation report records SHA256 checksums of every training and test input, not the upstream source revision or retrieval time.
+
+## Personal data
+
+- No user database. A Team ID is used per request and cached in memory with the FPL response for minutes.
+- Managers' personal names are never returned by the API or shown; mini-leagues show team names only.
+- Application logs replace numeric IDs in paths with `{id}`; uvicorn's access log (client IP plus full path) is off (`Dockerfile.backend`).
+- Each client IP is limited per minute (`backend/rate_limit.py`, `FPL_AI_RATE_LIMIT_PER_MINUTE`, default 120).
+- The benchmark snapshot of recorded teams is pseudonymised: synthetic IDs 9100001-9100011, no names, regions, badges or league memberships. Only the project owner's own team keeps its real ID.
+- The public notice is the app's [Privacy and terms](https://fantasyfootball-ai.vercel.app/privacy) page (`frontend/app/privacy/page.tsx`); keep it in step with the code.
 
 ## Product boundary
 

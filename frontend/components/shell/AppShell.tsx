@@ -148,7 +148,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <footer className="site-foot">
         <span>Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</span>
-        <span>Historical data: <a href="https://github.com/vaastav/Fantasy-Premier-League" target="_blank" rel="noopener noreferrer">vaastav/Fantasy-Premier-League</a> by Vaastav Anand. Live data: the public FPL API. Recommendations only.</span>
+        <span>Historical data: <a href="https://github.com/vaastav/Fantasy-Premier-League" target="_blank" rel="noopener noreferrer">vaastav/Fantasy-Premier-League</a> by Vaastav Anand. Live data: the public FPL API. Recommendations only. <Link href="/privacy">Privacy and terms</Link>.</span>
       </footer>
 
       <nav className="tabbar" aria-label="Mobile primary">
@@ -180,7 +180,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <p className="side-disclaimer">Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</p>
+        <p className="side-disclaimer">Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team. <Link href="/privacy" onClick={() => setMoreOpen(false)}>Privacy and terms</Link>.</p>
       </Sheet>
     </div>
   );

@@ -94,7 +94,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
             <Stat size="sm" label={<><Crown size={12} aria-hidden="true" />Captain</>} value={live.captainContribution ?? "—"} unit="pts" sub={live.captain ? `${live.captain.name}${live.captain.multiplier && live.captain.multiplier > 2 ? " · triple" : ""}` : "No captain"} />
             <Stat size="sm" label="Bench" value={live.benchPoints ?? "—"} unit="pts" sub="Not counted unless auto-subbed" />
             <Stat size="sm" label="GW rank" value={compact(eventRank)} sub="Official, updates after matches" />
-            <Stat size="sm" label="Overall" value={compact(overallRank)} sub="Official" />
+            <Stat size="sm" label="Overall" value={compact(overallRank)} sub="From FPL" />
           </div>
         </div>
       </section>
