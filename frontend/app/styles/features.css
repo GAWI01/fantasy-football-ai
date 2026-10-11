@@ -669,7 +669,9 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 /* Phone market table: keep the player column readable and pinned while the stats scroll. */
 @media (max-width: 767px) {
   .market-table .table th:first-child, .market-table .table td:first-child {
-    position: sticky; left: 0; z-index: 2; min-width: 148px; max-width: 160px; background: var(--surface-1);
+    /* -16px = the .table-wrap gutter: pin to the wrap's visible edge, or the
+       scrolled columns show through the gutter to the left of the player. */
+    position: sticky; left: -16px; z-index: 2; min-width: 148px; max-width: 160px; background: var(--surface-1);
     box-shadow: 1px 0 0 var(--line);
   }
   .market-table .table th:first-child { z-index: 3; }
