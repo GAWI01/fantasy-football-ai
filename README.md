@@ -22,6 +22,7 @@ Gameweeks, all from a validated points model and the official FPL data.
 | **Gameweek plan** | One recommendation for the next deadline: transfer (or roll), captain and vice, chip decision, bench order and the main risk in your XI, with a confidence level and the reasoning behind it. |
 | **My Team** | Your squad on a pitch with each player's forecast. Drag or tap to test lineups, bench order and armbands; formations stay legal. |
 | **Plan & Transfers** | Hold, each free transfer and hits compared on one scale (best XI and captain over five weighted Gameweeks, bench only as cover, a banked transfer has value). Budgets use selling prices derived from your public transfer history. **Test your own move** scores any transfer you are considering against holding and the recommendation. |
+| **Mini-leagues** | Your private leagues: standings and gaps, the players your rivals rely on (effective ownership, threats you do not own, your differentials) and a head-to-head against any rival. Based on the latest public squads: FPL hides everyone's next-deadline team until it passes. |
 | **Players** | Every player with official stats, the next-Gameweek forecast, expected minutes, value per million and the next three fixtures. |
 | **Fixtures** | Every club's next 3, 5 or 8 Gameweeks with official difficulty, blanks and doubles. |
 | **History & Review** | Your season record, and each Gameweek's result set against the forecast that was published before its deadline. |

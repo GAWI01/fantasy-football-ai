@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 
-import { fetchFixtureMatrix, fetchPlayers, fetchReview } from "@/lib/api";
-import type { FixtureMatrixEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope } from "@/lib/contracts";
+import { fetchFixtureMatrix, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
+import type { FixtureMatrixEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
 import { useResource } from "@/lib/hooks/useResource";
 
 function useDataVersion() {
@@ -44,4 +44,19 @@ export function useFixtureMatrix(horizon = 6) {
 export function useReview(teamId: string | null, event?: number) {
   const version = useDataVersion();
   return useResource<ReviewEnvelope>(teamId ? `review:${teamId}:${event ?? "latest"}:${version}` : null, (signal) => fetchReview(teamId ?? "", event, signal), 300_000);
+}
+
+
+export function useLeagues(teamId: string | null) {
+  return useResource<LeaguesEnvelope>(teamId ? `leagues:${teamId}` : null, (signal) => fetchLeagues(teamId ?? "", signal), 600_000);
+}
+
+export function useLeague(leagueId: number | null, teamId: string | null) {
+  const version = useDataVersion();
+  return useResource<LeagueEnvelope>(leagueId && teamId ? `league:${leagueId}:${teamId}:${version}` : null, (signal) => fetchLeague(leagueId ?? 0, teamId ?? "", signal), 300_000);
+}
+
+export function useRival(leagueId: number | null, rivalId: number | null, teamId: string | null) {
+  const version = useDataVersion();
+  return useResource<RivalEnvelope>(leagueId && rivalId && teamId ? `rival:${leagueId}:${rivalId}:${teamId}:${version}` : null, (signal) => fetchRival(leagueId ?? 0, rivalId ?? 0, teamId ?? "", signal), 300_000);
 }

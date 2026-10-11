@@ -688,3 +688,12 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 .own-move .select-label { flex-direction: column; align-items: stretch; gap: 4px; flex: 1 1 220px; min-width: 0; }
 .own-move .select-label select { width: 100%; min-width: 0; }
 .own-move-result { margin-top: 12px; }
+
+/* Mini-leagues */
+.league-summary .big { font-size: 1.8rem; font-family: var(--font-display); }
+.rival-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rival-col { min-width: 0; }
+@media (max-width: 860px) {
+  .rival-grid { grid-template-columns: 1fr; }
+  .league-summary { grid-template-columns: 1fr; }
+}
