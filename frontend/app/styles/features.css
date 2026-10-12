@@ -1001,3 +1001,14 @@ button.race-row:hover { background: var(--surface-hover); }
 @media (max-width: 640px) {
   .market-table .phone-hide { display: none; }
 }
+
+/* Fixture tables: the club column stays put while the Gameweeks scroll sideways */
+.fx-tr > :first-child {
+  position: sticky; left: 0; z-index: 2; align-self: stretch; display: flex; align-items: center;
+  margin: -3px 0 -3px -4px; padding: 3px 8px 3px 4px; border-radius: var(--r-sm) 0 0 var(--r-sm);
+  /* Solid paint either side covers the grid gap and the table's gutter, so nothing shows through. */
+  background: #0e1426; box-shadow: -24px 0 0 #0e1426, 8px 0 0 #0e1426, 18px 0 12px -10px rgba(0, 0, 0, 0.8);
+}
+.fx-thead > :first-child { background: #0e1426; }
+.fx-tr.is-owned { box-shadow: none; }
+.fx-tr.is-owned > :first-child { background: linear-gradient(rgba(139, 92, 246, 0.14), rgba(139, 92, 246, 0.14)), #0e1426; box-shadow: inset 2px 0 0 var(--violet), -24px 0 0 #0e1426, 8px 0 0 #0e1426, 18px 0 12px -10px rgba(0, 0, 0, 0.8); }

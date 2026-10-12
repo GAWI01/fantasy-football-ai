@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Plus, Scale, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useTeam } from "@/app/providers/TeamProvider";
+import { useGameState } from "@/lib/hooks/useGameState";
 import { FixtureCell } from "@/components/fixtures/FixtureCell";
 import { Kit } from "@/components/kit/Kit";
 import { PlayerChip } from "@/components/player/PlayerChip";
@@ -130,6 +131,7 @@ const COMPARE_ROWS: Array<{ label: string; get: (player: PlayerSummary) => numbe
 
 export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
   const { dashboard } = useTeam();
+  const gameState = useGameState(dashboard);
   const market = usePlayerMarket();
   const matrix = useFixtureMatrix(5);
   const [initial] = useState(() => readUrl(search));
@@ -179,7 +181,8 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
   const toggleCompare = (id: number) => setCompare((current) => current.includes(id) ? current.filter((value) => value !== id) : current.length < 4 ? [...current, id] : current);
   const compared = compare.map((id) => byId.get(id)).filter((player): player is PlayerSummary => Boolean(player));
   const detailPlayer = detail != null ? byId.get(detail) ?? null : null;
-  const live = market.data?.data.status === "LIVE" && market.data.data.finished !== true;
+  // Once every match is played the Gameweek is no longer live, even before FPL's final data check.
+  const live = market.data?.data.status === "LIVE" && market.data.data.finished !== true && !gameState.gwPlayed;
   const marketSource = market.data?.meta.stale ? "cached" : live ? "live" : "official";
 
   // Phones show the player, xP, price and whatever the list is sorted by.
