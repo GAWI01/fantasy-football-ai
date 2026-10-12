@@ -7,6 +7,8 @@ import { useMemo, useState } from "react";
 import { Kit } from "@/components/kit/Kit";
 import { clubCode } from "@/lib/fpl/kits";
 import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
+import { useTeam } from "@/app/providers/TeamProvider";
+import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
 import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
@@ -143,6 +145,10 @@ function ChipOutlookList({ outlook }: { outlook: ChipOutlook[] }) {
 function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
   const chips = chipAvailability(plan.chip.state);
   const state = plan.chip.state;
+  const { teamId } = useTeam();
+  const [squadSheet, setSquadSheet] = useState<ChipSquadKind | null>(null);
+  const [squadKind, setSquadKind] = useState<ChipSquadKind>("free_hit");
+  const statusOf = (chip: string) => chips.find((item) => item.chip === chip)?.status ?? "unknown";
   return (
     <Card id="chips" title="Chips" icon={<Zap size={16} />} source={["model", "official"]}>
       <div className="chip-call">
@@ -161,6 +167,12 @@ function ChipCard({ plan, locked }: { plan: GameweekPlan; locked: boolean }) {
           ))}
         </div>
       )}
+      <div className="chip-squad-actions">
+        <button type="button" className="btn btn-sm" onClick={() => { setSquadKind("free_hit"); setSquadSheet("free_hit"); }}>Best Free Hit team</button>
+        <button type="button" className="btn btn-sm" onClick={() => { setSquadKind("wildcard"); setSquadSheet("wildcard"); }}>Best Wildcard team</button>
+      </div>
+      <ChipSquadSheet open={squadSheet != null} onClose={() => setSquadSheet(null)} kind={squadKind} onKind={setSquadKind} teamId={teamId}
+        chipStatus={{ free_hit: statusOf("FREE_HIT"), wildcard: statusOf("WILDCARD") }} />
       {state ? (
         <p className="card-note">
           {state.double_gameweek ? "Double Gameweek fixtures exist in the target Gameweek. " : ""}
