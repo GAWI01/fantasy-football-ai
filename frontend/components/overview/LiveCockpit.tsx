@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowRightLeft, Crown, Goal, Hourglass, Radio, Sparkles, Trophy } from "lucide-react";
+import { Activity, ArrowRight, ArrowRightLeft, Crown, Goal, Hourglass, Radio, Sparkles, Trophy } from "lucide-react";
 
 import { Kit } from "@/components/kit/Kit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
@@ -52,7 +52,9 @@ function FixtureScore({ fixture }: { fixture: LiveFixture }) {
   );
 }
 
-export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { live: LiveView; squad: SquadPlayer[]; source: SourceKind; overallRank: number | null; eventRank: number | null }) {
+export type PlanPreview = { event: number | null; label: string; provisional: boolean; onOpen: () => void };
+
+export function LiveCockpit({ live, squad, source, overallRank, eventRank, planPreview = null }: { live: LiveView; squad: SquadPlayer[]; source: SourceKind; overallRank: number | null; eventRank: number | null; planPreview?: PlanPreview | null }) {
   const starters = squad.filter((player) => player.isStarter);
   const bench = squad.filter((player) => !player.isStarter).sort((left, right) => left.slot - right.slot);
   const totalActive = live.finished + live.playing + live.remaining + live.noFixture;
@@ -65,6 +67,10 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
   const motion = useMotionLevel();
   const shownPoints = useCountUp(live.points, motion, { fromZero: true, duration: 900 });
   const shownCaptain = useCountUp(live.captainContribution, motion, { fromZero: true });
+  const liveMatches = live.fixtures.filter((fixture) => fixture.started && !fixture.finished).length;
+  const finishedMatches = live.fixtures.filter((fixture) => fixture.finished).length;
+  const upcomingMatches = live.fixtures.length - liveMatches - finishedMatches;
+  const returnsCount = groupEventsByPlayer(live.events).length;
 
   return (
     <div className="live-grid">
@@ -104,7 +110,15 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
         </div>
       </section>
 
-      <Card title="Your XI live" icon={<Activity size={16} />} source={source} className="live-pitch-card">
+      {planPreview ? (
+        <button type="button" className="preview-line preview-plan" onClick={planPreview.onOpen}>
+          <span><b>GW{planPreview.event ?? "—"} plan</b> · {planPreview.label}{planPreview.provisional ? " (provisional)" : ""}</span>
+          <span className="preview-cta">Open plan<ArrowRight size={14} aria-hidden="true" /></span>
+        </button>
+      ) : null}
+
+      <Card title="Your XI live" icon={<Activity size={16} />} source={source} className="live-pitch-card"
+        collapse={{ id: "xi-live", defaults: { mobile: true, desktop: true }, summary: `${starters.length} starters · ${live.points ?? "—"} pts` }}>
         <PitchSurface compact label="Starting eleven with live points">
           <FormationRows starters={starters} render={(player) => <PitchPlayer key={player.id} player={player} mode="live" size="sm" />} />
         </PitchSurface>
@@ -115,11 +129,19 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
       </Card>
 
       <div className="live-side">
-        <Card title="Your matches" icon={<Goal size={16} />} source={source}>
+        <Card title="Your matches" icon={<Goal size={16} />} source={source}
+          collapse={{ id: "matches", defaults: { mobile: false, desktop: true }, summary: `${liveMatches} live · ${finishedMatches} finished · ${upcomingMatches} to play` }}>
           {live.fixtures.length ? <ul className="scores">{live.fixtures.map((fixture) => <FixtureScore key={fixture.fixture_id} fixture={fixture} />)}</ul> : <p className="faint">No fixture data for your clubs yet.</p>}
         </Card>
 
-        <Card title="What is happening" icon={<Sparkles size={16} />} source="derived">
+        <Card title="What is happening" icon={<Sparkles size={16} />} source="derived"
+          collapse={{
+            id: "happening",
+            defaults: { mobile: false, desktop: true },
+            summary: live.yetToPlay.length ? `${plural(live.yetToPlay.length, "starter")} still to finish` : "All your starters have finished",
+            // A possible auto-sub opens this section until it is closed.
+            signal: live.autoSubWatch.length ? `autosub:${live.event}:${live.autoSubWatch.map(({ out }) => out.id).join("-")}` : null,
+          }}>
           <ul className="insights">
             {live.topContributors[0] && (live.topContributors[0].liveContribution ?? 0) > 0 ? (
               <li><Trophy size={15} aria-hidden="true" className="tone-pos" /><span><b>{live.topContributors[0].name}</b> leads your team with {live.topContributors[0].liveContribution} pts{live.topContributors[0].isCaptain ? " (captained)" : ""}.</span></li>
@@ -133,7 +155,8 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
           </ul>
         </Card>
 
-        <Card title="Owned player returns" icon={<Activity size={16} />} source={source}>
+        <Card title="Owned player returns" icon={<Activity size={16} />} source={source}
+          collapse={{ id: "returns", defaults: { mobile: false, desktop: true }, summary: returnsCount ? `${plural(returnsCount, "player")} with returns` : "No returns yet" }}>
           {live.events.length ? (
             <ul className="events">
               {groupEventsByPlayer(live.events).slice(0, 10).map(({ playerId, events }) => {

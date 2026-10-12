@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, CircleCheck, Crown, Info, Layers, Shield, ShieldAlert, Sparkles, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, CircleCheck, Crown, Info, Shield, ShieldAlert, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -145,7 +145,6 @@ export function GameweekPlanCard({
   const isTransfer = plan.verdict === "TRANSFER";
   const scenario = isTransfer ? plan.recommended : plan.bestRejected;
   const confidence = plan.confidence;
-  const benchOutfield = plan.bench.filter((player) => player.position !== "GKP");
   const riskIcon = plan.mainRisk.tone === "calm" ? <CircleCheck size={16} aria-hidden="true" /> : plan.mainRisk.tone === "risk" ? <ShieldAlert size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />;
 
   return (
@@ -188,56 +187,37 @@ export function GameweekPlanCard({
           ) : null}
         </div>
 
-        <div className="hero-side">
-          <div className="armband">
-            {plan.captain ? (
-              <PlayerCard
-                tone="captain"
-                tag={<><Crown size={12} aria-hidden="true" />Captain</>}
-                badge="C"
-                name={plan.captain.name}
-                team={plan.captain.team}
-                teamShort={plan.captain.teamShort}
-                position={plan.captain.position}
-                value={fixed(plan.captain.xp)}
-                meta={plan.captain.opponent ? `${plan.captain.opponent}${plan.captain.home == null ? "" : plan.captain.home ? " (H)" : " (A)"}` : "Fixture —"}
-              />
-            ) : <div className="tile"><span className="tile-label"><Crown size={14} aria-hidden="true" />Captain</span><span className="faint">Unavailable</span></div>}
-            <div className="armband-side">
-              <div className="tile tile-score">
-                <span className="tile-label"><Sparkles size={14} aria-hidden="true" />Projected score</span>
-                <strong className="tile-number">{fixed(plan.projectedScore)}<small> xP</small></strong>
-                <small className="faint">Best XI + captain{plan.formation ? ` · ${plan.formation}` : ""}</small>
-              </div>
-              <div className="tile">
-                <span className="tile-label"><Shield size={14} aria-hidden="true" />Vice-captain</span>
-                {plan.vice ? (
-                  <PlayerChip name={plan.vice.name} team={plan.vice.team} teamShort={plan.vice.teamShort} position={plan.vice.position} badge="V" meta={<span className="tone-accent">{fixed(plan.vice.xp)} xP</span>} size={32} />
-                ) : <span className="faint">Unavailable</span>}
-              </div>
-            </div>
-          </div>
-          <div className="decision-tiles">
-            <div className="tile">
-              <span className="tile-label"><Zap size={14} aria-hidden="true" />Chip</span>
-              <strong className={`tile-word${plan.chip.recommended ? " tone-warn" : ""}`}>{plan.chip.recommended ? CHIP_LABEL[plan.chip.recommended] : "Hold chips"}</strong>
-              <small className="faint">{plan.chip.recommended ? plan.chip.reason ?? "The chip case beats its evidence bar" : chipHint(plan) ?? plan.chip.reason ?? "No chip clears the evidence bar"}</small>
-              {plan.chipBudgetIsEstimate ? <small className="faint">Squad affordability estimated from market prices.</small> : null}
-            </div>
-            <div className="tile">
-              <span className="tile-label"><Layers size={14} aria-hidden="true" />Bench order</span>
-              <ol className="bench-mini">
-                {benchOutfield.map((player) => <li key={player.id}>{player.name}<small> {fixed(player.xp)}</small></li>)}
-                {!benchOutfield.length ? <li className="faint">Unavailable</li> : null}
-              </ol>
-            </div>
-            <div className={`tile tile-risk tile-risk-${plan.mainRisk.tone}`}>
-              <span className="tile-label">{riskIcon}Main risk</span>
-              <strong className="tile-risk-title">{plan.mainRisk.title}</strong>
+        <ul className="hero-lines">
+          <li className="hero-line">
+            <Crown size={16} aria-hidden="true" className="tone-accent" />
+            <span>
+              <span className="hero-line-label">Captain</span>
+              {plan.captain ? (
+                <>
+                  <b>{plan.captain.name}</b> <span className="tone-accent num">{fixed(plan.captain.xp)} xP</span>
+                  {plan.captain.opponent ? <span className="faint"> · {plan.captain.opponent}{plan.captain.home == null ? "" : plan.captain.home ? " (H)" : " (A)"}</span> : null}
+                  {plan.vice ? <span className="faint"> · Vice </span> : null}{plan.vice ? <b>{plan.vice.name}</b> : null}
+                </>
+              ) : <span className="faint">Unavailable</span>}
+            </span>
+          </li>
+          <li className={`hero-line hero-line-risk tone-line-${plan.mainRisk.tone}`}>
+            {riskIcon}
+            <span>
+              <span className="hero-line-label">Main risk</span>
+              <b className="tile-risk-title">{plan.mainRisk.title}</b>
               <small>{plan.mainRisk.detail}</small>
-            </div>
-          </div>
-        </div>
+            </span>
+          </li>
+          <li className={`hero-line${plan.chip.recommended ? " hero-line-chip" : ""}`}>
+            <Zap size={16} aria-hidden="true" className={plan.chip.recommended ? "tone-warn" : undefined} />
+            <span>
+              <span className="hero-line-label">Chip</span>
+              <b className={plan.chip.recommended ? "tone-warn" : undefined}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold chips"}</b>
+              {plan.chip.recommended && plan.chip.reason ? <small>{plan.chip.reason}</small> : null}
+            </span>
+          </li>
+        </ul>
       </div>
       </SourceScope>
 
@@ -250,4 +230,59 @@ export function GameweekPlanCard({
       <WhySheet open={whyOpen} onClose={() => setWhyOpen(false)} plan={plan} modelVersion={modelVersion} />
     </section>
   );
+}
+
+
+/** Captain, vice and the projected score, for the Lineup & captain section. */
+export function PlanLineupDetails({ plan }: { plan: GameweekPlan }) {
+  return (
+    <div className="armband">
+      {plan.captain ? (
+        <PlayerCard
+          tone="captain"
+          tag={<><Crown size={12} aria-hidden="true" />Captain</>}
+          badge="C"
+          name={plan.captain.name}
+          team={plan.captain.team}
+          teamShort={plan.captain.teamShort}
+          position={plan.captain.position}
+          value={fixed(plan.captain.xp)}
+          meta={plan.captain.opponent ? `${plan.captain.opponent}${plan.captain.home == null ? "" : plan.captain.home ? " (H)" : " (A)"}` : "Fixture —"}
+        />
+      ) : <div className="tile"><span className="tile-label"><Crown size={14} aria-hidden="true" />Captain</span><span className="faint">Unavailable</span></div>}
+      <div className="armband-side">
+        <div className="tile tile-score">
+          <span className="tile-label"><Sparkles size={14} aria-hidden="true" />Projected score</span>
+          <strong className="tile-number">{fixed(plan.projectedScore)}<small> xP</small></strong>
+          <small className="faint">Best XI + captain{plan.formation ? ` · ${plan.formation}` : ""}</small>
+        </div>
+        <div className="tile">
+          <span className="tile-label"><Shield size={14} aria-hidden="true" />Vice-captain</span>
+          {plan.vice ? (
+            <PlayerChip name={plan.vice.name} team={plan.vice.team} teamShort={plan.vice.teamShort} position={plan.vice.position} badge="V" meta={<span className="tone-accent">{fixed(plan.vice.xp)} xP</span>} size={32} />
+          ) : <span className="faint">Unavailable</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The chip call and the best week for each chip you still have. */
+export function PlanChipDetails({ plan }: { plan: GameweekPlan }) {
+  const hint = chipHint(plan);
+  return (
+    <div className="chip-details">
+      <strong className={`tile-word${plan.chip.recommended ? " tone-warn" : ""}`}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold chips"}</strong>
+      <p className="muted">{plan.chip.recommended ? plan.chip.reason ?? "The chip case beats its evidence bar." : plan.chip.reason ?? "No chip clears the evidence bar this week."}</p>
+      {hint ? <p className="faint">{hint}</p> : null}
+      {plan.chipBudgetIsEstimate ? <p className="faint">Squad affordability estimated from market prices.</p> : null}
+    </div>
+  );
+}
+
+/** One line for a closed Chip section. */
+export function chipSummary(plan: GameweekPlan): string {
+  if (plan.chip.recommended) return `Play ${CHIP_LABEL[plan.chip.recommended]} this week`;
+  const next = plan.chip.outlook.filter((item) => item.available && item.best_window).sort((left, right) => (left.best_window?.gameweek ?? 99) - (right.best_window?.gameweek ?? 99))[0];
+  return next?.best_window ? `Hold chips · ${next.label} best in GW${next.best_window.gameweek}` : "Hold chips";
 }

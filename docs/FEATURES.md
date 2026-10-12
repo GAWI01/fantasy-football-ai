@@ -27,6 +27,17 @@ played. The plan is labelled **Provisional forecast** until the live Gameweek
 has final scores and the forecast is replaced. During a live Gameweek the
 Overview has a **GW6 live / GW7 plan** switch.
 
+**Decision first.** The Overview opens with the call itself: the move, the
+numbers behind it, and one line each for the captain, the main risk and the
+chip. Everything else sits in sections below it that open and close from their
+header: **Lineup & captain** (the model XI, bench order, captain and vice),
+**What changed**, **Chip**, **Season** and **Your fixture runs**. A closed
+section shows a one-line summary. On a phone the sections start closed, on a
+desktop most start open, and the app remembers what you open or close. Something
+new opens its section by itself until you close it: a changed plan, a chip to
+play now, or a possible auto-sub during a live Gameweek. While a Gameweek is
+live, a line at the top links the live cockpit and the next Gameweek's plan.
+
 ## Live Gameweek
 
 ![Live cockpit: live points, progress, captain, bench, ranks and the live pitch](screenshots/live.png)

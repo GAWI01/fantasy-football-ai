@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useId, type ReactNode } from "react";
 
 import type { SourceKind } from "@/lib/model/phase";
+import { useSectionOpen, type SectionDefaults } from "@/lib/sections";
 
 const SOURCE_COPY: Record<SourceKind, { label: string; hint: string }> = {
   live: { label: "Live", hint: "Live official match data for the Gameweek in progress. Can still change." },
@@ -36,6 +37,18 @@ export function SourceBadge({ kind, label, pinned = false }: { kind: SourceKind;
   );
 }
 
+/** Makes a card collapsible: the header opens and closes it, and the choice is remembered. */
+export type CardCollapse = {
+  id: string;
+  /** One line shown while the card is closed, so its gist stays visible. */
+  summary?: ReactNode;
+  defaults: SectionDefaults;
+  /** A stable key for something new that opens the card until the reader closes it. */
+  signal?: string | null;
+};
+
+const ALWAYS_OPEN: SectionDefaults = { mobile: true, desktop: true };
+
 export function Card({
   title,
   eyebrow,
@@ -47,6 +60,7 @@ export function Card({
   icon,
   labelledBy,
   tone,
+  collapse,
 }: {
   title?: ReactNode;
   eyebrow?: ReactNode;
@@ -58,18 +72,37 @@ export function Card({
   icon?: ReactNode;
   labelledBy?: string;
   tone?: "accent" | "live" | "warn" | "risk";
+  collapse?: CardCollapse;
 }) {
+  const autoId = useId();
+  const [stateOpen, toggle] = useSectionOpen(collapse?.id ?? autoId, collapse?.defaults ?? ALWAYS_OPEN, collapse?.signal);
+  const open = collapse ? stateOpen : true;
   const sources = source ? (Array.isArray(source) ? source : [source]) : [];
-  const headingId = labelledBy ?? (id ? `${id}-title` : undefined);
+  const headingId = labelledBy ?? (id ? `${id}-title` : collapse ? `${autoId}-title` : undefined);
+  const bodyId = `${autoId}-body`;
+  const content = sources.length ? <SourceScope kinds={sources}>{children}</SourceScope> : children;
   return (
-    <section className={["card", tone ? `card-${tone}` : "", className].filter(Boolean).join(" ")} id={id} aria-labelledby={title && headingId ? headingId : undefined}>
+    <section
+      className={["card", tone ? `card-${tone}` : "", collapse ? "card-collapsible" : "", collapse && !open ? "is-collapsed" : "", className].filter(Boolean).join(" ")}
+      id={id}
+      aria-labelledby={title && headingId ? headingId : undefined}
+    >
       {title || action || sources.length ? (
         <header className="card-head">
           <div className="card-title">
             {icon ? <span className="card-icon" aria-hidden="true">{icon}</span> : null}
             <div>
               {eyebrow ? <span className="eyebrow">{eyebrow}</span> : null}
-              {title ? <h2 id={headingId}>{title}</h2> : null}
+              {title ? (
+                <h2 id={headingId}>
+                  {collapse ? (
+                    <button type="button" className="card-toggle" aria-expanded={open} aria-controls={bodyId} onClick={toggle}>
+                      {title}<span className="card-chevron" aria-hidden="true" />
+                    </button>
+                  ) : title}
+                </h2>
+              ) : null}
+              {collapse?.summary && !open ? <span className="card-summary">{collapse.summary}</span> : null}
             </div>
           </div>
           <div className="card-meta">
@@ -78,7 +111,11 @@ export function Card({
           </div>
         </header>
       ) : null}
-      {sources.length ? <SourceScope kinds={sources}>{children}</SourceScope> : children}
+      {collapse ? (
+        <div className="card-body" id={bodyId} data-open={open ? "true" : "false"} inert={!open}>
+          <div className="card-body-inner">{content}</div>
+        </div>
+      ) : content}
     </section>
   );
 }

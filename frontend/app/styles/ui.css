@@ -266,3 +266,25 @@
 .search { position: relative; display: block; }
 .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
 .search .input { padding-left: 38px; }
+
+/* Collapsible cards: the whole header toggles; the body folds with a grid-row
+   transition so content of any height animates, and stays mounted. */
+.card-collapsible .card-head { position: relative; transition: margin-bottom var(--dur-2) var(--ease); }
+.card-collapsible.is-collapsed .card-head { margin-bottom: 0; }
+.card-toggle { display: inline-flex; align-items: center; gap: 10px; text-align: left; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
+.card-toggle::after { content: ""; position: absolute; inset: -10px -10px; border-radius: var(--r-md); }
+.card-toggle:focus-visible { outline: none; }
+.card-toggle:focus-visible::after { outline: 2px solid var(--violet-text); outline-offset: -2px; }
+.card-collapsible .card-meta { position: relative; z-index: 1; }
+.card-chevron { width: 9px; height: 9px; flex: none; margin-top: -4px; border-right: 2px solid var(--text-3); border-bottom: 2px solid var(--text-3); transform: rotate(45deg); transition: transform var(--dur-3) var(--ease), margin var(--dur-3) var(--ease); }
+.card-toggle[aria-expanded="true"] .card-chevron { transform: rotate(225deg); margin-top: 4px; }
+.card-summary { display: block; margin-top: 4px; font-size: var(--fs-sm); color: var(--text-2); }
+.card-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.34s var(--ease); }
+.card-body[data-open="false"] { grid-template-rows: 0fr; }
+.card-body-inner { min-height: 0; overflow: hidden; }
+/* Once open, stop clipping (pop-overs and focus rings inside can overflow), but
+   only after the unfold so content does not spill over the cards below. */
+.card-body[data-open="true"] > .card-body-inner { animation: card-unclip 0s linear 0.34s forwards; }
+@keyframes card-unclip { to { overflow: visible; } }
+.app[data-motion="off"] .card-body[data-open="true"] > .card-body-inner { overflow: visible; }
+@media (prefers-reduced-motion: reduce) { .card-body[data-open="true"] > .card-body-inner { overflow: visible; } }
