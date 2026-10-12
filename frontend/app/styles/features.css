@@ -662,10 +662,15 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
   .price-filter { flex: 1; }
   .sort-mobile { display: block; flex: 1; }
   .sort-mobile .select { height: 36px; }
-  .market-card { padding: 4px 12px 12px; }
+  /* On a phone the table is the card: edge to edge, clipped by the card's
+     rounded corners, so the pinned player column and the header line up with
+     the box behind them instead of floating inside it. */
+  .market-card { padding: 0 0 12px; }
+  .market-card .load-more, .market-card .data-state { margin: 0 12px; }
   /* The table's scroll gutter must equal the card padding, or the table and
      its pinned player column slide past the card's edge while you swipe. */
-  .market-card .table-wrap { margin: 0 -12px; padding: 0 12px; }
+  .market-card .table-wrap { margin: 0; padding: 0; }
+  .market-table .table th:first-child, .market-table .table td:first-child { padding-left: 14px; }
   .compare-tray { top: calc(var(--topbar-h) + 6px); }
   .table-scroll, .heat-wrap { margin: 0 -16px; padding: 0 16px; }
   .review-hero .review-scoreline { gap: 14px; }
@@ -690,9 +695,8 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 /* Phone market table: keep the player column readable and pinned while the stats scroll. */
 @media (max-width: 767px) {
   .market-table .table th:first-child, .market-table .table td:first-child {
-    /* -12px = the .table-wrap gutter: pin to the wrap's visible edge, or the
-       scrolled columns show through the gutter to the left of the player. */
-    position: sticky; left: -12px; z-index: 2; min-width: 148px; max-width: 160px; background: var(--surface-1);
+    /* Pinned to the card's own edge (the wrap has no gutter on phones). */
+    position: sticky; left: 0; z-index: 2; min-width: 148px; max-width: 160px; background: var(--surface-1);
     box-shadow: 1px 0 0 var(--line);
   }
   .market-table .table th:first-child { z-index: 3; }
