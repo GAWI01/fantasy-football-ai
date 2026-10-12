@@ -182,3 +182,26 @@ def test_captain_within_the_tie_band_goes_to_the_surer_starter():
     p.loc[p.player_id==1,"predicted_points"]=6.5
     out=build_intelligence(current_team=team,predictions=p,starting_xi=p,transfer_result={"net_gain":0,"gross_gain":0,"transfers_used":0,"hit_cost":0})
     assert out["captain_decision"]["captain"]["player_id"]==1
+
+
+def test_strategy_preserves_projected_points_without_relabelling_legacy_scores():
+    predictions = pd.DataFrame([
+        {"player_id": 1, "name": "A", "predicted_points": 5.0, "xmins": 90,
+         "start_probability": 1, "availability": "AVAILABLE", "difficulty": 2},
+        {"player_id": 2, "name": "B", "predicted_points": 4.0, "xmins": 90,
+         "start_probability": 1, "availability": "AVAILABLE", "difficulty": 2},
+    ])
+    legacy = {"net_gain": 2.0, "gross_gain": 6.0, "transfers_used": 0, "hit_cost": 4.0}
+    projected = {**legacy, "projected_gain": 10.0, "projected_net_gain": 6.0}
+    for source in (legacy, projected):
+        result = build_intelligence(
+            current_team={"players": predictions.to_dict("records")}, predictions=predictions,
+            starting_xi=predictions,
+            transfer_result={**source, "alternatives": [source], "options_by_transfer_count": [source]},
+        )
+        strategy = result["transfer_strategy"]
+        for option in (strategy, strategy["alternatives"][0], strategy["options_by_transfer_count"][0]):
+            assert option["projected_gain"] == source.get("projected_gain")
+            assert option["projected_net_gain"] == source.get("projected_net_gain")
+            assert option["horizon_gain"] == 6.0
+            assert option["net_gain"] == 2.0

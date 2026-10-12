@@ -62,9 +62,10 @@ flowchart LR
     GHA[GitHub Actions<br/>every 3 hours] --> CSV
 ```
 
-- **Forecast:** a gradient-boosting model of each player's points. It
-  beats a last-five average on unseen Gameweeks (mean absolute error 1.26
-  against 1.35) and is re-checked after every Gameweek.
+- **Forecast:** a gradient-boosting model of each player's points. In the
+  inspected 2026/27 GW1–5 evaluation its mean absolute error was 1.26, against
+  1.35 for a last-five average. It is re-checked after every Gameweek; future
+  improvements require evaluation on previously reserved rounds.
 - **Decisions:** one optimiser picks the squad, XI and captain over five
   weighted Gameweeks. Holding, free transfers and hits are scored on one
   scale.

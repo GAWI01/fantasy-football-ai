@@ -6,6 +6,10 @@ FPL AI currently uses public Fantasy Premier League endpoints for bootstrap/play
 
 Before commercial/public launch, the project owner must re-review the Premier League/FPL website terms, branding rules, acceptable request volume, attribution expectations and any restrictions on commercial reuse. The current implementation should not be interpreted as legal approval.
 
+### Pre-deadline snapshot archive
+
+The [deadline snapshot recorder](DEADLINE_SNAPSHOTS.md) retains full public official `bootstrap-static` and `fixtures` responses with actual UTC acquisition times, target event/deadline, official forecast-event mappings and SHA256 hashes. It requests bootstrap metadata every 30 minutes in the scheduled workflow and fixtures only for a missing capture within bounded windows around 24h and 90min before the next deadline. Raw bundles stay outside Git and are retained as immutable, uniquely named assets on season-specific `data-archive-*` GitHub prereleases until the owner explicitly removes them. Incomplete acquisitions and deadline crossings are not published; missed scheduling windows are skipped. No manager/team-entry data is requested. Premier League/FPL owns the underlying data; publicly accessible endpoints and archival hashes do not establish reuse or redistribution permission. The launch review and existing source credits and permissions in this register remain applicable.
+
 ## Prediction artifacts
 
 Model output is generated inside this project and published with a versioned manifest. A publication timestamp certifies when an artifact was published, not that its inputs are licensed or that its model was validated. The UI labels these values `Model`, never `Live` or `Official`. Forecasts from `gw6_predictions_v12.csv` onwards (now `v13`, model v4) carry the certified model's hashes, its validation report and the SHA256 of every input file; earlier artifacts (GW3 v11, GW6 v11) do not and remain unverified.

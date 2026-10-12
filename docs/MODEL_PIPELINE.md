@@ -67,9 +67,11 @@ seasons before it. Gradient boosting with fixture difficulty beat Random Forest
 and the club-ID feature set on every fold.
 
 **Production model**: trained on 2020-21 to 2025-26 (2025-26 introduced
-defensive-contribution points, so it must be in training). **Held-out test**:
-the current season's completed Gameweeks (2026-27 GW1-5, 3 216 fixture rows),
-used neither for training nor for model selection.
+defensive-contribution points, so it must be in training). **Current-season
+evaluation**: 2026-27 GW1-5, 3 216 completed fixture rows. These rows are excluded
+from model fitting, but their results have been inspected during development
+and recertification. They are confirmation evidence, not an untouched final
+test set. Future model comparisons must reserve later Gameweeks before tuning.
 
 | | MAE | RMSE | Spearman per GW (all players) | Actual points of the model's top 10 per GW |
 |---|---|---|---|---|
@@ -117,6 +119,31 @@ certificate. `backend.data_manifest.model_validation_state()` reports
   availability flags are not archived, so it cannot be validated historically.
 - New signings with no completed history this season are scored from price,
   position and fixture only.
+- Temporal feature tests guard completed-outcome cutoffs. They do not prove
+  that every historical source was available before its deadline: later
+  source revisions, fixture ratings and preprocessing must be audited too.
+- Archived points reflect each season's actual scoring rules. Recalculating
+  them under today's rules would be partial where defensive actions, assist
+  adjudication or inputs to the bonus system are missing. Missing defensive
+  contributions must not be interpreted as zero contributions.
+
+## Deadline-time evidence and self-collected history
+
+The existing current-season collector provides completed outcomes. The separate
+[deadline snapshot recorder](DEADLINE_SNAPSHOTS.md) preserves public bootstrap and
+fixtures responses around 24 hours and 90 minutes before a deadline, with their
+actual acquisition times, target event, source URLs and hashes. Both `ep_this`
+and `ep_next` are saved with the official current/next-event flags; the field
+name alone does not identify the evaluation Gameweek.
+
+Snapshot inputs and subsequently finalized outcomes can support chronological
+evaluation of availability and set-piece roles. This recorder does not change
+the certified model or demonstrate that adding those features improves it.
+Compare any new model against the existing model and baselines on future,
+previously reserved rounds, using the same forecast horizon and information
+cutoff. A switch to exclusively self-collected training data depends on those
+results, not a promised date or number of seasons. Retain the documented
+Vaastav attribution and permission while using his historical dependency.
 
 ## Live forecasts and availability
 

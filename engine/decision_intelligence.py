@@ -140,6 +140,8 @@ def _option_view(
         "transfers_used": count,
         "next_gw_gain": option.get("next_gw_gain"),
         "horizon_gain": round(_number(option.get("gross_gain")), 3),
+        "projected_gain": option.get("projected_gain"),
+        "projected_net_gain": option.get("projected_net_gain"),
         "hit_cost": round(hit, 3),
         "net_gain": round(net, 3),
         "roll_value_forgone": round(_number(option.get("roll_value_forgone")), 3),
@@ -171,6 +173,7 @@ def _insights(
     horizon: Mapping[str, Any],
     chips: Mapping[str, Any],
     weeks: int,
+    timing_plan: Mapping[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     insights: list[dict[str, Any]] = []
     chosen_moves = strategy.get("selected_transfers") or []
@@ -192,6 +195,22 @@ def _insights(
                 + f", which does not beat keeping the free transfer (worth {_number(runner_up.get('roll_value_forgone')):.1f})."
             )
             evidence = {**evidence, "best_move": runner_up["transfers"], "best_move_score": runner_up.get("decision_score")}
+            if (timing_plan and timing_plan.get("selection_policy") == "conservative"
+                    and timing_plan.get("optimality_known")
+                    and timing_plan.get("recommended_transfers_now") == 0
+                    and _number(runner_up.get("decision_score")) > 0):
+                hold_sequence = next((sequence for sequence in timing_plan.get("sequences", [])
+                                      if sequence.get("recommended") and sequence.get("transfers_now") == 0), None)
+                if hold_sequence:
+                    reason = (
+                        f"Hold and roll. The best immediate move ({_names(runner_up['transfers'])}) has a positive "
+                        f"weighted decision score ({_signed(runner_up.get('decision_score'))}). "
+                        f"The conservative continuation plan prefers waiting, with "
+                        f"{hold_sequence['free_transfers_next']} free transfers available next week."
+                    )
+                    evidence = {**evidence, "selection_policy": "conservative",
+                                "baseline": timing_plan.get("baseline"),
+                                "free_transfers_next": hold_sequence["free_transfers_next"]}
         else:
             reason = "Hold and roll: no legal move improves the projected lineup."
         insights.append({"type": "TRANSFER", "severity": "INFO", "reason": reason, "evidence": evidence})
@@ -315,6 +334,8 @@ def build_intelligence(
         "transfers_used": chosen["transfers_used"],
         "next_gw_gain": chosen["next_gw_gain"],
         "horizon_gain": chosen["horizon_gain"],
+        "projected_gain": chosen["projected_gain"],
+        "projected_net_gain": chosen["projected_net_gain"],
         "hit_cost": chosen["hit_cost"],
         "net_gain": chosen["net_gain"],
         "roll_value_forgone": chosen["roll_value_forgone"],
@@ -456,6 +477,7 @@ def build_intelligence(
         "risk_summary": risk_summary,
         "wildcard_signal": wildcard_signal,
         "insights": _insights(
-            action, transfer_block, health, captain, horizon_block, chips, len(predictions_by_gw)
+            action, transfer_block, health, captain, horizon_block, chips, len(predictions_by_gw),
+            transfer_result.get("two_week")
         ),
     }

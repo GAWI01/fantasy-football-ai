@@ -54,12 +54,13 @@ less: the weights are 1, 0.85, 0.7, 0.55 and 0.4.
   compared on one scale: the best XI and captain each plan can field, minus
   hits and the value of the free transfers it uses.
 - **A banked transfer has a value,** so a move must beat rolling it.
-- **Two-week check.** The squad may change now and next week, with FPL's
-  free-transfer rules in between (`optimizer/two_week.py`). For each number of
-  transfers now the best two-week plan is solved; when waiting is as good or
-  better (hold now and make two free moves next week, or a free move next week
-  instead of a hit now) the engine makes fewer moves now. It never makes more:
-  both weeks use today's projections, and team news arrives in between.
+- **Two-stage check.** For each evaluated current action, the follow-up solver
+  is constrained to that action's actual squad (`optimizer/two_week.py`). The
+  squad can change again next week; the resulting lineups are valued across
+  the remaining forecast horizon with each Gameweek's distinct projection.
+  The conservative policy can reduce transfers now when waiting is better,
+  but cannot increase them. It is a bounded policy, not a claim of a globally
+  best plan. Next-week moves remain conditional on today's information.
 - **Bench players count only as autosub cover** (10%, goalkeeper 2%), so the
   engine does not buy a reserve goalkeeper for his points.
 - **A doubtful starter is covered by the bench.** A player with a 75% chance
@@ -68,8 +69,10 @@ less: the weights are 1, 0.85, 0.7, 0.55 and 0.4.
   good bench behind him instead of selling him for a slightly weaker fit one,
   and the best XI starts him when that is worth more than benching him. A
   ruled-out player (0%) is simply benched.
-- **A hit costs 4 points plus a safety margin.** The engine takes one only
-  when the five-Gameweek gain clearly pays for it.
+- **A hit costs 4 actual points.** Decision scores additionally apply horizon
+  weights, a policy safety margin and a value for banked free transfers.
+  Unweighted projected points after hits are reported separately from those
+  decision scores.
 - **Availability is applied per Gameweek.** Official news such as "Suspended
   until …" or "Expected back …" means a one-match ban costs one Gameweek, not
   five.

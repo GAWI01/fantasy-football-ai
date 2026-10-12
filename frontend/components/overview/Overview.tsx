@@ -232,7 +232,7 @@ export function Overview() {
 
           {plan?.recommended && plan.alternatives.length ? (
             <p className="overview-footnote faint">
-              {plan.alternatives.length} alternative plan{plan.alternatives.length === 1 ? "" : "s"} evaluated · best alternative 5-GW net {signed(plan.alternatives[0].horizonNet)} xP. <Link className="link" href="/plan#compare">Compare all</Link> <SourceBadge kind="derived" />
+              {plan.alternatives.length} alternative plan{plan.alternatives.length === 1 ? "" : "s"} evaluated · best alternative {plan.horizon == null ? "horizon" : `${plan.horizon}-GW`} net {signed(plan.alternatives[0].horizonNet)} xP. <Link className="link" href="/plan#compare">Compare all</Link> <SourceBadge kind="derived" />
             </p>
           ) : null}
         </>

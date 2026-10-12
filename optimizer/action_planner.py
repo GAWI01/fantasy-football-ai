@@ -390,12 +390,15 @@ def _option(problem: _Problem, solution: _Solution, hold: _Solution, owned: set[
     roll_lost = (policy.roll_value(free_transfers, free_transfers)
                  - policy.roll_value(max(0, free_transfers - count), free_transfers))
     gross = solution.value - hold.value
+    projected = sum(solution.gameweek_values) - sum(hold.gameweek_values)
     return {
         "transfers": moves,
         "transfers_used": count,
         "paid_transfers": paid,
         "lineup_value": round(solution.value, 3),
         "gross_gain": round(gross, 3),
+        "projected_gain": round(projected, 3),
+        "projected_net_gain": round(projected - hit, 3),
         "hit_cost": hit,
         "net_gain": round(gross - hit, 3),
         "roll_value_forgone": round(roll_lost, 3),
@@ -475,18 +478,24 @@ def plan_action(
     from optimizer.two_week import plan_two_weeks, summarise
     two_week_raw = plan_two_weeks(problem, free_transfers=free_transfers,
                                   max_transfers=min(max_transfers, free_transfers + policy.max_hits),
-                                  policy=policy, unlimited=unlimited)
-    two_week = summarise(problem, sorted(owned), two_week_raw)
+                                  policy=policy, unlimited=unlimited,
+                                  stage1_squads={count: solution.ids for count, solution in solutions.items()},
+                                  stage1_statuses=statuses)
     if (two_week_raw and two_week_raw["best_count"] in options
             and two_week_raw["best_count"] < best["transfers_used"]
-            and not any(value == "time_limit" for value in statuses.values())):
+            and two_week_raw["optimality_known"]
+            and all(value in {"optimal", "infeasible"} for value in statuses.values())):
         best = options[two_week_raw["best_count"]]
     ranked = [best] + [item for item in ranked if item is not best]
     best_count = best["transfers_used"]
+    if two_week_raw:
+        two_week_raw["recommended_count"] = best_count
+    two_week = summarise(problem, sorted(owned), two_week_raw)
 
     # Other plans with the chosen number of transfers: the best plan without
     # each chosen incoming player in turn ("the alternative to Rashford").
     alternatives = [item for item in ranked[1:]]
+    alternative_statuses = []
     if best_count:
         banned: list[int] = []
         incoming = [move["player_in_id"] for move in best["transfers"]]
@@ -496,6 +505,7 @@ def plan_action(
                 break
             banned.append(candidates[0])
             status, solution = problem.solve(newcomers_low=best_count, newcomers_high=best_count, banned=banned)
+            alternative_statuses.append(status)
             if solution is None:
                 break
             option = _option(problem, solution, hold, owned, sale_info, free_transfers, policy)
@@ -509,7 +519,14 @@ def plan_action(
             unique.append(item)
     alternatives = unique
 
-    timed_out = any(value == "time_limit" for value in statuses.values())
+    search_statuses = list(statuses.values())
+    if two_week_raw and not two_week_raw["optimality_known"]:
+        search_statuses.append(two_week_raw["solver_status"])
+    failures = [value for value in search_statuses if value not in {"optimal", "infeasible"}]
+    complete = not failures and (two_week_raw is None or two_week_raw["optimality_known"])
+    solver_status = "time_limit" if "time_limit" in failures else failures[0] if failures else "optimal"
+    if not complete and solver_status == "optimal":
+        solver_status = "incomplete"
     result = {
         "action": classify_action(best_count, best["hit_cost"]),
         "chosen": best,
@@ -527,8 +544,11 @@ def plan_action(
             "hit_cost": policy.hit_cost,
             "hit_margin": policy.hit_margin,
         },
-        "solver_status": "time_limit" if timed_out else "optimal",
-        "optimality_known": not timed_out,
+        "solver_status": solver_status,
+        "optimality_known": complete,
+        "optimality_scope": "candidate_pool_conservative_policy",
+        "alternatives_complete": complete and all(value in {"optimal", "infeasible"}
+                                     for value in search_statuses + alternative_statuses),
         "two_week": two_week,
     }
     if evaluate_wildcard:

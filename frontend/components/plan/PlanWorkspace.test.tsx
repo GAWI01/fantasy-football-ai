@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
@@ -63,11 +63,11 @@ function serveDashboard(fetchSpy: ReturnType<typeof mockApi>, dashboard: ReturnT
   });
 }
 
-test("a hold plan explains the rejected move against the value of rolling, without threshold claims", async () => {
+test("a hold plan explains the conservative policy without threshold claims", async () => {
   serveDashboard(mockApi(), makeDashboard({ verdict: "HOLD" }));
   const { container } = render(<TeamProvider><PlanWorkspace /></TeamProvider>);
-  expect(await screen.findByText(/No move beats the value of rolling the free transfer/)).toBeInTheDocument();
-  expect(screen.getByText(/rolling is worth more/)).toBeInTheDocument();
+  expect(await screen.findByText(/The planner recommends holding under its conservative policy/)).toBeInTheDocument();
+  expect(screen.getByText(/Evaluated move · conservative policy recommends holding/)).toBeInTheDocument();
   expect(container.textContent).not.toMatch(/threshold/i);
 });
 
@@ -75,7 +75,7 @@ test("the explanation describes the hit and holding policy the engine actually a
   serveDashboard(mockApi(), makeDashboard());
   const { container } = render(<TeamProvider><PlanWorkspace /></TeamProvider>);
   await screen.findByRole("heading", { name: /Ekström → Castellano/ });
-  expect(container.textContent).toMatch(/takes a hit only when the five-Gameweek gain beats the hit plus a safety margin/);
+  expect(container.textContent).toMatch(/takes a hit only when the weighted horizon gain beats the hit plus a safety margin/);
   expect(container.textContent).toMatch(/Holding is always an option/);
   expect(container.textContent).not.toMatch(/clears its threshold/);
 });
@@ -104,4 +104,30 @@ test("each remaining chip says whether to play it and which week suits it", asyn
   expect(screen.getByText("Best: GW9")).toBeInTheDocument();
   expect(screen.getByText(/This week 6.0 · worth it from 12.0/)).toBeInTheDocument();
   expect(screen.getByText("Used this half: Wildcard.")).toBeInTheDocument();
+});
+
+test("projected point metrics stay distinct from weighted scores and conservative overrides", async () => {
+  const dashboard = makeDashboard();
+  const strategy = dashboard.data.decision!.intelligence!.transfer_strategy;
+  Object.assign(strategy, { projected_gain: 13, projected_net_gain: 13, horizon_gain: 9.4, net_gain: 9.4, decision_score: 6.5 });
+  Object.assign(strategy.alternatives[0], { projected_gain: 22, projected_net_gain: 18, horizon_gain: 15, net_gain: 11, decision_score: 8.5 });
+  serveDashboard(mockApi(), dashboard);
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  await screen.findByRole("heading", { name: /Ekström → Castellano/ });
+  const rows = within(screen.getByRole("radiogroup", { name: "Transfer scenarios" })).getAllByRole("radio");
+  expect(rows[0]).not.toHaveTextContent("Recommended");
+  expect(rows[1]).toHaveTextContent("Recommended");
+  expect(screen.getByText(/conservative.*may recommend.*lower single-stage score/i)).toBeInTheDocument();
+  expect(screen.getByText("5-GW projected gain").closest("div")).toHaveTextContent("+13.0 xP");
+  expect(screen.getByText("5-GW net after hits").closest("div")).toHaveTextContent("+13.0 xP");
+  expect(rows[1]).toHaveTextContent("+9.4 weighted gain");
+  expect(rows[1]).toHaveTextContent("+6.5");
+});
+
+test("older forecasts never turn weighted values into projected FPL point metrics", async () => {
+  serveDashboard(mockApi(), makeDashboard());
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  await screen.findByRole("heading", { name: /Ekström → Castellano/ });
+  expect(screen.getByText("5-GW projected gain").closest("div")).toHaveTextContent("Unavailable");
+  expect(screen.getByText("5-GW net after hits").closest("div")).toHaveTextContent("Unavailable");
 });

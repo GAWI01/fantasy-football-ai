@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from collections.abc import Callable, Mapping
+from concurrent.futures import Future
 from pathlib import Path
 from datetime import datetime, timezone
 from threading import RLock
@@ -835,6 +837,7 @@ class _DecisionCache:
 
     def __init__(self, max_entries: int = 256):
         self._entries: OrderedDict[str, dict] = OrderedDict()
+        self._pending: dict[str, Future[dict]] = {}
         self._max = max_entries
         self._lock = RLock()
 
@@ -856,12 +859,40 @@ class _DecisionCache:
         with self._lock:
             self._entries.clear()
 
+    def get_or_compute(self, key: str, calculate: Callable[[], dict]) -> dict:
+        """Share an in-flight solve for this key without blocking other teams."""
+        with self._lock:
+            cached = self.get(key)
+            if cached is not None:
+                return cached
+            pending = self._pending.get(key)
+            owner = pending is None
+            if pending is None:
+                pending = Future()
+                self._pending[key] = pending
+        if not owner:
+            return pending.result()
+        try:
+            result = calculate()
+        except BaseException as exc:
+            with self._lock:
+                pending.set_exception(exc)
+                self._pending.pop(key, None)
+            raise
+        with self._lock:
+            self.put(key, result)
+            pending.set_result(result)
+            self._pending.pop(key, None)
+        return result
+
 
 _DECISION_CACHE = _DecisionCache()
 
 
 def _decision_cache_key(team: dict, bootstrap: dict, manifest, chip_state: dict,
-                        predictions: pd.DataFrame, **options) -> str:
+                        predictions: pd.DataFrame, *,
+                        horizon_predictions: Mapping[int, pd.DataFrame] | None = None,
+                        **options) -> str:
     official = [
         (e.get("id"), e.get("now_cost"), e.get("status"), e.get("chance_of_playing_next_round"), e.get("news"))
         for e in bootstrap.get("elements") or []
@@ -871,6 +902,14 @@ def _decision_cache_key(team: dict, bootstrap: dict, manifest, chip_state: dict,
         "forecast": [getattr(manifest, "prediction_file", None), str(getattr(manifest, "generated_at", ""))],
         # The served projections after the official overlay, exactly as optimised.
         "projections": int(pd.util.hash_pandas_object(predictions, index=False).sum()),
+        # Later fixtures/availability can change while the current-GW artifact
+        # remains identical. Hash the actual frames passed to the optimizer.
+        "horizon_projections": [
+            [event, list(frame.columns), hashlib.sha256(
+                pd.util.hash_pandas_object(frame, index=False).to_numpy().tobytes()
+            ).hexdigest()]
+            for event, frame in sorted((horizon_predictions or {}).items())
+        ],
         "chips": chip_state,
         "options": options,
         "official": official,
@@ -992,10 +1031,11 @@ def get_decision(
         cache_key = _decision_cache_key(
             team, bootstrap, manifest, chip_state, predictions,
             budget=budget, free_transfers=effective_free_transfers, max_transfers=effective_max_transfers,
+            horizon=effective_horizon, horizon_predictions=horizon_predictions,
         )
-        decision = _DECISION_CACHE.get(cache_key)
-        if decision is None:
-            decision = build_decision(
+        decision = _DECISION_CACHE.get_or_compute(
+            cache_key,
+            lambda: build_decision(
                 team,
                 predictions,
                 budget=budget,
@@ -1004,8 +1044,8 @@ def get_decision(
                 horizon_predictions=horizon_predictions,
                 horizon=effective_horizon,
                 chip_state=chip_state,
-            )
-            _DECISION_CACHE.put(cache_key, decision)
+            ),
+        )
         decision = copy.deepcopy(decision)
         # Public FPL data cannot see every transfer rule, so tell clients
         # whether the count came from the user or was derived.
