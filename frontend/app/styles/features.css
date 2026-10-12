@@ -301,12 +301,18 @@
 .live-bar-done { background: var(--green); }
 .live-bar-now {
   position: relative; overflow: hidden;
-  background: repeating-linear-gradient(45deg, #34d399 0 6px, #10b981 6px 12px);
-  background-size: 17px 17px;
+  /* A barber pole: high-contrast diagonal stripes, one 20px period. */
+  background: repeating-linear-gradient(-45deg, #6ee7b7 0 5px, #059669 5px 10px);
+  background-size: 14.14px 14.14px;
 }
-/* The part still being played moves: the stripes run and the segment breathes. */
-.app:is([data-motion="calm"], [data-motion="lively"], [data-motion="max"]) .live-bar-now { animation: live-stripes 0.9s linear infinite, live-breathe 1.8s ease-in-out infinite; }
-@keyframes live-stripes { from { background-position: 0 0; } to { background-position: 17px 0; } }
+/* The part still being played moves: the stripes run and the segment breathes.
+   It also grows in with the rest of the bar; listing all three keeps the
+   general bar-grow rule from replacing the stripes. */
+.app[data-motion="calm"] .live-bar-now { animation: live-stripes 0.7s linear infinite, live-breathe 1.8s ease-in-out infinite; }
+.app:is([data-motion="lively"], [data-motion="max"]) .live-bar i.live-bar-now {
+  animation: bar-grow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards, live-stripes 0.7s linear infinite, live-breathe 1.8s ease-in-out infinite;
+}
+@keyframes live-stripes { from { background-position: 0 0; } to { background-position: 14.14px 0; } }
 @keyframes live-breathe { 0%, 100% { filter: brightness(1); box-shadow: 0 0 0 rgba(52, 211, 153, 0); } 50% { filter: brightness(1.25); box-shadow: 0 0 12px rgba(52, 211, 153, 0.75); } }
 .live-bar-left { background: var(--surface-3); }
 .live-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: var(--fs-xs); color: var(--text-2); }
