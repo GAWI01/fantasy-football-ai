@@ -14,22 +14,38 @@
     radial-gradient(1000px 600px at 50% 120%, rgba(16, 185, 129, 0.08), transparent 60%),
     var(--bg);
 }
-.ambient-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0.55; }
-/* A night stadium under the light. No grid: mown grass in perspective at the
-   bottom, a faint set of pitch lines, drifting haze, fine rain in the beams and
-   a vignette that keeps the edges dark. */
-.ambient-stadium { position: absolute; inset: 0; overflow: hidden; perspective: 700px; perspective-origin: 50% 0%; }
-.ambient-pitch {
-  position: absolute; left: -40%; right: -40%; bottom: -18%; height: 78%;
-  transform: rotateX(64deg); transform-origin: 50% 100%;
-  background:
-    radial-gradient(55% 70% at 50% 45%, rgba(34, 197, 94, 0.09), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(22, 101, 52, 0.16) 0 5%, rgba(5, 46, 22, 0.1) 5% 10%);
-  -webkit-mask-image: linear-gradient(to top, #000 15%, transparent 92%);
-  mask-image: linear-gradient(to top, #000 15%, transparent 92%);
+.ambient-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0.7; }
+/* A night stadium under the light: floodlight masts in the top corners, a turf
+   glow on the ground and haze drifting through the beams. Everything here
+   is a soft CSS gradient at full resolution, and a fine grain over the whole
+   layer (::before) breaks up colour banding in the dark gradients. */
+.ambient::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; opacity: 0.07; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
 }
-.ambient-pitch svg { position: absolute; inset: 6% 12%; width: 76%; height: 88%; fill: none; stroke: rgba(220, 252, 231, 0.07); stroke-width: 0.35; vector-effect: non-scaling-stroke; }
-.ambient-pitch svg * { vector-effect: non-scaling-stroke; stroke-width: 1.5px; }
+.ambient-mast { position: absolute; top: -34px; width: 220px; height: 170px; pointer-events: none; transform: rotate(var(--mast-tilt)); }
+.ambient-mast-left { left: -40px; --mast-tilt: -28deg; transform-origin: 0 0; }
+.ambient-mast-right { right: -40px; --mast-tilt: 28deg; transform-origin: 100% 0; }
+/* The bank of lamps: rows of bright points inside a soft oval. */
+.ambient-mast::before {
+  content: ""; position: absolute; left: 50%; top: 62%; width: 96px; height: 42px; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1.4px, rgba(226, 232, 255, 0.45) 2.4px, transparent 4px) 0 0 / 12px 11px;
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent);
+  mask-image: radial-gradient(closest-side, #000 62%, transparent);
+}
+/* The glow it throws, which breathes slightly. */
+.ambient-mast::after {
+  content: ""; position: absolute; inset: -70px; pointer-events: none;
+  background:
+    radial-gradient(64px 40px at 50% 58%, rgba(255, 255, 255, 0.3), transparent 70%),
+    radial-gradient(200px 130px at 50% 58%, rgba(196, 210, 255, 0.13), transparent 70%);
+}
+.ambient-turf {
+  position: absolute; left: -10%; right: -10%; bottom: -30vh; height: 70vh; pointer-events: none;
+  background:
+    radial-gradient(50% 50% at 50% 50%, rgba(16, 185, 129, 0.16), rgba(6, 78, 59, 0.08) 55%, transparent 75%);
+}
 .ambient-haze {
   position: absolute; inset: -20%;
   background:
@@ -37,34 +53,21 @@
     radial-gradient(36% 22% at 72% 48%, rgba(167, 139, 250, 0.06), transparent 70%),
     radial-gradient(50% 30% at 50% 85%, rgba(110, 231, 183, 0.05), transparent 70%);
 }
-.ambient-rain {
-  position: absolute; inset: 0; overflow: hidden; opacity: 0;
-  -webkit-mask-image: radial-gradient(38% 60% at 14% 0%, #000, transparent 75%), radial-gradient(38% 60% at 86% 0%, #000, transparent 75%);
-  mask-image: radial-gradient(38% 60% at 14% 0%, #000, transparent 75%), radial-gradient(38% 60% at 86% 0%, #000, transparent 75%);
-}
-/* The streaks move by transform (one period per loop), never by repainting. */
-.ambient-rain::before {
-  content: ""; position: absolute; top: -240px; bottom: 0; left: 0; right: -28px;
-  background-image:
-    linear-gradient(172deg, transparent 0 46%, rgba(226, 232, 240, 0.18) 50%, transparent 54%),
-    linear-gradient(170deg, transparent 0 47%, rgba(226, 232, 240, 0.12) 50%, transparent 53%);
-  background-size: 7px 120px, 14px 240px;
-}
 .ambient::after {
   content: ""; position: absolute; inset: 0;
   background:
     linear-gradient(180deg, rgba(2, 3, 8, 0.35), transparent 30%, transparent 70%, rgba(2, 3, 8, 0.25)),
     radial-gradient(120% 90% at 50% 40%, transparent 35%, rgba(2, 3, 8, 0.75) 100%);
 }
-.app:is([data-motion="lively"], [data-motion="max"]) .ambient-pitch { animation: pitch-pan 48s ease-in-out infinite alternate; }
+.app:is([data-motion="lively"], [data-motion="max"]) .ambient-mast::after { animation: mast-breathe 5s ease-in-out infinite alternate; }
+.app:is([data-motion="lively"], [data-motion="max"]) .ambient-mast-right::after { animation-delay: -2.5s; }
+.app:is([data-motion="lively"], [data-motion="max"]) .ambient-turf { animation: turf-breathe 14s ease-in-out infinite alternate; }
 .app:is([data-motion="lively"], [data-motion="max"]) .ambient-haze { animation: haze-drift 38s ease-in-out infinite alternate; }
-.app:is([data-motion="lively"], [data-motion="max"]) .ambient-rain { opacity: 0.55; }
-.app:is([data-motion="lively"], [data-motion="max"]) .ambient-rain::before { animation: rain-fall 1.6s linear infinite; }
-.app[data-motion="max"] .ambient-rain { opacity: 0.8; }
-@keyframes pitch-pan { from { transform: rotateX(64deg) translateX(-3%); } to { transform: rotateX(64deg) translateX(3%); } }
+@keyframes mast-breathe { from { opacity: 0.8; } to { opacity: 1; } }
+@keyframes turf-breathe { from { opacity: 0.75; transform: scaleX(1); } to { opacity: 1; transform: scaleX(1.08); } }
 @keyframes haze-drift { from { transform: translate3d(-6%, 2%, 0) scale(1); } to { transform: translate3d(6%, -3%, 0) scale(1.12); } }
-@keyframes rain-fall { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-28px, 240px, 0); } }
-@media (max-width: 767px) { .ambient-pitch { height: 60%; } .ambient-rain { display: none; } }
+
+@media (max-width: 767px) { .ambient-mast-left { left: -64px; } .ambient-mast-right { right: -64px; } .ambient-mast { top: -46px; } }
 
 /* ---------- Glass ----------
    In-page cards are tinted and see-through, without a blur of their own: the
@@ -105,7 +108,7 @@
   .tabbar { background: rgba(10, 13, 26, 0.96); }
 }
 @media (prefers-contrast: more) {
-  .ambient-canvas, .ambient-stadium, .ambient-haze, .ambient-rain { display: none; }
+  .ambient-canvas, .ambient-mast, .ambient-turf, .ambient-haze { display: none; }
   .card, .card:has(table), .plan-hero, .live-hero, .stat-row { background: var(--surface-1); }
 }
 
