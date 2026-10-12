@@ -128,7 +128,7 @@ export function PitchPlayer({
       ref={inspectable ? setTile : undefined}
       {...interaction}
       aria-label={label}
-      className={["pp", `pp-${size}`, selected ? "is-selected" : "", target ? "is-target" : "", dimmed ? "is-dimmed" : "", mode === "live" && player.fixtureState === "live" ? "is-playing" : "", inspectable ? "is-inspectable" : "", open ? "is-open" : "", scored ? "is-scorer" : ""].filter(Boolean).join(" ")}
+      className={["pp", `pp-${size}`, selected ? "is-selected" : "", target ? "is-target" : "", dimmed ? "is-dimmed" : "", mode === "live" && player.fixtureState === "live" ? "is-playing" : "", mode === "live" && player.fixtureState === "finished" ? "is-finished" : "", mode === "live" && player.fixtureState === "upcoming" ? "is-upcoming" : "", inspectable ? "is-inspectable" : "", open ? "is-open" : "", scored ? "is-scorer" : ""].filter(Boolean).join(" ")}
       data-moment={scored}
       draggable={draggable || undefined}
       onDragStart={draggable ? (event: DragEvent<HTMLElement>) => onDragStart?.(event, player) : undefined}
