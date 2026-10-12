@@ -6,6 +6,8 @@ html { -webkit-text-size-adjust: 100%; font-size: 93.75%; }
 html, body {
   margin: 0;
   min-height: 100%;
+  /* Nothing pans the page sideways. "clip" (not "hidden") keeps sticky headers working. */
+  overflow-x: clip;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
