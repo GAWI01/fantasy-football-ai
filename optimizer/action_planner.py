@@ -13,6 +13,11 @@ Value model (one MILP per transfer count, SciPy/HiGHS):
   small weight (`DecisionPolicy.*_bench_weight`) instead of counting as if
   they played. A reserve goalkeeper almost never comes on, so his weight is
   smaller still;
+* a doubtful starter (official chance of playing between 0 and 100%) is
+  covered by the bench: when he misses, the first substitute comes on. He is
+  worth his own expected points plus his chance of missing times the points
+  of the squad's best bench player of his kind (outfield or goalkeeper),
+  taken from the current squad's best lineup (`_Problem.set_cover`);
 * Gameweeks are weighted (`gw_weights`): later projections are less certain;
 * an unused free transfer is worth something next week (`roll_values`), a
   transfer beyond the free ones costs `hit_cost` points plus a risk margin.
@@ -123,6 +128,7 @@ class _Problem:
         gameweeks = len(frames)
         points = np.zeros((len(base), gameweeks))
         uncertainty = np.zeros((len(base), gameweeks))
+        doubt = np.zeros((len(base), gameweeks))
         index = {int(pid): row for row, pid in enumerate(base.index)}
         for g, frame in enumerate(frames):
             values = frame.drop_duplicates("player_id").set_index("player_id")
@@ -134,6 +140,10 @@ class _Problem:
             if "uncertainty" in values.columns:
                 band = pd.to_numeric(values["uncertainty"], errors="coerce").fillna(0.0).clip(lower=0.0)
                 uncertainty[picked, g] = band.to_numpy()[mask]
+            if "availability_multiplier" in values.columns:
+                # Only doubtful players: a ruled-out player is benched, not covered.
+                chance = pd.to_numeric(values["availability_multiplier"], errors="coerce").fillna(1.0).to_numpy()
+                doubt[picked, g] = np.where((chance > 0) & (chance < 1), 1.0 - chance, 0.0)[mask]
         all_ids = np.array([int(pid) for pid in base.index])
         positions = np.array([_normalise_position(p) for p in base["position"]])
         # Plain strings for every club: pandas 3 keeps a missing club as NaN
@@ -158,6 +168,10 @@ class _Problem:
         self.clubs = clubs[keep]
         self.points = points[keep]
         self.uncertainty = uncertainty[keep]
+        self.doubt = doubt[keep]
+        # Points a doubtful starter's substitute brings, per player and Gameweek
+        # (zero until `set_cover` reads them from a lineup).
+        self.cover = np.zeros_like(self.points)
         self.names = base["name"].astype(str).to_numpy()[keep]
         self.prices = prices[keep]
         self.owned = np.isin(self.ids, list(owned))
@@ -176,14 +190,8 @@ class _Problem:
         n, gameweeks = len(self.ids), len(self.weights)
         self.n, self.g = n, gameweeks
         size = n * (1 + 2 * gameweeks)
-        objective = np.zeros(size)
-        objective[:n] = -(self.points * self.bench[:, None]) @ self.weights
-        for g in range(gameweeks):
-            objective[self._s(0, g):self._s(0, g) + n] = -self.weights[g] * self.points[:, g] * (1 - self.bench)
-            objective[self._c(0, g):self._c(0, g) + n] = -self.weights[g] * self.points[:, g]
-        # Deterministic tie-break: among equal plans keep owned players.
-        objective[:n] -= 1e-6 * self.owned
-        self.objective = objective
+        self.size = size
+        self._set_objective()
         rows, cols, vals, lower, upper = [], [], [], [], []
 
         def add(entries: list[tuple[int, float]], low: float, high: float) -> None:
@@ -215,7 +223,45 @@ class _Problem:
                 add([(self._s(i, g), 1.0), (i, -1.0)], -np.inf, 0)
                 add([(self._c(i, g), 1.0), (self._s(i, g), -1.0)], -np.inf, 0)
         self.base_rows = (rows, cols, vals, lower, upper)
-        self.size = size
+
+    def _starter_value(self) -> np.ndarray:
+        """A starter's points per Gameweek, with his substitute's cover."""
+        return self.points + self.doubt * self.cover
+
+    def _set_objective(self) -> None:
+        n, gameweeks = self.n, self.g
+        starter = self._starter_value()
+        objective = np.zeros(self.size)
+        objective[:n] = -(self.points * self.bench[:, None]) @ self.weights
+        for g in range(gameweeks):
+            objective[self._s(0, g):self._s(0, g) + n] = -self.weights[g] * (starter[:, g] - self.points[:, g] * self.bench)
+            objective[self._c(0, g):self._c(0, g) + n] = -self.weights[g] * self.points[:, g]
+        # Deterministic tie-break: among equal plans keep owned players.
+        objective[:n] -= 1e-6 * self.owned
+        self.objective = objective
+
+    def set_cover(self, solution: "_Solution") -> bool:
+        """Read each doubtful starter's substitute from `solution`'s lineups.
+
+        The substitute is the best bench player of the same kind (outfield or
+        goalkeeper) in that Gameweek. Every plan is then valued with the cover
+        of this lineup, so plans stay on one scale. Returns whether anything
+        changed (nothing does when no candidate is doubtful).
+        """
+        if not self.doubt.any():
+            return False
+        selected = np.isin(self.ids, solution.ids)
+        keeper = self.positions == "GK"
+        cover = np.zeros_like(self.points)
+        for g, starters in enumerate(solution.starters):
+            bench = selected & ~np.isin(self.ids, starters)
+            for kind in (keeper, ~keeper):
+                pool = bench & kind
+                cover[kind, g] = self.points[pool, g].max() if pool.any() else 0.0
+        changed = not np.array_equal(cover, self.cover)
+        self.cover = cover
+        self._set_objective()
+        return changed
 
     def _s(self, i: int, g: int) -> int:
         return self.n + g * self.n + i
@@ -262,7 +308,7 @@ class _Problem:
             captains.append(int(self.ids[captain]))
             bench = selected & ~start
             gameweek_values.append(float(
-                self.points[start, g].sum() + self.points[captain, g]
+                self._starter_value()[start, g].sum() + self.points[captain, g]
                 + (self.points[bench, g] * self.bench[bench]).sum()))
         value = float(np.dot(self.weights, gameweek_values))
         return "optimal", _Solution([int(pid) for pid in self.ids[selected]], starters, captains,
@@ -273,6 +319,14 @@ class _Problem:
 
     def index_of(self, player_id: int) -> int:
         return int(np.where(self.ids == player_id)[0][0])
+
+
+def _solve_hold(problem: _Problem) -> tuple[str, _Solution | None]:
+    """The current squad's best lineup, valued with its own bench as cover."""
+    status, hold = problem.solve(newcomers_low=0, newcomers_high=0)
+    if hold is not None and problem.set_cover(hold):
+        status, hold = problem.solve(newcomers_low=0, newcomers_high=0)
+    return status, hold
 
 
 def _transfers(problem: _Problem, solution: _Solution, owned: set[int],
@@ -385,7 +439,7 @@ def plan_action(
     unlimited = free_transfers > UNLIMITED_FREE_TRANSFERS
     max_transfers = max(0, min(int(max_transfers), 15))
 
-    status, hold = problem.solve(newcomers_low=0, newcomers_high=0)
+    status, hold = _solve_hold(problem)
     if hold is None:
         if status == "infeasible":
             raise ActionPlanningError("the current squad cannot field a legal lineup")
@@ -514,7 +568,7 @@ def evaluate_moves(
         raise ActionPlanningError("A chosen player has no projection for this Gameweek")
     problem = _Problem(frames, weights, owned, {pid: info[0] for pid, info in sale_info.items()}, bank, policy,
                        extra_candidates=buy)
-    status, hold = problem.solve(newcomers_low=0, newcomers_high=0)
+    status, hold = _solve_hold(problem)
     if hold is None:
         raise SolverUnavailable(status)
     status, solution = problem.solve(newcomers_low=len(buy), newcomers_high=len(buy),
