@@ -301,12 +301,18 @@
 .live-bar-done { background: var(--green); }
 .live-bar-now {
   position: relative; overflow: hidden;
-  background: repeating-linear-gradient(45deg, #34d399 0 6px, #10b981 6px 12px);
-  background-size: 17px 17px;
+  /* A barber pole: high-contrast diagonal stripes, one 20px period. */
+  background: repeating-linear-gradient(-45deg, #6ee7b7 0 5px, #059669 5px 10px);
+  background-size: 14.14px 14.14px;
 }
-/* The part still being played moves: the stripes run and the segment breathes. */
-.app:is([data-motion="calm"], [data-motion="lively"], [data-motion="max"]) .live-bar-now { animation: live-stripes 0.9s linear infinite, live-breathe 1.8s ease-in-out infinite; }
-@keyframes live-stripes { from { background-position: 0 0; } to { background-position: 17px 0; } }
+/* The part still being played moves: the stripes run and the segment breathes.
+   It also grows in with the rest of the bar; listing all three keeps the
+   general bar-grow rule from replacing the stripes. */
+.app[data-motion="calm"] .live-bar-now { animation: live-stripes 0.7s linear infinite, live-breathe 1.8s ease-in-out infinite; }
+.app:is([data-motion="lively"], [data-motion="max"]) .live-bar i.live-bar-now {
+  animation: bar-grow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards, live-stripes 0.7s linear infinite, live-breathe 1.8s ease-in-out infinite;
+}
+@keyframes live-stripes { from { background-position: 0 0; } to { background-position: 14.14px 0; } }
 @keyframes live-breathe { 0%, 100% { filter: brightness(1); box-shadow: 0 0 0 rgba(52, 211, 153, 0); } 50% { filter: brightness(1.25); box-shadow: 0 0 12px rgba(52, 211, 153, 0.75); } }
 .live-bar-left { background: var(--surface-3); }
 .live-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: var(--fs-xs); color: var(--text-2); }
@@ -546,7 +552,7 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 .price-filter { display: grid; gap: 2px; font-size: var(--fs-xs); color: var(--text-2); min-width: 150px; }
 .price-filter input { accent-color: var(--violet); width: 100%; }
 .sort-mobile { display: none; }
-.market-card { padding: 6px 18px 14px; }
+.market-card { padding: 6px 18px 14px; overflow: clip; }
 .market-table .table td { padding: 8px 10px; }
 .compare-tray {
   position: sticky; top: calc(var(--topbar-h) + 8px); z-index: 5; margin-bottom: 12px;
@@ -657,6 +663,9 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
   .sort-mobile { display: block; flex: 1; }
   .sort-mobile .select { height: 36px; }
   .market-card { padding: 4px 12px 12px; }
+  /* The table's scroll gutter must equal the card padding, or the table and
+     its pinned player column slide past the card's edge while you swipe. */
+  .market-card .table-wrap { margin: 0 -12px; padding: 0 12px; }
   .compare-tray { top: calc(var(--topbar-h) + 6px); }
   .table-scroll, .heat-wrap { margin: 0 -16px; padding: 0 16px; }
   .review-hero .review-scoreline { gap: 14px; }
@@ -681,9 +690,9 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 /* Phone market table: keep the player column readable and pinned while the stats scroll. */
 @media (max-width: 767px) {
   .market-table .table th:first-child, .market-table .table td:first-child {
-    /* -16px = the .table-wrap gutter: pin to the wrap's visible edge, or the
+    /* -12px = the .table-wrap gutter: pin to the wrap's visible edge, or the
        scrolled columns show through the gutter to the left of the player. */
-    position: sticky; left: -16px; z-index: 2; min-width: 148px; max-width: 160px; background: var(--surface-1);
+    position: sticky; left: -12px; z-index: 2; min-width: 148px; max-width: 160px; background: var(--surface-1);
     box-shadow: 1px 0 0 var(--line);
   }
   .market-table .table th:first-child { z-index: 3; }

@@ -247,6 +247,7 @@
 @media (max-width: 767px) {
   .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); }
   .card { padding: 16px; border-radius: var(--r-md); }
+  /* Table gutters follow the phone card padding (16px), not the desktop 18px. */
   .table-wrap { margin: 0 -16px; padding: 0 16px; }
   h1 { font-size: 1.6rem; }
   .page-head { margin-bottom: 16px; }
