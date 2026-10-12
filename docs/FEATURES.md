@@ -214,9 +214,9 @@ scrolling.
 
 The app is meant to feel alive during a Gameweek, without getting in the way.
 
-- **Background:** a dark stadium at night. A mown pitch fades into the dark at
-  the bottom, floodlight beams sweep from the corners, haze drifts through
-  them and fine rain catches the light. The light turns greener while a
+- **Background:** a dark stadium at night. Floodlight masts glow in the top
+  corners and their soft beams sweep slowly, haze drifts through them and the
+  turf glows faintly at the bottom. The light turns greener while a
   Gameweek is live, warms towards amber in the last 24 hours before a
   deadline, brightens once when new data arrives and swells green when one of
   your players scores. It shifts a little as you scroll.

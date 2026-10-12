@@ -8,16 +8,18 @@ import type { MotionLevel } from "@/lib/motion";
  * The page background: soft violet, teal and green light that drifts like
  * floodlight spill on a night pitch, and reacts to the game.
  *
- * Cheap by design. It draws a few radial gradients on a canvas at 1/8 of the
- * screen's size and lets the browser stretch it, so the blur costs nothing.
- * It redraws 14 times a second at most, pauses while the page scrolls or is
- * hidden, and never moves at the Off level (or with reduced motion).
+ * Cheap by design. It draws a few soft gradients on a canvas at about 40% of
+ * the screen's CSS size (enough that nothing looks blocky once stretched, since
+ * every shape is a gradient with no hard edge). It redraws 15 times a second at
+ * most, pauses while the page scrolls or is hidden, and never moves at the Off
+ * level (or with reduced motion).
  */
 export type AmbientMood = "decision" | "live" | "deadline" | "urgent" | "settled";
 
 type Rgba = [number, number, number, number];
 
-const SCALE = 1 / 8;
+const SCALE = 0.4;
+const MAX_SIDE = 720;
 const IDLE_FPS = 15;
 const BURST_FPS = 30;
 const CROSSFADE_MS = 1200;
@@ -42,15 +44,15 @@ const FIELDS = [
 // Floodlight beams from the two top corners, sweeping slowly. Colour and
 // strength follow the mood (brighter and greener while a Gameweek is live).
 const BEAMS = [
-  { x: -0.02, y: -0.04, base: 0.62, sweep: 0.16, p: 24, o: 0 },
-  { x: 1.02, y: -0.04, base: Math.PI - 0.62, sweep: 0.16, p: 29, o: 1.9 },
+  { x: 0.03, y: 0.0, base: 0.9, sweep: 0.16, p: 24, o: 0 },
+  { x: 0.97, y: 0.0, base: Math.PI - 0.9, sweep: 0.16, p: 29, o: 1.9 },
 ];
 const BEAM_COLOR: Record<AmbientMood, Rgba> = {
-  decision: hex("#c4b5fd", 0.07),
-  live: hex("#d1fae5", 0.11),
-  deadline: hex("#fde68a", 0.07),
-  urgent: hex("#fecaca", 0.07),
-  settled: hex("#cbd5e1", 0.04),
+  decision: hex("#c7d2fe", 0.11),
+  live: hex("#d1fae5", 0.15),
+  deadline: hex("#fde68a", 0.1),
+  urgent: hex("#fecaca", 0.1),
+  settled: hex("#cbd5e1", 0.07),
 };
 
 function hex(color: string, alpha: number): Rgba {
@@ -99,8 +101,9 @@ export function AmbientBackground({ mood, level, goalId, pulseKey = null }: { mo
     let scrollTimer = 0;
 
     const size = () => {
-      const width = Math.max(24, Math.round(window.innerWidth * SCALE));
-      const height = Math.max(24, Math.round(window.innerHeight * SCALE));
+      const scale = Math.min(SCALE, MAX_SIDE / Math.max(window.innerWidth, window.innerHeight));
+      const width = Math.max(24, Math.round(window.innerWidth * scale));
+      const height = Math.max(24, Math.round(window.innerHeight * scale));
       // Mobile toolbars change the height while scrolling; only a new width redraws the buffer.
       if (width === state.width && Math.abs(height - state.height) < 4) return false;
       state.width = width;
@@ -155,24 +158,20 @@ export function AmbientBackground({ mood, level, goalId, pulseKey = null }: { mo
       if (beam[3] > 0.004) {
         BEAMS.forEach((item) => {
           const angle = item.base + Math.sin((2 * Math.PI * t) / item.p + item.o) * item.sweep;
-          const length = L * 1.25;
-          const spread = L * 0.16;
+          const length = L * 1.3;
           context.save();
+          // A stretched radial gradient: bright at the mast, soft on every
+          // edge, so the beam has no outline to pixelate.
           context.translate(item.x * W, item.y * H);
           context.rotate(angle);
-          const light = context.createLinearGradient(0, 0, length, 0);
+          context.scale(1, 0.16);
+          const light = context.createRadialGradient(0, 0, 0, 0, 0, length);
           const rgb = `rgba(${beam[0] | 0},${beam[1] | 0},${beam[2] | 0},`;
-          light.addColorStop(0, `${rgb}${(beam[3] * gain * 1.6).toFixed(3)})`);
-          light.addColorStop(0.55, `${rgb}${(beam[3] * gain * 0.6).toFixed(3)})`);
+          light.addColorStop(0, `${rgb}${(beam[3] * gain * 1.9).toFixed(3)})`);
+          light.addColorStop(0.35, `${rgb}${(beam[3] * gain * 0.8).toFixed(3)})`);
           light.addColorStop(1, `${rgb}0)`);
           context.fillStyle = light;
-          context.beginPath();
-          context.moveTo(0, -spread * 0.08);
-          context.lineTo(length, -spread);
-          context.lineTo(length, spread);
-          context.lineTo(0, spread * 0.08);
-          context.closePath();
-          context.fill();
+          context.fillRect(0, -length, length, length * 2);
           context.restore();
         });
       }
@@ -319,21 +318,13 @@ export function AmbientBackground({ mood, level, goalId, pulseKey = null }: { mo
   return (
     <div className="ambient" aria-hidden="true">
       <canvas ref={canvasRef} className="ambient-canvas" />
-      {/* A dark stadium under the light: the pitch fades into the night, haze
-          drifts through the floodlights and fine rain catches the beams. */}
-      <div className="ambient-stadium">
-        <div className="ambient-pitch">
-          <svg viewBox="0 0 100 64" preserveAspectRatio="none">
-            <rect x="2" y="2" width="96" height="60" />
-            <line x1="50" y1="2" x2="50" y2="62" />
-            <circle cx="50" cy="32" r="8" />
-            <rect x="2" y="17" width="14" height="30" />
-            <rect x="84" y="17" width="14" height="30" />
-          </svg>
-        </div>
-      </div>
+      {/* Floodlight masts in the top corners, a turf glow on the ground and
+          haze drifting through the light. All soft CSS gradients at full
+          resolution; a fine grain on top keeps the dark gradients smooth. */}
+      <div className="ambient-mast ambient-mast-left" />
+      <div className="ambient-mast ambient-mast-right" />
+      <div className="ambient-turf" />
       <div className="ambient-haze" />
-      <div className="ambient-rain" />
     </div>
   );
 }
