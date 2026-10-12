@@ -33,6 +33,9 @@ const ICONS: Record<NavKey, LucideIcon> = {
 
 
 function PhaseChip({ state }: { state: GameState }) {
+  if (state.gwPlayed) {
+    return <span className="phase-chip phase-settled" title="Every match is played; FPL confirms the final points after its data check"><i aria-hidden="true" />GW{state.currentEvent ?? "—"} done</span>;
+  }
   if (state.phase === "live") {
     return <span className="phase-chip phase-live"><i aria-hidden="true" />GW{state.currentEvent ?? "—"} live</span>;
   }

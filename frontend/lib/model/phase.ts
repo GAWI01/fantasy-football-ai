@@ -2,7 +2,7 @@ import type { DashboardEnvelope } from "@/lib/contracts";
 
 /**
  * decision: the target deadline is in the future, so recommendations are actionable.
- * live:     the current Gameweek's deadline has passed and it is not finished.
+ * live:     the current Gameweek's deadline has passed and matches are still to finish.
  * settled:  nothing is live and no actionable plan exists (e.g. between GWs before a model refresh).
  */
 export type Phase = "decision" | "live" | "settled";
@@ -12,6 +12,8 @@ export type SourceKind = "live" | "official" | "model" | "derived" | "cached";
 export type GameState = {
   phase: Phase;
   liveActive: boolean;
+  /** Every match of the current Gameweek is played, but FPL has not confirmed it yet. */
+  gwPlayed: boolean;
   actionsOpen: boolean;
   currentEvent: number | null;
   targetEvent: number | null;
@@ -32,6 +34,7 @@ export function deriveGameState(envelope: DashboardEnvelope | null, now = Date.n
     return {
       phase: "settled",
       liveActive: false,
+      gwPlayed: false,
       actionsOpen: false,
       currentEvent: null,
       targetEvent: null,
@@ -48,7 +51,10 @@ export function deriveGameState(envelope: DashboardEnvelope | null, now = Date.n
   }
   const { meta, data } = envelope;
   const live = data.live;
-  const liveActive = live?.status === "LIVE" && live.finished !== true;
+  // Once every match is at full time the Gameweek is no longer live, even
+  // before FPL's data check marks it finished.
+  const gwPlayed = live?.status === "LIVE" && live.finished !== true && live.all_played === true;
+  const liveActive = live?.status === "LIVE" && live.finished !== true && !gwPlayed;
   // Missing planning metadata fails closed: a plan without a known deadline is never actionable.
   const deadline = meta.target_deadline_time ?? live?.next_deadline_time ?? null;
   const deadlineAt = deadline ? Date.parse(deadline) : Number.NaN;
@@ -57,6 +63,7 @@ export function deriveGameState(envelope: DashboardEnvelope | null, now = Date.n
   return {
     phase: liveActive ? "live" : actionsOpen ? "decision" : "settled",
     liveActive,
+    gwPlayed,
     actionsOpen,
     currentEvent: meta.current_event ?? live?.current_event ?? meta.event ?? data.team.event ?? null,
     targetEvent: meta.prediction_event ?? data.team.prediction_event ?? null,

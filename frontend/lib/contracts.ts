@@ -132,6 +132,8 @@ export type DashboardLive = {
   gameweek_name?: string;
   status: "LIVE" | "FINISHED" | string;
   finished?: boolean;
+  /** Every match of the Gameweek is at full time (before FPL's final data check). */
+  all_played?: boolean;
   next_event?: number | null;
   next_deadline_time?: string | null;
   picks: LivePick[];

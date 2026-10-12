@@ -27,6 +27,12 @@ test("derives the decision, live and settled phases from the envelope and fails 
   const live = deriveGameState(makeDashboard({ phase: "live" }));
   expect(live).toMatchObject({ phase: "live", liveActive: true, actionsOpen: false });
   expect(deriveGameState(makeDashboard({ phase: "settled" })).phase).toBe("settled");
+  // Every match at full time: no longer live, even before FPL's data check.
+  const played = makeDashboard({ phase: "live" });
+  played.data.live!.all_played = true;
+  played.meta.actions_locked = false;
+  played.meta.target_deadline_time = new Date(Date.now() + 86_400_000).toISOString();
+  expect(deriveGameState(played)).toMatchObject({ phase: "decision", liveActive: false, gwPlayed: true, actionsOpen: true });
   const missing = makeDashboard();
   delete missing.meta.actions_locked;
   expect(deriveGameState(missing).actionsOpen).toBe(false);

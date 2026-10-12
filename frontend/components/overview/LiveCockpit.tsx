@@ -55,7 +55,7 @@ function FixtureScore({ fixture }: { fixture: LiveFixture }) {
 
 export type PlanPreview = { event: number | null; label: string; provisional: boolean; onOpen: () => void };
 
-export function LiveCockpit({ live, squad, source, overallRank, eventRank, planPreview = null }: { live: LiveView; squad: SquadPlayer[]; source: SourceKind; overallRank: number | null; eventRank: number | null; planPreview?: PlanPreview | null }) {
+export function LiveCockpit({ live, squad, source, overallRank, eventRank, planPreview = null, gwPlayed = false }: { live: LiveView; squad: SquadPlayer[]; source: SourceKind; overallRank: number | null; eventRank: number | null; planPreview?: PlanPreview | null; gwPlayed?: boolean }) {
   const starters = squad.filter((player) => player.isStarter);
   const bench = squad.filter((player) => !player.isStarter).sort((left, right) => left.slot - right.slot);
   const totalActive = live.finished + live.playing + live.remaining + live.noFixture;
@@ -77,7 +77,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank, planP
     <div className="live-grid">
       <section className="live-hero card card-live" aria-labelledby="live-title">
         <header className="card-head">
-          <div className="card-title"><span className="card-icon live-icon" aria-hidden="true"><Radio size={16} /></span><div><span className="eyebrow">Gameweek {live.event} · {allDone ? "all your matches played" : "in progress"}</span><h2 id="live-title">Live points</h2></div></div>
+          <div className="card-title"><span className="card-icon live-icon" aria-hidden="true"><Radio size={16} /></span><div><span className="eyebrow">Gameweek {live.event} · {gwPlayed ? "full time · FPL confirms later" : allDone ? "all your matches played" : "in progress"}</span><h2 id="live-title">{gwPlayed ? "Gameweek points" : "Live points"}</h2></div></div>
           <div className="card-meta"><SourceBadge kind={source} /></div>
         </header>
         <div className="live-hero-body">
@@ -118,7 +118,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank, planP
         </button>
       ) : null}
 
-      <Card title="Your XI live" icon={<Activity size={16} />} source={source} className="live-pitch-card"
+      <Card title={gwPlayed ? "Your XI" : "Your XI live"} icon={<Activity size={16} />} source={source} className="live-pitch-card"
         collapse={{ id: "xi-live", defaults: { mobile: true, desktop: true }, summary: `${starters.length} starters · ${live.points ?? "—"} pts` }}>
         <PitchSurface compact label="Starting eleven with live points">
           <FormationRows starters={starters} render={(player) => <PitchPlayer key={player.id} player={player} mode="live" size="sm" />} />
@@ -127,11 +127,11 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank, planP
           <div className="bench-head"><span className="eyebrow">Bench</span></div>
           <div className="bench-row">{bench.map((player, index) => <PitchPlayer key={player.id} player={player} mode="live" size="sm" benchIndex={index} />)}</div>
         </div>
-        <div className="live-key" aria-hidden="true">
+        {gwPlayed ? null : <div className="live-key" aria-hidden="true">
           <span><i className="key-playing" />Playing</span>
           <span><i className="key-finished" />Finished</span>
           <span><i className="key-upcoming" />To play</span>
-        </div>
+        </div>}
       </Card>
 
       <div className="live-side">

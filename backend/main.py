@@ -611,6 +611,13 @@ def get_live_team(team_id: int):
             "gameweek_name": live["gameweek_name"],
             "status": live["status"],
             "finished": bool(live.get("finished")),
+            # Every match of the Gameweek has reached full time. FPL marks the
+            # Gameweek finished only after its data check, often hours later,
+            # so the app stops treating it as live as soon as this is true.
+            "all_played": bool(live.get("finished")) or (
+                bool(event_fixtures.get("fixtures"))
+                and all(item.get("finished") for item in event_fixtures.get("fixtures", []))
+            ),
             "next_event": live.get("next_event"),
             "next_deadline_time": live.get("next_deadline_time"),
             "picks": picks,
