@@ -196,11 +196,27 @@ injury news and the five-Gameweek outlook.
 </table>
 
 The whole app is designed for phones as well: a bottom tab bar, tap instead of
-hover, and no sideways scrolling.
+hover, controls at least 40px tall, text at least 12px, and no sideways
+scrolling.
+
+## Look and motion
+
+The app is meant to feel alive during a Gameweek, without getting in the way.
+
+- **Background:** soft violet, teal and green light drifts behind the glass
+  cards like floodlights on a night pitch. It turns greener while a Gameweek is
+  live, warms towards amber in the last 24 hours before a deadline, and swells
+  green when one of your players scores.
+- **Moments:** when one of your players scores or assists, a short notice
+  slides in and the player pops on the pitch. Live points count up, and a
+  number that changes glows once. Goals are noticed when the live data
+  refreshes (every minute), so a notice can arrive up to a minute late.
+- **Settings → Motion:** Auto (the default), Calm (moves only at moments),
+  Lively, Max or Off. Your device's reduce-motion setting always wins.
 
 ## Trust: what every number means
 
-Every number is labelled by where it comes from:
+Every number's source is labelled, once per card:
 
 - **FPL data:** straight from the official game. The app itself is independent, not official.
 - **Model:** the forecast.

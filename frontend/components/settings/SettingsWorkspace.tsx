@@ -1,12 +1,13 @@
 "use client";
 
-import { Database, LogOut, Server, ShieldCheck, Target } from "lucide-react";
+import { Database, LogOut, Server, ShieldCheck, Sparkles, Target } from "lucide-react";
 import Link from "next/link";
 
 import { useTeam } from "@/app/providers/TeamProvider";
 import { Card, SourceBadge } from "@/components/ui/primitives";
 import { API_BASE_URL } from "@/lib/api";
 import { dateTime } from "@/lib/format";
+import { motionOptions, useMotionPreference, usePrefersReducedMotion, writeMotionPreference } from "@/lib/motion";
 import { seasonGoalOptions, useSeasonGoal, writeSeasonGoal, type SeasonGoal } from "@/lib/preferences";
 
 const SOURCE_GUIDE: Array<{ kind: Parameters<typeof SourceBadge>[0]["kind"]; text: string }> = [
@@ -20,6 +21,8 @@ const SOURCE_GUIDE: Array<{ kind: Parameters<typeof SourceBadge>[0]["kind"]; tex
 export function SettingsWorkspace() {
   const { teamId, dashboard, disconnect } = useTeam();
   const seasonGoal = useSeasonGoal();
+  const motion = useMotionPreference();
+  const systemReduced = usePrefersReducedMotion();
   const modelVersion = dashboard?.meta.prediction_version ?? dashboard?.data.team.prediction_file ?? null;
 
   return (
@@ -58,6 +61,19 @@ export function SettingsWorkspace() {
           <p className="card-note">Saved in this browser as a personal goal. It does not change the model or its recommendations.</p>
         </Card>
 
+        <Card title="Motion" icon={<Sparkles size={16} />}>
+          <fieldset className="radio-list">
+            <legend className="sr-only">How much the app moves</legend>
+            {motionOptions.map((option) => (
+              <label key={option.id} className={`radio-card${motion === option.id ? " is-active" : ""}`}>
+                <input type="radio" name="motion" value={option.id} checked={motion === option.id} onChange={() => writeMotionPreference(option.id)} />
+                <span><b>{option.label}</b><small>{option.description}</small></span>
+              </label>
+            ))}
+          </fieldset>
+          <p className="card-note">{systemReduced ? "Your device asks for reduced motion, so nothing moves whatever you choose here." : "Saved in this browser. Your device's reduce-motion setting always wins."}</p>
+        </Card>
+
         <Card title="Data runtime" icon={<Server size={16} />}>
           <dl className="kv">
             <div><dt>API origin</dt><dd>{API_BASE_URL || "Same-origin gateway"}</dd></div>
@@ -75,7 +91,7 @@ export function SettingsWorkspace() {
 
       <Card title="What Fantasy Football AI can and cannot do" icon={<ShieldCheck size={16} />}>
         <p>Fantasy Football AI is a free, independent tool. It reads public manager data and gives decision support. It cannot make transfers, play chips or change your captain on the official game; every lineup and transfer on this site is a simulation until you make it yourself.</p>
-        <p className="card-note">Not affiliated with or endorsed by the Premier League or Fantasy Premier League. Club colours are shown as original, simplified kits and are not official designs. <Link href="/privacy">Privacy and terms</Link>.</p>
+        <p className="card-note">Not affiliated with or endorsed by the Premier League, Fantasy Premier League or any football club. Club colours are shown on simplified kits drawn for this site; they are not official designs or replicas. <Link href="/privacy">Privacy and terms</Link>.</p>
       </Card>
     </div>
   );

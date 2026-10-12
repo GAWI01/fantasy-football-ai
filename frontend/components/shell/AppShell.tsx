@@ -15,16 +15,19 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
 import { useTeam } from "@/app/providers/TeamProvider";
+import { AmbientBackground, type AmbientMood } from "@/components/shell/AmbientBackground";
 import { BrandMark } from "@/components/shell/BrandMark";
-import { DeadlineCountdown } from "@/components/shell/DeadlineCountdown";
+import { DeadlineCountdown, deadlineUrgency } from "@/components/shell/DeadlineCountdown";
 import { Sheet } from "@/components/ui/Sheet";
 import { compact, relativeAge } from "@/lib/format";
 import { useGameState } from "@/lib/hooks/useGameState";
+import { LiveMomentContext, useLiveMoments, type LiveMoment } from "@/lib/hooks/useLiveMoments";
 import { refreshResources } from "@/lib/hooks/useResource";
 import type { GameState } from "@/lib/model/phase";
+import { useMotionLevel } from "@/lib/motion";
 import { isActive, MOBILE_PRIMARY, NAV_ITEMS, type NavKey } from "@/lib/navigation";
 
 
@@ -83,10 +86,47 @@ export function AppShell({ children }: { children: ReactNode }) {
   const mobileItems = NAV_ITEMS.filter((item) => MOBILE_PRIMARY.includes(item.key));
   const moreItems = NAV_ITEMS.filter((item) => !MOBILE_PRIMARY.includes(item.key));
   const moreActive = moreItems.some((item) => isActive(item, pathname));
+  const primaryIndex = mobileItems.findIndex((item) => isActive(item, pathname));
+  const activeTab = primaryIndex >= 0 ? primaryIndex : moreActive ? mobileItems.length : -1;
+
+  const motion = useMotionLevel();
+  const moment = useLiveMoments(dashboard?.data.live);
+  const toast = useMomentToast(moment);
+  // Deadline urgency tints the background; a minute is precise enough for that.
+  const [clock, setClock] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => setClock(Date.now());
+    const first = window.setTimeout(tick, 0);
+    const timer = window.setInterval(tick, 60_000);
+    return () => { window.clearTimeout(first); window.clearInterval(timer); };
+  }, []);
+  // Max: a soft glow follows the pointer across a card.
+  useEffect(() => {
+    if (motion !== "max") return;
+    const move = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      const card = (event.target as Element | null)?.closest?.(".card") as HTMLElement | null;
+      if (!card) return;
+      const box = card.getBoundingClientRect();
+      card.style.setProperty("--mx", `${event.clientX - box.left}px`);
+      card.style.setProperty("--my", `${event.clientY - box.top}px`);
+    };
+    document.addEventListener("pointermove", move, { passive: true });
+    return () => document.removeEventListener("pointermove", move);
+  }, [motion]);
+  const urgency = showDeadline && clock != null ? deadlineUrgency(showDeadline, clock) : "calm";
+  const mood: AmbientMood = !connected ? "decision"
+    : state.phase === "live" ? "live"
+    : state.phase === "settled" ? "settled"
+    : urgency === "urgent" ? "urgent" : urgency === "soon" ? "deadline" : "decision";
 
   return (
-    <div className="app" data-phase={connected ? state.phase : "setup"}>
+    <div className="app" data-phase={connected ? state.phase : "setup"} data-motion={motion}>
+      <AmbientBackground mood={mood} level={motion} goalId={moment?.kind === "goal" ? moment.id : null} />
       <a className="skip-link" href="#main-content">Skip to content</a>
+      <div className={`moment-toast moment-${toast?.kind ?? "none"}${toast ? " is-shown" : ""}`} role="status" aria-live="polite">
+        {toast ? (toast.kind === "goal" ? <><b>Goal!</b> {toast.playerName}</> : <><b>Assist</b> {toast.playerName}</>) : null}
+      </div>
 
       <header className="masthead">
         <div className="masthead-row">
@@ -143,14 +183,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       ) : null}
 
-      <main id="main-content" className="content" tabIndex={-1}>{children}</main>
+      <main id="main-content" className="content" tabIndex={-1}><LiveMomentContext.Provider value={moment}>{children}</LiveMomentContext.Provider></main>
 
       <footer className="site-foot">
-        <span>Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team.</span>
+        <span>Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League, Fantasy Premier League or any football club. It never changes your official team.</span>
         <span>Historical data: <a href="https://github.com/vaastav/Fantasy-Premier-League" target="_blank" rel="noopener noreferrer">vaastav/Fantasy-Premier-League</a> by Vaastav Anand. Live data: the public FPL API. Recommendations only. <Link href="/privacy">Privacy and terms</Link>.</span>
       </footer>
 
-      <nav className="tabbar" aria-label="Mobile primary">
+      <nav className="tabbar" aria-label="Mobile primary" data-has-active={activeTab >= 0 || undefined} style={{ "--tab-index": Math.max(0, activeTab) } as CSSProperties}>
+        <span className="tab-indicator" aria-hidden="true" />
         {mobileItems.map((item) => {
           const Icon = ICONS[item.key];
           const active = isActive(item, pathname);
@@ -179,8 +220,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <p className="side-disclaimer">Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League or Fantasy Premier League. It never changes your official team. <Link href="/privacy" onClick={() => setMoreOpen(false)}>Privacy and terms</Link>.</p>
+        <p className="side-disclaimer">Fantasy Football AI is an independent, free tool. Not affiliated with or endorsed by the Premier League, Fantasy Premier League or any football club. It never changes your official team. <Link href="/privacy" onClick={() => setMoreOpen(false)}>Privacy and terms</Link>.</p>
       </Sheet>
     </div>
   );
+}
+
+
+/** Keeps a goal or assist on screen for a few seconds after it is noticed. */
+function useMomentToast(moment: LiveMoment | null): LiveMoment | null {
+  const [shown, setShown] = useState<LiveMoment | null>(null);
+  useEffect(() => {
+    if (!moment) return;
+    const show = window.setTimeout(() => setShown(moment), 0);
+    const hide = window.setTimeout(() => setShown(null), 3400);
+    return () => { window.clearTimeout(show); window.clearTimeout(hide); };
+  }, [moment]);
+  return shown;
 }

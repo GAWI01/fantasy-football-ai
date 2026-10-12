@@ -11,6 +11,7 @@ import { compact, fixed, plural, shortTime } from "@/lib/format";
 import type { LiveView } from "@/lib/model/live";
 import type { SourceKind } from "@/lib/model/phase";
 import type { SquadPlayer } from "@/lib/model/squad";
+import { useCountUp, useMotionLevel } from "@/lib/motion";
 
 const EVENT_COPY: Record<LiveEvent["event_type"], [string, string]> = {
   GOAL: ["goal", "goals"],
@@ -60,6 +61,10 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
   // Comparing a part-played Gameweek with a full-Gameweek projection would mislead, so the delta waits for the final whistle.
   const delta = live.playing === 0 && live.remaining === 0 && totalActiveCount > 0 && live.points != null && live.projectedXI != null ? live.points - live.projectedXI : null;
   const allDone = live.playing === 0 && live.remaining === 0;
+  // The big numbers count up when the cockpit opens and whenever they move.
+  const motion = useMotionLevel();
+  const shownPoints = useCountUp(live.points, motion, { fromZero: true, duration: 900 });
+  const shownCaptain = useCountUp(live.captainContribution, motion, { fromZero: true });
 
   return (
     <div className="live-grid">
@@ -70,7 +75,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
         </header>
         <div className="live-hero-body">
           <div className="live-score">
-            <strong className="num" aria-label={live.points == null ? "Live points unavailable" : `${live.points} live points`}>{live.points ?? "—"}</strong>
+            <strong className="num" aria-label={live.points == null ? "Live points unavailable" : `${live.points} live points`}>{shownPoints == null ? "—" : Math.round(shownPoints)}</strong>
             <span className="live-score-context">
               {live.projectedXI != null ? <>Model expected <b className="tone-accent">{fixed(live.projectedXI)} xP</b> for your active picks <SourceBadge kind="model" /></> : "Model expectation unavailable"}
               {delta != null ? <span className={delta >= 0 ? "tone-pos" : "tone-neg"}> · {delta >= 0 ? "+" : "−"}{Math.abs(delta).toFixed(1)} vs expected</span> : null}
@@ -91,7 +96,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank }: { l
             <span className="sr-only">{Math.round(progress * 100)}% of starter minutes resolved</span>
           </div>
           <div className="live-stats">
-            <Stat size="sm" label={<><Crown size={12} aria-hidden="true" />Captain</>} value={live.captainContribution ?? "—"} unit="pts" sub={live.captain ? `${live.captain.name}${live.captain.multiplier && live.captain.multiplier > 2 ? " · triple" : ""}` : "No captain"} />
+            <Stat size="sm" label={<><Crown size={12} aria-hidden="true" />Captain</>} value={shownCaptain == null ? "—" : Math.round(shownCaptain)} unit="pts" sub={live.captain ? `${live.captain.name}${live.captain.multiplier && live.captain.multiplier > 2 ? " · triple" : ""}` : "No captain"} />
             <Stat size="sm" label="Bench" value={live.benchPoints ?? "—"} unit="pts" sub="Not counted unless auto-subbed" />
             <Stat size="sm" label="GW rank" value={compact(eventRank)} sub="Official, updates after matches" />
             <Stat size="sm" label="Overall" value={compact(overallRank)} sub="From FPL" />

@@ -1,54 +1,76 @@
 /**
- * The Fantasy Football AI kit system: original, club-inspired shirts.
+ * The Fantasy Football AI kit system: simple shirts drawn for this site.
  *
- * Every club is represented by its colours plus one of a small family of
- * Fantasy Football AI house patterns. Patterns are deliberately assigned so that no club
- * gets a reproduction of its real shirt layout (no Arsenal sleeves, no
- * Newcastle stripes, etc.). No crests, sponsors, maker marks or protected kit
- * details are used — only colour, geometry and the club's initials.
+ * Each club is shown in its traditional, long-standing home colours (approximate
+ * shades, not exact brand colours) with one generic layout: plain, vertical
+ * stripes, hoops, halves, a sash or contrasting sleeves. Collar and cuffs are a
+ * single colour, and the only text is the club's initials in the site's own font.
+ *
+ * Nothing is taken from a particular season (no prints, fades, collar shapes or
+ * trim combinations), and no away kits, shorts or socks are modelled. No crests,
+ * sponsors, maker logos or maker trims, league patches, league lettering or
+ * shirt images from the FPL game are used. Goalkeepers share one house shirt.
  */
 
-export type KitPattern = "plain" | "chevron" | "sash" | "split" | "yoke" | "band" | "pinstripe";
+/** Generic club layouts, plus the house "pinstripe" kept for goalkeepers only. */
+export type KitPattern = "plain" | "stripes" | "hoops" | "halves" | "sash" | "sleeves" | "pinstripe";
+
+/** Layouts a club kit may use (everything except the goalkeeper house pattern). */
+export const CLUB_KIT_PATTERNS = ["plain", "stripes", "hoops", "halves", "sash", "sleeves"] as const satisfies readonly KitPattern[];
 
 export type KitDesign = {
   code: string;
+  /** Main shirt colour. */
   body: string;
+  /** Second colour: stripes, hoops, the other half or the sash. */
   detail: string;
+  /** Single colour for collar and cuffs. */
   trim: string;
+  /** Colour of the initials. */
   ink: string;
   pattern: KitPattern;
+  /** Sleeve colour for contrasting-sleeve kits. */
+  sleeves?: string;
+  /** Number of equal vertical bands across the front for striped kits (default 5). */
+  stripes?: 3 | 5;
 };
 
+const WHITE = "#f4f4f4";
+const BLACK = "#16181d";
+
 const designs: Record<string, Omit<KitDesign, "code">> = {
-  ARS: { body: "#d6262f", detail: "#f4f4f4", trim: "#14254a", ink: "#ffffff", pattern: "chevron" },
-  AVL: { body: "#6b1d3e", detail: "#9cc6ec", trim: "#f2c94c", ink: "#ffffff", pattern: "band" },
-  BOU: { body: "#c8202b", detail: "#111317", trim: "#f4f4f4", ink: "#ffffff", pattern: "split" },
-  BRE: { body: "#d9252e", detail: "#f4f4f4", trim: "#111317", ink: "#ffffff", pattern: "sash" },
-  BHA: { body: "#1f5fbf", detail: "#f4f4f4", trim: "#f2c94c", ink: "#ffffff", pattern: "yoke" },
-  BUR: { body: "#6c1d45", detail: "#9fd3ec", trim: "#f2c94c", ink: "#ffffff", pattern: "yoke" },
-  CHE: { body: "#1747a6", detail: "#f4f4f4", trim: "#d5a838", ink: "#ffffff", pattern: "band" },
-  COV: { body: "#6cb4e6", detail: "#14335a", trim: "#f4f4f4", ink: "#0f2340", pattern: "sash" },
-  CRY: { body: "#1d4a9a", detail: "#c62334", trim: "#f4f4f4", ink: "#ffffff", pattern: "split" },
-  EVE: { body: "#1a3d9c", detail: "#f4f4f4", trim: "#2d8a4e", ink: "#ffffff", pattern: "yoke" },
-  FUL: { body: "#f4f4f4", detail: "#16181d", trim: "#c62334", ink: "#16181d", pattern: "chevron" },
-  HUL: { body: "#f0a12f", detail: "#16181d", trim: "#f4f4f4", ink: "#16181d", pattern: "band" },
-  IPS: { body: "#1c4fb0", detail: "#f4f4f4", trim: "#d63a3f", ink: "#ffffff", pattern: "sash" },
-  LEE: { body: "#f4f4f4", detail: "#1d428a", trim: "#f2c94c", ink: "#1d428a", pattern: "yoke" },
-  LEI: { body: "#1c3f95", detail: "#f4f4f4", trim: "#f2b729", ink: "#ffffff", pattern: "chevron" },
-  LIV: { body: "#c51f34", detail: "#f4f4f4", trim: "#1fb3a8", ink: "#ffffff", pattern: "band" },
-  MCI: { body: "#73b2e0", detail: "#1b2c59", trim: "#f4f4f4", ink: "#10203f", pattern: "chevron" },
-  MUN: { body: "#d1281f", detail: "#16181d", trim: "#f4f4f4", ink: "#ffffff", pattern: "sash" },
-  NEW: { body: "#16181d", detail: "#f4f4f4", trim: "#5fb7e6", ink: "#ffffff", pattern: "split" },
-  NFO: { body: "#cc1e2b", detail: "#f4f4f4", trim: "#16181d", ink: "#ffffff", pattern: "yoke" },
-  NOR: { body: "#f5d916", detail: "#16864a", trim: "#16181d", ink: "#123524", pattern: "sash" },
-  SHU: { body: "#d9283a", detail: "#f4f4f4", trim: "#16181d", ink: "#ffffff", pattern: "band" },
-  SOU: { body: "#d2232b", detail: "#f4f4f4", trim: "#16181d", ink: "#ffffff", pattern: "split" },
-  SUN: { body: "#d8232f", detail: "#f4f4f4", trim: "#16181d", ink: "#ffffff", pattern: "chevron" },
-  TOT: { body: "#f4f4f4", detail: "#16245a", trim: "#8d97a8", ink: "#16245a", pattern: "sash" },
-  WAT: { body: "#f5dd2a", detail: "#16181d", trim: "#d6262f", ink: "#16181d", pattern: "band" },
-  WHU: { body: "#7b2a3c", detail: "#5ab6e3", trim: "#f2c94c", ink: "#ffffff", pattern: "split" },
-  WOL: { body: "#f2ad1f", detail: "#1f1d1e", trim: "#f4f4f4", ink: "#1f1d1e", pattern: "chevron" },
+  ARS: { body: "#d6262f", detail: WHITE, sleeves: WHITE, trim: WHITE, ink: "#ffffff", pattern: "sleeves" },
+  AVL: { body: "#6b1d3e", detail: "#9cc6ec", sleeves: "#9cc6ec", trim: "#9cc6ec", ink: "#ffffff", pattern: "sleeves" },
+  BOU: { body: "#c8202b", detail: BLACK, trim: BLACK, ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  BRE: { body: "#d9252e", detail: WHITE, trim: BLACK, ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  BHA: { body: "#1f5fbf", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  BUR: { body: "#6c1d45", detail: "#a3d5ee", sleeves: "#a3d5ee", trim: WHITE, ink: "#ffffff", pattern: "sleeves" },
+  CHE: { body: "#1747a6", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "plain" },
+  COV: { body: "#62b5ea", detail: WHITE, trim: WHITE, ink: "#0f2340", pattern: "plain" },
+  CRY: { body: "#1d4a9a", detail: "#c62334", trim: "#c62334", ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  EVE: { body: "#1a3d9c", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "plain" },
+  FUL: { body: WHITE, detail: BLACK, trim: BLACK, ink: BLACK, pattern: "plain" },
+  HUL: { body: "#f39325", detail: BLACK, trim: BLACK, ink: BLACK, pattern: "plain" },
+  IPS: { body: "#1c4fb0", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "plain" },
+  LEE: { body: WHITE, detail: "#1d428a", trim: "#1d428a", ink: "#1d428a", pattern: "plain" },
+  LEI: { body: "#1c3f95", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "plain" },
+  LIV: { body: "#c51f34", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "plain" },
+  MCI: { body: "#7ab4e0", detail: WHITE, trim: WHITE, ink: "#10203f", pattern: "plain" },
+  MUN: { body: "#d1281f", detail: BLACK, trim: BLACK, ink: "#ffffff", pattern: "plain" },
+  NEW: { body: BLACK, detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  NFO: { body: "#cc1e2b", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "plain" },
+  NOR: { body: "#f5d916", detail: "#16864a", trim: "#16864a", ink: "#123524", pattern: "plain" },
+  SHU: { body: "#d9283a", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  SOU: { body: "#d2232b", detail: WHITE, trim: BLACK, ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  SUN: { body: "#d8232f", detail: WHITE, trim: WHITE, ink: "#ffffff", pattern: "stripes", stripes: 5 },
+  TOT: { body: WHITE, detail: "#16245a", trim: "#16245a", ink: "#16245a", pattern: "plain" },
+  WAT: { body: "#f5dd2a", detail: BLACK, trim: BLACK, ink: BLACK, pattern: "plain" },
+  WHU: { body: "#7b2a3c", detail: "#5ab6e3", sleeves: "#5ab6e3", trim: "#7b2a3c", ink: "#ffffff", pattern: "sleeves" },
+  WOL: { body: "#f7b52a", detail: "#1f1d1e", trim: "#1f1d1e", ink: "#1f1d1e", pattern: "plain" },
 };
+
+/** Every club code with its own kit. */
+export const KIT_CLUB_CODES: readonly string[] = Object.keys(designs);
 
 const aliases: Record<string, string> = {
   arsenal: "ARS", astonvilla: "AVL", bournemouth: "BOU", brentford: "BRE",
@@ -89,5 +111,5 @@ export function kitDesign(team?: string | null, teamShort?: string | null, goalk
 /** A single representative colour for chips, dots and fixture cells. */
 export function clubColor(team?: string | null, teamShort?: string | null): string {
   const design = kitDesign(team, teamShort);
-  return design.body === "#f4f4f4" ? design.detail : design.body;
+  return design.body === WHITE ? design.detail : design.body;
 }

@@ -21,8 +21,8 @@ export default function PrivacyPage() {
         <h2>Who runs this</h2>
         <p>
           Fantasy Football AI is a free, independent, non-commercial tool made by{" "}
-          <a href="https://github.com/GAWI01">GAWI01</a>. It is not affiliated with or endorsed by the Premier League or
-          Fantasy Premier League, and it never logs in to FPL or changes your team. Questions, privacy requests and
+          <a href="https://github.com/GAWI01">GAWI01</a>. It is not affiliated with or endorsed by the Premier League,
+          Fantasy Premier League or any football club, and it never logs in to FPL or changes your team. Questions, privacy requests and
           takedown requests: <a href={CONTACT}>open an issue on GitHub</a>.
         </p>
       </section>
@@ -46,6 +46,7 @@ export default function PrivacyPage() {
           <li><code>fpl-ai-free-transfers</code>: free transfers you set yourself</li>
           <li><code>fpl-ai-plan-history</code>: earlier plans, to show when the advice changes</li>
           <li><code>fpl-ai-season-goal</code>, <code>fpl-ai-season-goal-change</code>: your season goal</li>
+          <li><code>fpl-ai-motion</code>: how much the app moves (Settings → Motion)</li>
         </ul>
         <p><b>Disconnect team</b> in Settings deletes all of them. So does clearing this site&rsquo;s data in your browser.</p>
       </section>
@@ -72,7 +73,7 @@ export default function PrivacyPage() {
           <li>Recommendations are model forecasts and opinions, not guarantees. Decide yourself and make changes in the official FPL app.</li>
           <li>The service is provided free, as is, without warranty, and may change or stop at any time.</li>
           <li>Do not use it to scrape or bulk-download data, or to overload the service.</li>
-          <li>FPL and Premier League data, names and marks belong to their owners. Club colours are shown as simplified, original kits, not official designs.</li>
+          <li>FPL and Premier League data, names and marks belong to their owners. Club colours are shown on simplified kits drawn for this site; they are not official designs or replicas.</li>
         </ul>
         <p>
           <b>Rights holders:</b> if you believe something here infringes your rights, <a href={CONTACT}>open an issue</a>{" "}

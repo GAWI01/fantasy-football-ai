@@ -1,0 +1,163 @@
+/* Background, glass and motion.
+   The page sits on a fixed ambient layer (AmbientBackground) and the cards are
+   tinted glass over it. Motion is graded by .app[data-motion]:
+   off (nothing moves) · calm (moments only) · lively (also ambient life) · max.
+   Everything animates transform or opacity only, so the compositor does the work. */
+
+/* ---------- Ambient layer ---------- */
+.ambient {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  /* The still fallback before the canvas draws, and without JavaScript. */
+  background:
+    radial-gradient(900px 520px at 12% -12%, rgba(124, 58, 237, 0.22), transparent 62%),
+    radial-gradient(800px 480px at 92% -8%, rgba(34, 211, 238, 0.1), transparent 60%),
+    radial-gradient(1000px 600px at 50% 120%, rgba(16, 185, 129, 0.08), transparent 60%),
+    var(--bg);
+}
+.ambient-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* The broadcast grid stays, over the light. */
+.ambient::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(rgba(148, 163, 209, 0.035) 1px, transparent 1px) 0 0 / 100% 56px,
+    linear-gradient(90deg, rgba(148, 163, 209, 0.035) 1px, transparent 1px) 0 0 / 56px 100%;
+}
+
+/* ---------- Glass ----------
+   In-page cards are tinted and see-through, without a blur of their own: the
+   background is already soft, and blurring dozens of cards would make long pages
+   stutter on phones. Only the floating parts (masthead, tab bar, sheets) blur.
+   Cards that hold tables stay nearly solid so dense numbers keep a steady ground. */
+.card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 120px),
+    linear-gradient(160deg, rgba(17, 23, 43, 0.74), rgba(8, 11, 22, 0.8));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), var(--shadow-1);
+}
+.card:has(table) {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 120px),
+    linear-gradient(160deg, rgba(17, 23, 43, 0.93), rgba(8, 11, 22, 0.95));
+}
+.plan-hero {
+  background:
+    radial-gradient(900px 420px at 100% 0%, rgba(34, 211, 238, 0.08), transparent 60%),
+    radial-gradient(900px 420px at 0% 0%, rgba(124, 58, 237, 0.22), transparent 62%),
+    linear-gradient(180deg, rgba(16, 21, 40, 0.8), rgba(7, 10, 21, 0.84));
+}
+.live-hero {
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(255, 255, 255, 0.016) 46px 92px),
+    radial-gradient(900px 360px at 0% 0%, rgba(16, 185, 129, 0.26), transparent 60%),
+    radial-gradient(700px 300px at 100% 0%, rgba(163, 230, 53, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(12, 22, 30, 0.8), rgba(6, 10, 18, 0.84));
+}
+.stat-row { background: rgba(11, 16, 32, 0.72); }
+.masthead { background: linear-gradient(180deg, rgba(4, 6, 13, 0.8), rgba(6, 9, 20, 0.72)); backdrop-filter: blur(16px) saturate(140%); }
+@media (max-width: 767px) {
+  .tabbar { background: rgba(12, 15, 30, 0.74); backdrop-filter: blur(16px) saturate(140%); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .masthead { background: rgba(4, 6, 13, 0.96); }
+  .tabbar { background: rgba(10, 13, 26, 0.96); }
+}
+@media (prefers-contrast: more) {
+  .ambient-canvas { display: none; }
+  .card, .card:has(table), .plan-hero, .live-hero, .stat-row { background: var(--surface-1); }
+}
+
+/* ---------- Mobile tab bar: the active pill slides between tabs ---------- */
+@media (max-width: 767px) {
+  .tab { position: relative; z-index: 1; }
+  .tab[aria-current="page"], .tab[data-active] { background: none; box-shadow: none; }
+  .tab-indicator {
+    position: absolute; top: 6px; bottom: 6px; left: 6px; width: calc((100% - 12px) / 5);
+    border-radius: 16px; pointer-events: none;
+    background: linear-gradient(180deg, rgba(124, 58, 237, 0.6), rgba(79, 70, 229, 0.4));
+    box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.45), 0 8px 20px -8px rgba(124, 58, 237, 0.85);
+    transform: translateX(calc(var(--tab-index, 0) * 100%));
+    transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+  }
+  .tabbar:not([data-has-active]) .tab-indicator { opacity: 0; }
+}
+@media (min-width: 768px) { .tab-indicator { display: none; } }
+
+/* ---------- Goal and assist toast ---------- */
+.moment-toast {
+  position: fixed; left: 50%; top: calc(var(--topbar-h) + 10px); z-index: 40;
+  transform: translate(-50%, -16px); opacity: 0; pointer-events: none;
+  padding: 9px 16px; border-radius: 14px; white-space: nowrap;
+  font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 1.05rem;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: #d1fae5; background: rgba(8, 30, 22, 0.9); border: 1px solid rgba(52, 211, 153, 0.55);
+  box-shadow: 0 14px 34px -14px rgba(16, 185, 129, 0.8);
+  backdrop-filter: blur(12px);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s;
+}
+.moment-toast b { color: #6ee7b7; margin-right: 4px; }
+.moment-toast.moment-assist { color: #e0e7ff; background: rgba(20, 18, 48, 0.9); border-color: var(--violet-line); }
+.moment-toast.moment-assist b { color: var(--violet-text); }
+.moment-toast.is-shown { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Pitch: moving points glow, the scorer pops ---------- */
+.pp-value.is-flash { animation: value-flash 1.3s var(--ease); }
+.pp-kit { position: relative; }
+.pp-ring { position: absolute; left: 50%; top: 50%; width: 120%; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--green); transform: translate(-50%, -50%) scale(0.6); opacity: 0; pointer-events: none; }
+.pp.is-scorer .pp-kit { animation: scorer-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.pp.is-scorer .pp-ring { animation: scorer-ring 1s ease-out; }
+@keyframes value-flash { 0% { filter: brightness(1.9) saturate(1.3); transform: scale(1.12); } 100% { filter: none; transform: none; } }
+@keyframes scorer-pop { 0% { transform: scale(1); } 35% { transform: scale(1.28) translateY(-5px); } 70% { transform: scale(0.95); } 100% { transform: none; } }
+@keyframes scorer-ring { from { transform: translate(-50%, -50%) scale(0.6); opacity: 0.95; } to { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } }
+
+/* ---------- Pages arrive: cards rise in, a few at a time ---------- */
+@keyframes card-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes card-rise-scale { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
+.app:is([data-motion="calm"], [data-motion="lively"], [data-motion="max"]) .content :is(.page-head, .card, .plan-hero, .stat-row) {
+  animation: fade-in 0.35s var(--ease) both;
+}
+.app:is([data-motion="lively"], [data-motion="max"]) .content :is(.card, .plan-hero, .stat-row) { animation-name: card-rise; animation-duration: 0.55s; }
+.app[data-motion="max"] .content :is(.card, .plan-hero, .stat-row) { animation-name: card-rise-scale; animation-duration: 0.6s; }
+.app .content :is(.card, .plan-hero, .stat-row):nth-child(2) { animation-delay: 60ms; }
+.app .content :is(.card, .plan-hero, .stat-row):nth-child(3) { animation-delay: 120ms; }
+.app .content :is(.card, .plan-hero, .stat-row):nth-child(4) { animation-delay: 180ms; }
+.app .content :is(.card, .plan-hero, .stat-row):nth-child(n + 5) { animation-delay: 220ms; }
+
+/* ---------- Ambient life (Lively and Max) ---------- */
+/* A slow glint crosses the hero glass every few seconds. */
+.plan-hero::after, .live-hero::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1; border-radius: inherit;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.06) 50%, transparent 65%);
+  transform: translateX(-130%);
+}
+.live-hero { overflow: hidden; }
+.app:is([data-motion="lively"], [data-motion="max"]) :is(.plan-hero, .live-hero)::after { animation: glint 9s ease-in-out infinite; }
+@keyframes glint { 0%, 72% { transform: translateX(-130%); } 88%, 100% { transform: translateX(130%); } }
+/* The live progress bar shimmers while matches are on. */
+.live-bar { position: relative; }
+.live-bar::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 28%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-120%); opacity: 0;
+}
+.app:is([data-motion="lively"], [data-motion="max"]) .live-bar::after { opacity: 1; animation: bar-shimmer 2.8s ease-in-out infinite; }
+@keyframes bar-shimmer { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(420%); } }
+
+/* ---------- Max only ---------- */
+.card:not(.live-hero)::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgba(167, 139, 250, 0.12), transparent 60%);
+  transition: opacity 0.3s;
+}
+.app[data-motion="max"] .card:not(.live-hero):hover::after { opacity: 1; }
+.app[data-motion="max"] .live-pitch-card .pp.is-playing .pp-kit { animation: bob 3.6s ease-in-out infinite; }
+.app[data-motion="max"] .live-pitch-card .pp.is-scorer .pp-kit { animation: scorer-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes bob { 0%, 100% { transform: none; } 50% { transform: translateY(-3px); } }
+
+/* ---------- Calm: only moments. Ambient loops stop. ---------- */
+.app[data-motion="calm"] :is(.phase-live i, .src-pulse, .live-dot, .score-status-live i) { animation: none; }
+
+/* ---------- Off: nothing moves ---------- */
+.app[data-motion="off"] *, .app[data-motion="off"] *::before, .app[data-motion="off"] *::after {
+  animation: none !important;
+  transition-duration: 0s !important;
+}
