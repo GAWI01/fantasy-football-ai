@@ -299,7 +299,15 @@
 .live-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--surface-3); }
 .live-bar i { display: block; min-width: 0; }
 .live-bar-done { background: var(--green); }
-.live-bar-now { background: repeating-linear-gradient(45deg, #34d399 0 6px, #10b981 6px 12px); }
+.live-bar-now {
+  position: relative; overflow: hidden;
+  background: repeating-linear-gradient(45deg, #34d399 0 6px, #10b981 6px 12px);
+  background-size: 17px 17px;
+}
+/* The part still being played moves: the stripes run and the segment breathes. */
+.app:is([data-motion="calm"], [data-motion="lively"], [data-motion="max"]) .live-bar-now { animation: live-stripes 0.9s linear infinite, live-breathe 1.8s ease-in-out infinite; }
+@keyframes live-stripes { from { background-position: 0 0; } to { background-position: 17px 0; } }
+@keyframes live-breathe { 0%, 100% { filter: brightness(1); box-shadow: 0 0 0 rgba(52, 211, 153, 0); } 50% { filter: brightness(1.25); box-shadow: 0 0 12px rgba(52, 211, 153, 0.75); } }
 .live-bar-left { background: var(--surface-3); }
 .live-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: var(--fs-xs); color: var(--text-2); }
 .live-legend span { display: inline-flex; align-items: center; gap: 6px; }

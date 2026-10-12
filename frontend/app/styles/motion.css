@@ -6,7 +6,9 @@
 
 /* ---------- Ambient layer ---------- */
 .ambient {
-  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  /* Clipped: the masts, haze and parallax canvas reach past the screen edge,
+     and iOS Safari lets the page pan sideways over fixed overflow. */
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
   /* The still fallback before the canvas draws, and without JavaScript. */
   background:
     radial-gradient(900px 520px at 12% -12%, rgba(124, 58, 237, 0.22), transparent 62%),
