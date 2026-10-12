@@ -135,7 +135,7 @@ export function TeamWorkspace() {
         <div>
           <span className="eyebrow">{dashboard.data.team.name} · GW{activeMode === "live" ? state.currentEvent : state.targetEvent ?? state.currentEvent}</span>
           <h1>My Team</h1>
-          <p>Tap or drag players to test lineups, bench order and armbands. {locked ? "The deadline has passed, so this is a what-if view only." : "Changes stay in Fantasy Football AI; set your real team in the official app."}</p>
+          <p>Try lineups and captains here. {locked ? "The deadline has passed, so this is a what-if view only." : "Nothing changes your real team."}</p>
         </div>
         <div className="page-head-actions">
           <Segmented<ValueMode>
@@ -190,7 +190,7 @@ export function TeamWorkspace() {
               ))}
             </div>
           </div>
-          <p className="team-help faint">Desktop: drag a player onto a highlighted teammate. Touch: tap a player, then tap a highlighted teammate to swap. Formations stay legal (1 GK, 3–5 DEF, 2–5 MID, 1–3 FWD).</p>
+          <p className="team-help faint">To swap, tap a player, then a highlighted teammate (or drag on a computer).</p>
         </div>
 
         <aside className="team-aside">
@@ -211,13 +211,13 @@ export function TeamWorkspace() {
             ) : plan?.captain ? <p className="card-note">Matches the model captain.</p> : null}
           </Card>
 
-          <Card title="Squad watch" icon={<Shield size={16} />} source={["official", "model"]}>
+          <Card title="Injury watch" icon={<Shield size={16} />} source={["official", "model"]}>
             {flagged.length ? (
               <div className="list">
                 {flagged.map((player) => (
                   <button type="button" className="list-row list-button" key={player.id} onClick={() => setDetailId(player.id)}>
                     <PlayerChip name={player.name} team={player.team} teamShort={player.teamShort} position={player.position} size={30} meta={player.news || (player.risk ? `${sentenceCase(player.risk.label)} minutes risk` : "Flagged")} />
-                    <span className="list-row-end"><b className="num">{player.xmins == null ? "—" : Math.round(player.xmins)}</b><small>xMins</small></span>
+                    <span className="list-row-end"><b className="num">{player.xmins == null ? "—" : Math.round(player.xmins)}</b><small>exp. mins</small></span>
                   </button>
                 ))}
               </div>

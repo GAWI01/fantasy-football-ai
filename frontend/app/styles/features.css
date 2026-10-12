@@ -996,3 +996,8 @@ button.race-row:hover { background: var(--surface-hover); }
 .plain-summary { font-size: 1.02rem; line-height: 1.5; color: var(--text); margin: 4px 0 0; }
 .todo-ft { margin-top: 10px; font-size: var(--fs-xs); color: var(--text-3); }
 .plan-transfer .ft-control { font-size: var(--fs-xs); color: var(--text-3); }
+
+/* Phones: the player table keeps only the columns that matter now */
+@media (max-width: 640px) {
+  .market-table .phone-hide { display: none; }
+}

@@ -9,6 +9,7 @@ import { Kit } from "@/components/kit/Kit";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { PageLinkTabs } from "@/components/shell/PageTabs";
 import { DataState } from "@/components/states/DataState";
+import { Term } from "@/components/ui/Term";
 import { Sheet } from "@/components/ui/Sheet";
 import { Card, Segmented, Skeleton, SourceBadge } from "@/components/ui/primitives";
 import type { FixtureMatrixTeam, PlayerSummary } from "@/lib/contracts";
@@ -181,10 +182,13 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
   const live = market.data?.data.status === "LIVE" && market.data.data.finished !== true;
   const marketSource = market.data?.meta.stale ? "cached" : live ? "live" : "official";
 
+  // Phones show the player, xP, price and whatever the list is sorted by.
+  const phone = (key: SortKey | "fixtures" | "xmins") => (key === "xp" || key === "price" || key === sort ? "num" : "num phone-hide");
+
   function header(key: SortKey, label: string) {
     const active = sort === key;
     return (
-      <th scope="col" className="num" aria-sort={active ? (ascending ? "ascending" : "descending") : undefined}>
+      <th scope="col" className={phone(key)} aria-sort={active ? (ascending ? "ascending" : "descending") : undefined}>
         <button type="button" className="sort-btn" onClick={() => { if (active) setAscending((value) => !value); else { setSort(key); setAscending(key === "price"); } }}>
           {label}{active ? (ascending ? <ArrowUp size={12} aria-hidden="true" /> : <ArrowDown size={12} aria-hidden="true" />) : null}
         </button>
@@ -203,7 +207,7 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
         <div>
           <span className="eyebrow">Explore{statsEvent ? ` · GW${statsEvent} stats` : ""}{forecastEvent ? ` · GW${forecastEvent} forecast` : ""}</span>
           <h1>Players</h1>
-          <p>Find any player. xP is the model’s points forecast for next Gameweek. Tick up to four to compare them side by side.</p>
+          <p>Find any player. <Term k="xp">xP</Term> is the points forecast for next Gameweek. Tap + on up to four players to compare them.</p>
         </div>
         <div className="page-head-actions"><SourceBadge kind={marketSource} /><SourceBadge kind="model" /></div>
       </header>
@@ -244,9 +248,9 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
                 <thead>
                   <tr>
                     <th scope="col">Player</th>
-                    <th scope="col">Next 3</th>
+                    <th scope="col" className="phone-hide">Next 3</th>
                     {header("xp", forecastEvent ? `xP GW${forecastEvent}` : "xP")}
-                    <th scope="col" className="num">xMins</th>
+                    <th scope="col" className="num phone-hide">xMins</th>
                     {header("value", "xP/£")}
                     {header("xg90", "xG/90")}
                     {header("xa90", "xA/90")}
@@ -270,16 +274,16 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
                             <PlayerChip name={player.name} team={player.team} teamShort={player.team_short} position={normalizePosition(player.position)} size={28} meta={<><span>{player.position} · {player.team_short}</span>{availability.tone !== "ok" ? <span className={`tone-${availability.tone === "risk" ? "neg" : "warn"}`}> · {availability.label}</span> : null}{owned ? <span className="tone-accent"> · Owned</span> : null}</>} />
                           </button>
                         </td>
-                        <td><span className="fx-mini">{team ? team.fixtures.slice(0, 3).map((cell) => <FixtureCell key={cell.event} cell={cell} compact />) : <span className="faint">—</span>}</span></td>
-                        <td className="num"><b className="tone-accent">{fixed(player.predicted_points)}</b></td>
-                        <td className="num">{player.xmins == null ? "—" : Math.round(player.xmins)}</td>
-                        <td className="num">{player.predicted_points != null && player.price ? fixed(player.predicted_points / player.price, 2) : "—"}</td>
-                        <td className="num">{fixed(per90(player, player.expected_goals_per_90), 2)}</td>
-                        <td className="num">{fixed(per90(player, player.expected_assists_per_90), 2)}</td>
-                        <td className="num">{fixed(player.form)}</td>
-                        <td className="num">{player.event_points ?? "—"}</td>
-                        <td className="num">{price(player.price)}</td>
-                        <td className="num">{percent(player.ownership, { digits: 1 })}</td>
+                        <td className="phone-hide"><span className="fx-mini">{team ? team.fixtures.slice(0, 3).map((cell) => <FixtureCell key={cell.event} cell={cell} compact />) : <span className="faint">—</span>}</span></td>
+                        <td className={phone("xp")}><b className="tone-accent">{fixed(player.predicted_points)}</b></td>
+                        <td className="num phone-hide">{player.xmins == null ? "—" : Math.round(player.xmins)}</td>
+                        <td className={phone("value")}>{player.predicted_points != null && player.price ? fixed(player.predicted_points / player.price, 2) : "—"}</td>
+                        <td className={phone("xg90")}>{fixed(per90(player, player.expected_goals_per_90), 2)}</td>
+                        <td className={phone("xa90")}>{fixed(per90(player, player.expected_assists_per_90), 2)}</td>
+                        <td className={phone("form")}>{fixed(player.form)}</td>
+                        <td className={phone("event")}>{player.event_points ?? "—"}</td>
+                        <td className={phone("price")}>{price(player.price)}</td>
+                        <td className={phone("ownership")}>{percent(player.ownership, { digits: 1 })}</td>
                         <td>
                           <button type="button" className={`icon-btn icon-btn-sm${chosen ? " is-on" : ""}`} aria-pressed={chosen} aria-label={`${chosen ? "Remove" : "Add"} ${player.name} ${chosen ? "from" : "to"} shortlist`} disabled={!chosen && compare.length >= 4} onClick={() => toggleCompare(player.player_id)}>
                             {chosen ? <X size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
