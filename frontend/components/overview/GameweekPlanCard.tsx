@@ -78,11 +78,11 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
     <dl className="metrics">
       <div>
         <dt>Next GW <SourceBadge kind="derived" /></dt>
-        <dd><Delta value={scenario.nextGwGain} unit=" xP" /></dd>
+        <dd><Delta value={scenario.nextGwGain} unit=" xP" animate /></dd>
       </div>
       <div>
         <dt>5-GW gain <SourceBadge kind="derived" /></dt>
-        <dd><Delta value={scenario.horizonGain} unit=" xP" /></dd>
+        <dd><Delta value={scenario.horizonGain} unit=" xP" animate /></dd>
       </div>
       <div>
         <dt>Hit cost</dt>
@@ -90,7 +90,7 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
       </div>
       <div>
         <dt>5-GW net <SourceBadge kind="derived" /></dt>
-        <dd><Delta value={scenario.horizonNet} unit=" xP" /></dd>
+        <dd><Delta value={scenario.horizonNet} unit=" xP" animate /></dd>
       </div>
       <div className="metrics-note">
         <dt className="sr-only">Free transfers</dt>

@@ -2,11 +2,12 @@
 
 import { Crown, Radar, Swords, Trophy } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 
 import { useTeam } from "@/app/providers/TeamProvider";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { DataState } from "@/components/states/DataState";
+import { CountUp } from "@/components/ui/CountUp";
 import { Card, Meter, Skeleton, SourceBadge } from "@/components/ui/primitives";
 import { fixed } from "@/lib/format";
 import type { LeaguePlayer, LeagueStanding, RivalPlayer } from "@/lib/contracts";
@@ -33,7 +34,7 @@ function Race({ standings, selected, onSelect }: { standings: LeagueStanding[]; 
   const floor = Math.max(0, lowest - (leader - lowest) * 0.6);
   return (
     <ol className="race" aria-label="League standings">
-      {standings.map((row) => {
+      {standings.map((row, index) => {
         const share = ((row.total ?? 0) - floor) / Math.max(1, leader - floor);
         const content = (
           <>
@@ -43,12 +44,12 @@ function Race({ standings, selected, onSelect }: { standings: LeagueStanding[]; 
               <small>{row.active_chip ? `${row.active_chip} · ` : ""}GW {row.event_points ?? "—"}</small>
             </span>
             <span className="race-track" aria-hidden="true"><i style={{ width: `${Math.max(4, share * 100)}%` }} /></span>
-            <span className="race-total num">{row.total ?? "—"}</span>
+            <span className="race-total num"><CountUp value={row.total} /></span>
             <span className={`race-gap num${row.is_you ? " is-you" : row.gap_to_you > 0 ? " is-ahead" : row.gap_to_you < 0 ? " is-behind" : ""}`}>{gapLabel(row)}</span>
           </>
         );
         return (
-          <li key={row.team_id}>
+          <li key={row.team_id} style={{ "--i": index } as CSSProperties}>
             {row.is_you ? (
               <div className="race-row is-you">{content}</div>
             ) : (

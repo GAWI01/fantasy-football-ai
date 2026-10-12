@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useId, type ReactNode } from "react";
+import { createContext, useContext, useId, useLayoutEffect, useRef, type ReactNode } from "react";
 
+import { CountUp } from "@/components/ui/CountUp";
 import type { SourceKind } from "@/lib/model/phase";
 import { useSectionOpen, type SectionDefaults } from "@/lib/sections";
 
@@ -148,11 +149,17 @@ export function Stat({
   );
 }
 
-export function Delta({ value, digits = 1, unit, neutralBelow = 0.05 }: { value: number | null | undefined; digits?: number; unit?: string; neutralBelow?: number }) {
+export function Delta({ value, digits = 1, unit, neutralBelow = 0.05, animate = false }: { value: number | null | undefined; digits?: number; unit?: string; neutralBelow?: number; animate?: boolean }) {
   if (typeof value !== "number" || !Number.isFinite(value)) return <span className="delta">—</span>;
   const tone = Math.abs(value) < neutralBelow ? "flat" : value > 0 ? "pos" : "neg";
-  const text = tone === "flat" ? (0).toFixed(digits) : `${value > 0 ? "+" : "−"}${Math.abs(value).toFixed(digits)}`;
-  return <span className={`delta delta-${tone}`}>{text}{unit ? <small>{unit}</small> : null}</span>;
+  const format = (n: number) => (Math.abs(n) < neutralBelow ? (0).toFixed(digits) : `${n > 0 ? "+" : "−"}${Math.abs(n).toFixed(digits)}`);
+  const text = tone === "flat" ? (0).toFixed(digits) : format(value);
+  return (
+    <span className={`delta delta-${tone}`}>
+      {animate && tone !== "flat" ? <CountUp value={value} decimals={digits} format={format} /> : text}
+      {unit ? <small>{unit}</small> : null}
+    </span>
+  );
 }
 
 export function Meter({ value, tone = "accent", label }: { value: number | null | undefined; tone?: "accent" | "pos" | "warn" | "neg" | "live"; label: string }) {
@@ -177,8 +184,29 @@ export function Segmented<T extends string>({
   label: string;
   size?: "sm" | "md";
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // One pill slides to the pressed option. Measured on the element directly, so
+  // it follows wraps and font loading without re-rendering.
+  useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const place = () => {
+      const active = root.querySelector<HTMLButtonElement>('button[aria-pressed="true"]');
+      if (!active) { delete root.dataset.slide; return; }
+      root.style.setProperty("--seg-x", `${active.offsetLeft}px`);
+      root.style.setProperty("--seg-y", `${active.offsetTop}px`);
+      root.style.setProperty("--seg-w", `${active.offsetWidth}px`);
+      root.style.setProperty("--seg-h", `${active.offsetHeight}px`);
+      root.dataset.slide = "true";
+    };
+    place();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(place);
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [value, options.length]);
   return (
-    <div className={`seg seg-${size}`} role="group" aria-label={label}>
+    <div ref={ref} className={`seg seg-${size}`} role="group" aria-label={label}>
       {options.map((option) => (
         <button
           key={option.value}

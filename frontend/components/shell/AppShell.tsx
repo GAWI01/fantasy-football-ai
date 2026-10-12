@@ -122,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="app" data-phase={connected ? state.phase : "setup"} data-motion={motion}>
-      <AmbientBackground mood={mood} level={motion} goalId={moment?.kind === "goal" ? moment.id : null} />
+      <AmbientBackground mood={mood} level={motion} goalId={moment?.kind === "goal" ? moment.id : null} pulseKey={state.officialFetchedAt} />
       <a className="skip-link" href="#main-content">Skip to content</a>
       <div className={`moment-toast moment-${toast?.kind ?? "none"}${toast ? " is-shown" : ""}`} role="status" aria-live="polite">
         {toast ? (toast.kind === "goal" ? <><b>Goal!</b> {toast.playerName}</> : <><b>Assist</b> {toast.playerName}</>) : null}
