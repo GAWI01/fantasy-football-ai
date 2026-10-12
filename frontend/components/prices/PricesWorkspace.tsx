@@ -89,7 +89,7 @@ export function PricesWorkspace() {
         <div>
           <span className="eyebrow">Explore · Prices</span>
           <h1>Price changes</h1>
-          <p className="page-lede">Who is about to rise or drop in price, from FPL&apos;s own figures. Make a transfer you were going to make anyway before a rise, or sell before a drop.</p>
+          <p className="page-lede">Who is about to rise or drop in price tonight, from FPL&apos;s own figures.</p>
         </div>
         <div className="page-head-actions"><SourceBadge kind={prices.data?.meta.stale ? "cached" : "official"} /></div>
       </header>
@@ -161,10 +161,13 @@ export function PricesWorkspace() {
         )}
       </Card>
 
-      <p className="card-note">
+      <details className="card-more">
+        <summary>How do price changes work?</summary>
+        <p className="card-note">
         Progress is FPL&apos;s published figure: at +100% a rise is due, at −100% a drop. FPL changes prices once a day and a player who has just changed is locked for a while.
         When you sell, FPL gives you only half of any rise since you bought (rounded down to £0.1m), so chase points first and use this for timing.
-      </p>
+        </p>
+      </details>
     </div>
   );
 }

@@ -272,7 +272,7 @@ export function LeagueWorkspace() {
               </div>
             ) : null}
             <p className="card-note">
-              Rivals&apos; EO: how many of your rivals start a player, a captain counting twice. {data.basis} <SourceBadge kind="official" />
+              The percentage is how many of your rivals start that player (a captain counts twice). {data.basis} <SourceBadge kind="official" />
             </p>
           </Card>
         </div>

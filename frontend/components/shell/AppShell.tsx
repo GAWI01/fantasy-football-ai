@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, Compass, History, LayoutDashboard, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy } from "lucide-react";
+import { CalendarRange, Compass, History, House, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
@@ -20,7 +20,7 @@ import { isActive, MENU_ITEMS, MOBILE_PRIMARY, type NavKey } from "@/lib/navigat
 
 
 const ICONS: Record<NavKey, LucideIcon> = {
-  overview: LayoutDashboard,
+  overview: House,
   team: Shirt,
   plan: Repeat2,
   league: Trophy,

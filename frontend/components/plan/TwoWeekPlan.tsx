@@ -35,7 +35,8 @@ export function NextWeekLine({ plan, transfersNow }: { plan: TwoWeekPlan | null;
 export function TwoWeekCard({ plan, transfersNow }: { plan: TwoWeekPlan; transfersNow: number }) {
   const best = Math.max(...plan.sequences.map((item) => item.score_vs_hold));
   return (
-    <Card id="two-week" title="Now and next-week plan" eyebrow={`${plan.horizon ?? "Multi"}-Gameweek scoring horizon`} icon={<CalendarClock size={16} />} source={["model", "derived"]}>
+    <Card id="two-week" title="This week vs next week" eyebrow="Move now or wait?" icon={<CalendarClock size={16} />} source={["model", "derived"]}
+      collapse={{ id: "plan-two-week", defaults: { mobile: false, desktop: true }, summary: "Compares moving now with waiting a week" }}>
       {!plan.sequences.length ? <p className="muted">No follow-up sequence was returned.</p> : null}
       <ul className="two-week-list">
         {plan.sequences.map((sequence) => {
@@ -59,6 +60,7 @@ export function TwoWeekCard({ plan, transfersNow }: { plan: TwoWeekPlan; transfe
       <details className="card-more">
         <summary>How is this worked out?</summary>
         <p className="card-note">
+        Scores cover the next {plan.horizon ?? "few"} Gameweeks.
         Each row evaluates transfers now with a follow-up next week using today&apos;s projections. Next-week moves apply only if current info holds.
         Unused free transfers carry over (up to five); extra moves cost −4.
         The baseline is hold now, then optimize next week with the allowed moves, rather than keeping the squad unchanged throughout.
