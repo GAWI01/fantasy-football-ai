@@ -719,3 +719,43 @@ export type RivalEnvelope = {
   };
   meta: SourceMeta; errors: AreaError[];
 };
+
+export type ChipSquadPlayer = {
+  player_id: number;
+  name: string;
+  position: string;
+  team: string;
+  /** What the squad pays: a kept player's selling price, a newcomer's price. */
+  cost: number;
+  price: number;
+  predicted_points: number;
+  horizon_points: number;
+  owned: boolean;
+  starter: boolean;
+};
+
+export type ChipSquad = {
+  available: boolean;
+  status?: string;
+  gameweeks?: number;
+  players?: ChipSquadPlayer[];
+  starting_xi_ids?: number[];
+  bench_ids?: number[];
+  captain_id?: number;
+  vice_captain_id?: number;
+  projected_points?: number;
+  current_projected_points?: number;
+  /** Planner scale: one week for a Free Hit, the weighted horizon for a Wildcard. */
+  gain?: number;
+  players_in?: number[];
+  players_out?: number[];
+  cost?: number;
+  budget?: number;
+  bank_left?: number;
+};
+
+export type ChipSquadsEnvelope = {
+  data: { free_hit: ChipSquad; wildcard: ChipSquad; selling_prices_known: boolean };
+  meta: SourceMeta & { event?: number };
+  errors: AreaError[];
+};

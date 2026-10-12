@@ -588,3 +588,92 @@ def evaluate_moves(
         return {"legal": False, "reason": "This move is not allowed: " + "; ".join(reasons) + "."}
     option = _option(problem, solution, hold, owned, {**sale_info}, free_transfers, policy)
     return {"legal": True, "option": option, "hold": _option(problem, hold, hold, owned, sale_info, free_transfers, policy)}
+
+
+def _squad_view(problem: _Problem, solution: _Solution, hold: _Solution, owned: set[int],
+                sale_values: Mapping[int, float]) -> dict[str, Any]:
+    """A chip squad as the app shows it: the first Gameweek's XI on a pitch."""
+    starters = set(solution.starters[0])
+    captain = solution.captains[0]
+    first = {pid: float(problem.points[problem.index_of(pid), 0]) for pid in solution.ids}
+    vice = max((pid for pid in starters if pid != captain), key=lambda pid: (first[pid], -pid))
+    bench_outfield = sorted((pid for pid in solution.ids if pid not in starters and problem.positions[problem.index_of(pid)] != "GK"),
+                            key=lambda pid: (-first[pid], pid))
+    bench_keeper = [pid for pid in solution.ids if pid not in starters and problem.positions[problem.index_of(pid)] == "GK"]
+    players = []
+    for pid in solution.ids:
+        i = problem.index_of(pid)
+        players.append({
+            "player_id": pid,
+            "name": str(problem.names[i]),
+            "position": str(problem.positions[i]),
+            "team": str(problem.clubs[i]),
+            # What the squad pays: a kept player's selling price, a newcomer's market price.
+            "cost": round(float(sale_values[pid]) if pid in owned else float(problem.prices[i]), 1),
+            "price": round(float(problem.prices[i]), 1),
+            "predicted_points": round(first[pid], 3),
+            "horizon_points": round(float(problem.points[i] @ problem.weights), 3),
+            "owned": pid in owned,
+            "starter": pid in starters,
+        })
+    cost = sum(player["cost"] for player in players)
+    projected = sum(first[pid] for pid in starters) + first[captain]
+    hold_first = sum(float(problem.points[problem.index_of(pid), 0]) for pid in hold.starters[0]) \
+        + float(problem.points[problem.index_of(hold.captains[0]), 0])
+    return {
+        "players": sorted(players, key=lambda player: player["player_id"]),
+        "starting_xi_ids": sorted(starters),
+        "bench_ids": bench_outfield + bench_keeper,
+        "captain_id": captain,
+        "vice_captain_id": vice,
+        "projected_points": round(projected, 3),
+        "current_projected_points": round(hold_first, 3),
+        # On the planner's own scale (weighted horizon for a Wildcard, one week for a Free Hit).
+        "gain": round(solution.value - hold.value, 3),
+        "players_in": sorted(set(solution.ids) - owned),
+        "players_out": sorted(owned - set(solution.ids)),
+        "cost": round(cost, 1),
+        "budget": round(problem.budget, 1),
+        "bank_left": round(problem.budget - cost, 1),
+    }
+
+
+def build_chip_squads(
+    frames: Sequence[pd.DataFrame],
+    *,
+    owned_ids: Sequence[int],
+    sale_info: Mapping[int, tuple[float, str, bool]],
+    bank: float,
+    weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+) -> dict[str, Any]:
+    """The best Free Hit and Wildcard squads within the manager's budget.
+
+    Free Hit: any legal 15 for the next Gameweek only (the squad returns
+    afterwards), valued like every plan: the best XI and captain, the bench as
+    autosub cover. Wildcard: the same rebuild valued over the weighted horizon,
+    because the squad is kept. Both spend the bank plus the squad's selling
+    value, with owned players kept at their selling price.
+    """
+    policy = policy or DEFAULT_POLICY
+    if not frames:
+        raise ActionPlanningError("at least one Gameweek of projections is required")
+    weights = list(weights) if weights is not None else [1.0] * len(frames)
+    owned = {int(pid) for pid in owned_ids}
+    sale_values = {pid: info[0] for pid, info in sale_info.items()}
+    result: dict[str, Any] = {}
+    for chip, chip_frames, chip_weights in (
+        ("free_hit", frames[:1], [1.0]),
+        ("wildcard", frames, weights),
+    ):
+        problem = _Problem(chip_frames, chip_weights, owned, sale_values, bank, policy)
+        status, hold = _solve_hold(problem)
+        if hold is None:
+            result[chip] = {"available": False, "status": status}
+            continue
+        status, rebuild = problem.solve(newcomers_low=0, newcomers_high=15)
+        if rebuild is None:
+            result[chip] = {"available": False, "status": status}
+            continue
+        result[chip] = {"available": True, "gameweeks": len(chip_frames), **_squad_view(problem, rebuild, hold, owned, sale_values)}
+    return result

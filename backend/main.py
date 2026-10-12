@@ -80,7 +80,7 @@ from .review_service import (
 )
 
 from engine.decision_engine import build_decision
-from engine.transfer_analysis import evaluate_transfer_moves
+from engine.transfer_analysis import chip_squads, evaluate_transfer_moves
 from optimizer.action_planner import DEFAULT_POLICY
 
 
@@ -1154,6 +1154,32 @@ def evaluate_transfers_v1(team_id: int, sell: str, buy: str, free_transfers: int
         "net_gain": recommendation.get("net_gain"),
     }
     result["free_transfers"] = inputs["free_transfers"]
+    meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
+    meta["event"] = inputs["manifest"].prediction_event
+    return api_envelope(result, meta)
+
+
+@app.get("/api/v1/chip-squads/{team_id}")
+def get_chip_squads_v1(team_id: int):
+    """The best Free Hit (next Gameweek) and Wildcard (five Gameweeks) squads.
+
+    Same inputs, horizon, prices and planner as the recommendation, so the
+    gains are on the same scale. Shown whether or not the chip is still
+    available; the app says which chips the manager has.
+    """
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="team_id must be positive")
+    try:
+        inputs = _decision_inputs(team_id, None, None)
+        frames = [inputs["horizon_predictions"][key] for key in sorted(inputs["horizon_predictions"])]
+        weights = [max(0.4, 1.0 - 0.15 * index) for index in range(len(frames))]
+        result = chip_squads(inputs["team"], inputs["predictions"], horizon_predictions=frames, horizon_weights=weights)
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"No FPL team found with ID {team_id}.") from exc
+    except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except (DataLoaderError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
     meta["event"] = inputs["manifest"].prediction_event
     return api_envelope(result, meta)

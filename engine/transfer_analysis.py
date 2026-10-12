@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from engine.fpl_rules import detect_club_changes, validate_transfer_squad
-from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, evaluate_moves, plan_action
+from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, build_chip_squads, evaluate_moves, plan_action
 
 
 class TransferAnalysisError(ValueError):
@@ -854,5 +854,30 @@ def evaluate_transfer_moves(
     if result["legal"]:
         for key in ("option", "hold"):
             result[key] = {k: v for k, v in result[key].items() if k != "squad"}
+    result["selling_prices_known"] = all(value[2] for value in sales.values())
+    return result
+
+
+def chip_squads(
+    team: dict[str, Any],
+    predictions: pd.DataFrame,
+    *,
+    horizon_predictions: Sequence[pd.DataFrame] | None = None,
+    horizon_weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+) -> dict[str, Any]:
+    """The best Free Hit and Wildcard squads, on the recommendation's inputs."""
+    picks = _validate_inputs(team, predictions)
+    frames = list(horizon_predictions) if horizon_predictions else [predictions]
+    frames = [frame.assign(position=frame["position"].astype(str).str.upper().replace({"GKP": "GK"}))
+              for frame in frames]
+    weights = list(horizon_weights) if horizon_weights is not None else [1.0] * len(frames)
+    prices = dict(zip(pd.to_numeric(frames[0]["player_id"]).astype(int), pd.to_numeric(frames[0]["price"])))
+    sales = {int(pick["player_id"]): selling_value(pick, float(prices[int(pick["player_id"])])) for pick in picks}
+    try:
+        result = build_chip_squads(frames, owned_ids=list(sales), sale_info=sales,
+                                   bank=float(team.get("bank") or 0.0), weights=weights, policy=policy)
+    except ActionPlanningError as exc:
+        raise TransferAnalysisError(str(exc)) from exc
     result["selling_prices_known"] = all(value[2] for value in sales.values())
     return result

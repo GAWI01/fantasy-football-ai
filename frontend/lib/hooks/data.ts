@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 
-import { fetchFixtureMatrix, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
-import type { FixtureMatrixEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
+import { fetchChipSquads, fetchFixtureMatrix, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
+import type { ChipSquadsEnvelope, FixtureMatrixEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
 import { useResource } from "@/lib/hooks/useResource";
 
 function useDataVersion() {
@@ -59,4 +59,10 @@ export function useLeague(leagueId: number | null, teamId: string | null) {
 export function useRival(leagueId: number | null, rivalId: number | null, teamId: string | null) {
   const version = useDataVersion();
   return useResource<RivalEnvelope>(leagueId && rivalId && teamId ? `rival:${leagueId}:${rivalId}:${teamId}:${version}` : null, (signal) => fetchRival(leagueId ?? 0, rivalId ?? 0, teamId ?? "", signal), 300_000);
+}
+
+/** Fetched only when asked for (a full rebuild takes a few seconds). */
+export function useChipSquads(teamId: string | null, enabled: boolean) {
+  const version = useDataVersion();
+  return useResource<ChipSquadsEnvelope>(enabled && teamId ? `chip-squads:${teamId}:${version}` : null, (signal) => fetchChipSquads(teamId ?? "", signal), 600_000);
 }

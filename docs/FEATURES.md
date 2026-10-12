@@ -119,6 +119,14 @@ squad:
 | **Bench Boost** | A double Gameweek with at least 12 projected bench points | The week your bench projects the most, with doubles counted |
 | **Triple Captain** | A double Gameweek with a captain projected for at least 9 points | The week your best captain projects the most |
 
+**Best Free Hit and Wildcard teams.** Two buttons on the Chips card open the
+best squad each chip could build right now, on a pitch with captain and bench
+order: the Free Hit picked for next Gameweek only (your squad returns after),
+the Wildcard for the next five Gameweeks (it is kept). Both spend your bank
+plus your players' selling prices, keep the three-per-club rule and show the
+gain over your current team. A chip you have used is still shown, marked as
+used.
+
 A chip is never recommended just because it is available. When a blank or
 double Gameweek is announced, or injuries pile up in one week, that week
 appears automatically. The Overview's chip tile shows a one-line summary,

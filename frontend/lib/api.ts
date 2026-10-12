@@ -1,4 +1,5 @@
 import type {
+  ChipSquadsEnvelope,
   DashboardEnvelope,
   EvaluationEnvelope,
   LeagueEnvelope,
@@ -172,6 +173,12 @@ export async function fetchEvaluation(
   return readJson<EvaluationEnvelope>(response);
 }
 
+
+/** The best Free Hit and Wildcard squads within the manager's budget. */
+export async function fetchChipSquads(teamId: string, signal?: AbortSignal): Promise<ChipSquadsEnvelope> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/chip-squads/${numericId(teamId, "FPL Team ID")}`, { cache: "no-store", signal });
+  return readJson<ChipSquadsEnvelope>(response);
+}
 
 function numericId(value: string | number, label: string): string {
   const text = String(value).trim();

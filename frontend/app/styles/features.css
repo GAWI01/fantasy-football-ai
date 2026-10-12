@@ -843,3 +843,8 @@ button.race-row:hover { background: var(--surface-hover); }
 @media (max-width: 1023px) {
   .plan-hero-grid:has(> .hero-lines) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Chip squads: the best Free Hit and Wildcard teams */
+.chip-squad-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chip-squad { display: grid; gap: 14px; margin-top: 14px; }
+.chip-squad-metrics dd small { font-size: var(--fs-xs); color: var(--text-3); font-weight: 600; }
