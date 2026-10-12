@@ -8,8 +8,11 @@ licence.
   under `historical_data/` and `benchmark/data/`) belongs to the Premier League
   / Fantasy Premier League. It is used for a free, non-commercial tool, with
   attribution, and is not licensed by this repository. FPL and Premier League
-  names and marks belong to their owners. This project is not affiliated with
-  or endorsed by them.
+  names and marks belong to their owners, and club names, colours and marks
+  belong to the clubs. This project is not affiliated with or endorsed by any
+  of them. The kits in the app are simplified drawings made for this site
+  (traditional colours and a generic layout, no crests, sponsors or maker
+  marks); they are not official designs or replicas.
 - **Historical seasons** come from
   [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League)
   by Vaastav Anand. He gave permission on 2026-10-11, on condition of

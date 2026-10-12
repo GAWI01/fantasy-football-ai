@@ -144,6 +144,7 @@ cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit
 ---
 
 <sub>Free, independent and non-commercial. Not affiliated with or endorsed by
-the Premier League or Fantasy Premier League. FPL data, names and marks belong
-to their owners. Code under the [MIT licence](LICENSE); data is not covered,
+the Premier League, Fantasy Premier League or any football club. FPL data,
+club names, colours and marks belong to their owners; kits are simplified
+drawings made for this site. Code under the [MIT licence](LICENSE); data is not covered,
 see [DATA_NOTICE.md](DATA_NOTICE.md). Made by [GAWI01](https://github.com/GAWI01).</sub>

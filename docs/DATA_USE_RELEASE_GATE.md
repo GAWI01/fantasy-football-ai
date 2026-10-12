@@ -9,6 +9,7 @@ This engineering review is not legal advice. It records the current product beha
 - Reads unauthenticated JSON responses from `fantasy.premierleague.com/api` for bootstrap metadata, fixtures, live event points, public manager picks/history, and public transfers.
 - Stores only the user's numeric public Team ID and plan history in that user's browser.
 - Does not request FPL credentials, write to an FPL account, reproduce player photos, reproduce club badges/crests or copy official shirt artwork; the UI uses original geometric shirt shapes with simple club-colour abstractions.
+- Kits (2026-10-12): only long-standing home colours (approximate shades) and one generic layout per club (plain, stripes, hoops, halves, sash or contrasting sleeves), with single-colour collar/cuffs and the club initials; nothing season-specific, and no crests, sponsors, maker marks or trims, league patches or anything derived from FPL shirt images.
 - Uses club and player names, fixtures, prices, statuses, points, rankings, and other FPL game data in the decision product.
 
 ## Official terms reviewed
@@ -37,7 +38,7 @@ Updated 2026-10-03: the project owner has decided the product will be a **free, 
 
 1. No payments, subscriptions, ads, affiliate links, sponsorship or data resale.
 2. No “FPL”, “Fantasy Premier League” or “Premier League” in the product name, logo, domain or app metadata. Those names may appear only descriptively (for example “works with your Fantasy Premier League Team ID”).
-3. A visible “independent, not affiliated with or endorsed by the Premier League or Fantasy Premier League” notice on every page.
+3. A visible “independent, not affiliated with or endorsed by the Premier League, Fantasy Premier League or any football club” notice on every page.
 4. No crests, logos, player photos, official shirt artwork or official imagery; original geometric club-colour kits only.
 5. Read-only: no FPL credentials, no writes to official accounts, no automation of transfers or chips.
 6. Polite upstream use: server-side cache, bounded cache size and a capped upstream request rate (`FPL_AI_UPSTREAM_MAX_PER_MINUTE`, default 60), with an identifying User-Agent. Browsers never call the official API directly.

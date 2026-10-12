@@ -1,12 +1,14 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
-import { useEffect, useId, useState, type DragEvent, type ReactNode } from "react";
+import { useContext, useEffect, useId, useState, type DragEvent, type ReactNode } from "react";
 
 import { Kit } from "@/components/kit/Kit";
 import { LiveStatCard } from "@/components/pitch/LiveStatCard";
 import { POSITIONS } from "@/lib/fpl/rules";
+import { LiveMomentContext } from "@/lib/hooks/useLiveMoments";
 import { isFlagged, type SquadPlayer } from "@/lib/model/squad";
+import { useChangeFlash } from "@/lib/motion";
 
 export type ValueMode = "projected" | "live";
 
@@ -103,6 +105,10 @@ export function PitchPlayer({
       window.removeEventListener("resize", close);
     };
   }, [open, tile]);
+  // Live points that move glow once; the player who just scored pops.
+  const flash = useChangeFlash(mode === "live" ? value.text : null);
+  const moment = useContext(LiveMomentContext);
+  const scored = mode === "live" && moment?.kind === "goal" && moment.playerId === player.id ? moment.id : undefined;
   const Tag = onPress || inspectable ? "button" : "div";
   const interaction = onPress
     ? { type: "button" as const, onClick: () => onPress(player), "aria-pressed": selected ?? false }
@@ -122,21 +128,23 @@ export function PitchPlayer({
       ref={inspectable ? setTile : undefined}
       {...interaction}
       aria-label={label}
-      className={["pp", `pp-${size}`, selected ? "is-selected" : "", target ? "is-target" : "", dimmed ? "is-dimmed" : "", mode === "live" && player.fixtureState === "live" ? "is-playing" : "", inspectable ? "is-inspectable" : "", open ? "is-open" : ""].filter(Boolean).join(" ")}
+      className={["pp", `pp-${size}`, selected ? "is-selected" : "", target ? "is-target" : "", dimmed ? "is-dimmed" : "", mode === "live" && player.fixtureState === "live" ? "is-playing" : "", inspectable ? "is-inspectable" : "", open ? "is-open" : "", scored ? "is-scorer" : ""].filter(Boolean).join(" ")}
+      data-moment={scored}
       draggable={draggable || undefined}
       onDragStart={draggable ? (event: DragEvent<HTMLElement>) => onDragStart?.(event, player) : undefined}
       onDragEnd={draggable ? onDragEnd : undefined}
       onDragOver={onDragOver ? (event: DragEvent<HTMLElement>) => onDragOver(event, player) : undefined}
       onDrop={onDrop ? (event: DragEvent<HTMLElement>) => onDrop(event, player) : undefined}
     >
-      <span className="pp-kit">
+      <span className="pp-kit" key={scored}>
+        {scored ? <i className="pp-ring" aria-hidden="true" /> : null}
         <Kit team={player.team} teamShort={player.teamShort} goalkeeper={player.position === "GKP"} size={size === "sm" ? 38 : 50} />
         {isCaptain ? <b className="pp-badge pp-badge-c" aria-hidden="true">C</b> : isVice ? <b className="pp-badge pp-badge-v" aria-hidden="true">V</b> : null}
         {flagged ? <i className={`pp-flag pp-flag-${flagTone}`} aria-hidden="true"><AlertTriangle size={10} strokeWidth={3} /></i> : null}
       </span>
       <span className="pp-plate">
         <span className="pp-name">{player.name}</span>
-        <span className={`pp-value pp-value-${value.kind}`}>{value.text}</span>
+        <span key={flash} className={`pp-value pp-value-${value.kind}${flash ? " is-flash" : ""}`}>{value.text}</span>
       </span>
       {fixture ? <span className="pp-fixture">{fixture}</span> : null}
     </Tag>
