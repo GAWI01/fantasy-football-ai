@@ -127,6 +127,11 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank, planP
           <div className="bench-head"><span className="eyebrow">Bench</span></div>
           <div className="bench-row">{bench.map((player, index) => <PitchPlayer key={player.id} player={player} mode="live" size="sm" benchIndex={index} />)}</div>
         </div>
+        <div className="live-key" aria-hidden="true">
+          <span><i className="key-playing" />Playing</span>
+          <span><i className="key-finished" />Finished</span>
+          <span><i className="key-upcoming" />To play</span>
+        </div>
       </Card>
 
       <div className="live-side">

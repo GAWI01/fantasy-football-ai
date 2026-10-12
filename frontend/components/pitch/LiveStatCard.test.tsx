@@ -59,3 +59,22 @@ describe("live stats card", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 });
+
+describe("live match state on the pitch", () => {
+  it("marks a player whose match is over, one still playing and one still to play", () => {
+    const player = livePlayer();
+    const { container, rerender } = render(<PitchPlayer player={{ ...player, fixtureState: "finished" }} mode="live" />);
+    expect(container.querySelector(".pp")).toHaveClass("is-finished");
+
+    rerender(<PitchPlayer player={{ ...player, fixtureState: "live" }} mode="live" />);
+    expect(container.querySelector(".pp")).toHaveClass("is-playing");
+    expect(container.querySelector(".pp")).not.toHaveClass("is-finished");
+
+    rerender(<PitchPlayer player={{ ...player, fixtureState: "upcoming" }} mode="live" />);
+    expect(container.querySelector(".pp")).toHaveClass("is-upcoming");
+
+    // Projections never carry a match state.
+    rerender(<PitchPlayer player={{ ...player, fixtureState: "finished" }} mode="projected" />);
+    expect(container.querySelector(".pp")).not.toHaveClass("is-finished");
+  });
+});
