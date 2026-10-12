@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, History, LayoutDashboard, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy, Users } from "lucide-react";
+import { CalendarRange, Compass, History, LayoutDashboard, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
@@ -16,7 +16,7 @@ import { LiveMomentContext, useLiveMoments, type LiveMoment } from "@/lib/hooks/
 import { refreshResources } from "@/lib/hooks/useResource";
 import type { GameState } from "@/lib/model/phase";
 import { useMotionLevel } from "@/lib/motion";
-import { isActive, MOBILE_PRIMARY, NAV_ITEMS, type NavKey } from "@/lib/navigation";
+import { isActive, MENU_ITEMS, MOBILE_PRIMARY, type NavKey } from "@/lib/navigation";
 
 
 const ICONS: Record<NavKey, LucideIcon> = {
@@ -24,7 +24,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
   team: Shirt,
   plan: Repeat2,
   league: Trophy,
-  players: Users,
+  players: Compass,
   prices: TrendingUp,
   fixtures: CalendarRange,
   review: History,
@@ -75,8 +75,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const deadlineEvent = liveNext?.next_deadline_time ? liveNext.next_event ?? null : state.targetEvent ?? dashboard?.data.live?.next_event ?? null;
   const deadlineTime = liveNext?.next_deadline_time ?? state.deadline;
   const showDeadline = connected && deadlineTime && state.phase !== "settled" ? deadlineTime : null;
-  const mobileItems = NAV_ITEMS.filter((item) => MOBILE_PRIMARY.includes(item.key));
-  const moreItems = NAV_ITEMS.filter((item) => !MOBILE_PRIMARY.includes(item.key));
+  const mobileItems = MENU_ITEMS.filter((item) => MOBILE_PRIMARY.includes(item.key));
+  const moreItems = MENU_ITEMS.filter((item) => !MOBILE_PRIMARY.includes(item.key));
   const moreActive = moreItems.some((item) => isActive(item, pathname));
   const primaryIndex = mobileItems.findIndex((item) => isActive(item, pathname));
   const activeTab = primaryIndex >= 0 ? primaryIndex : moreActive ? mobileItems.length : -1;
@@ -127,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="brand-text"><strong><span className="brand-full">Fantasy Football<em>·</em>AI</span><span className="brand-short" aria-hidden="true">FF<em>·</em>AI</span></strong><small><span className="brand-tagline">Gameweek intelligence</span><span className="brand-credit">Made by <b>gawi</b></span></small></span>
           </Link>
           <nav className="topnav" aria-label="Primary">
-            {NAV_ITEMS.filter((item) => item.key !== "settings").map((item) => {
+            {MENU_ITEMS.filter((item) => item.key !== "settings").map((item) => {
               const Icon = ICONS[item.key];
               const active = isActive(item, pathname);
               return (
@@ -200,14 +200,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </button>
       </nav>
 
-      <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="More" subtitle="Research, history and settings">
+      <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="More" subtitle="Leagues, history and settings">
         <nav className="more-nav" aria-label="More destinations">
           {moreItems.map((item) => {
             const Icon = ICONS[item.key];
             return (
               <Link key={item.key} href={item.href} className="more-link" aria-current={isActive(item, pathname) ? "page" : undefined} onClick={() => setMoreOpen(false)}>
                 <Icon size={18} aria-hidden="true" />
-                <span>{item.label}</span>
+                <span><b>{item.label}</b><small>{item.hint}</small></span>
               </Link>
             );
           })}

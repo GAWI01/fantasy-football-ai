@@ -2,12 +2,33 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test } from "vitest";
 
+import { DATA_LABELS_KEY } from "@/lib/preferences";
 import { resetSectionSignals, SECTIONS_KEY } from "@/lib/sections";
 
 import { Card, SourceBadge, SourceScope } from "./primitives";
 
 
+test("with data labels off only Live and Cached show", () => {
+  localStorage.clear();
+  render(
+    <Card title="Prices" source="official">
+      <p>Price <SourceBadge kind="model" /></p>
+      <SourceBadge kind="live" />
+      <SourceBadge kind="cached" />
+      <SourceBadge kind="derived" always />
+    </Card>,
+  );
+
+  expect(screen.queryByText("FPL data")).not.toBeInTheDocument();
+  expect(screen.queryByText("Model")).not.toBeInTheDocument();
+  expect(screen.getByText("Live")).toBeInTheDocument();
+  expect(screen.getByText("Cached")).toBeInTheDocument();
+  expect(screen.getByText("Derived")).toBeInTheDocument();
+});
+
+
 test("a card labels each source once: inner badges for a header source are left out", () => {
+  localStorage.setItem(DATA_LABELS_KEY, "on");
   render(
     <Card title="Transfer decision" source={["model", "derived"]}>
       <p>Next GW <SourceBadge kind="derived" /></p>
@@ -24,6 +45,7 @@ test("a card labels each source once: inner badges for a header source are left 
 
 
 test("pinned badges always show, and a custom label is never dropped", () => {
+  localStorage.setItem(DATA_LABELS_KEY, "on");
   render(
     <SourceScope kinds={["official"]}>
       <SourceBadge kind="official" pinned />

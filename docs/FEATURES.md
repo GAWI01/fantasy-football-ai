@@ -2,6 +2,20 @@
 
 A tour of everything Fantasy Football AI does. Back to the [README](../README.md).
 
+## Where to find what
+
+| Menu | What is there |
+| --- | --- |
+| **Overview** | This Gameweek at a glance: the plan, or your live score. |
+| **Team** | Your squad on the pitch: try lineups, bench order and armbands. |
+| **Plan** | Tabs for **Transfers**, **Captain**, **Chips**, **Squad** (five-week outlook, minutes risk) and **Why**. |
+| **Explore** | Tabs for **Players**, **Prices** and **Fixtures**. |
+| **Leagues** | Your mini-league race and how your squad differs from rivals. |
+| **History** | Your season and each Gameweek against the model. |
+| **Settings** | Team ID, motion and data labels. |
+
+On a phone the first four sit in the tab bar; **More** holds the rest, each with a one-line description.
+
 ## Gameweek plan
 
 The Overview shows one recommendation for the next deadline:
@@ -64,7 +78,8 @@ model's expectation. The rows add up to the player's official total.
 
 ![Plan and Transfers: the recommended transfer with next-Gameweek and five-Gameweek gains](screenshots/plan.png)
 
-The Plan page explains the recommendation in full:
+The Plan page explains the recommendation in full, in five tabs (Transfers,
+Captain, Chips, Squad, Why). Old links such as `/plan#chips` open the matching tab.
 
 - **Transfer decision:** who goes out, who comes in, the selling and buying
   prices, and four numbers:
@@ -226,6 +241,8 @@ only half of a rise when you sell, so points come first.
   - each transfer's projected and actual gain;
   - the biggest model miss and the biggest minutes miss;
   - every pick, player by player.
+- The calls (captain, decisions, bench) share one card, and the two biggest
+  misses share another. Transfers and player-by-player open on tap.
 - Wildcard weeks show your **net squad changes**: a chain of swaps
   (A→B, then B→C) becomes one change (A→C), with the same totals.
 - The page opens on the latest Gameweek that has a saved pre-deadline forecast.
@@ -270,7 +287,9 @@ The app is meant to feel alive during a Gameweek, without getting in the way.
 
 ## Trust: what every number means
 
-Every number's source is labelled, once per card:
+With **Settings → Data labels** on, every number's source is labelled, once per
+card. Labels are off by default to keep screens calm. **Live** and **Cached** always
+show, and forecasts always carry their xP unit.
 
 - **FPL data:** straight from the official game. The app itself is independent, not official.
 - **Model:** the forecast.

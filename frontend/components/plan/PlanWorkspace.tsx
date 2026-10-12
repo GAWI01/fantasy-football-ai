@@ -2,7 +2,7 @@
 
 import { Crown, GitCompareArrows, Grid3x3, History, Info, Lightbulb, Repeat2, Zap } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Kit } from "@/components/kit/Kit";
 import { clubCode } from "@/lib/fpl/kits";
@@ -14,6 +14,7 @@ import { PriceTiming } from "@/components/prices/PriceTiming";
 import { NextWeekLine, TwoWeekCard } from "@/components/plan/TwoWeekPlan";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
+import { PageSectionTabs } from "@/components/shell/PageTabs";
 import { DataState } from "@/components/states/DataState";
 import { Card, Delta, Meter, SourceBadge } from "@/components/ui/primitives";
 import { fixed, price, sentenceCase, signed } from "@/lib/format";
@@ -100,11 +101,14 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
           <b>Hit check:</b> best plan with a hit nets {signed(withHit.horizonNet)} over five Gameweeks{noHit ? `, versus ${signed(noHit.horizonNet)} for the best free move` : ""}. {plan.recommended.hit ? "The engine accepts this hit." : "The engine does not take the hit."}
         </p>
       ) : null}
-      <p className="card-note">
+      <details className="card-more">
+        <summary>How is the score worked out?</summary>
+        <p className="card-note">
         <b>Score</b> is what the engine ranks by: the five-Gameweek gain (later weeks count less), minus any hit, minus a safety margin per hit,
         minus what the free transfers it uses would be worth if you banked them. Holding scores 0, so a move must beat keeping the transfer.
-        See <a href="#why">Why this plan</a> for more.
-      </p>
+        See the <a href="#why">Why</a> tab for more.
+        </p>
+      </details>
     </Card>
   );
 }
@@ -238,7 +242,7 @@ function HorizonGrid({ squad }: { squad: SquadPlayer[] }) {
           </tbody>
         </table>
       </div>
-      <p className="card-note">Darker cells mean more expected points. Totals are the sum of the five Gameweeks shown. Bench players are dimmed.</p>
+      <p className="card-note">Darker cells mean more expected points. Bench players are dimmed.</p>
     </Card>
   );
 }
@@ -261,6 +265,37 @@ function RiskCard({ squad }: { squad: SquadPlayer[] }) {
   );
 }
 
+type PlanTab = "transfers" | "captain" | "chips" | "squad" | "why";
+
+// Old links (#compare, #why …) still land on the section that holds them.
+const HASH_TAB: Record<string, PlanTab> = {
+  transfers: "transfers", compare: "transfers", "two-week": "transfers", "test-move": "transfers",
+  captain: "captain", chips: "chips", squad: "squad", risk: "squad", why: "why", history: "why",
+};
+
+/** The Plan's open section, kept in the address (#chips) so links and the back button work. */
+function usePlanTab(): [PlanTab, (tab: PlanTab) => void] {
+  const [tab, setTabState] = useState<PlanTab>("transfers");
+  useEffect(() => {
+    const sync = () => {
+      const hash = window.location.hash.slice(1);
+      const next = HASH_TAB[hash];
+      if (!next) return;
+      setTabState(next);
+      // A deep link to a card inside the section (#compare) scrolls to it once it renders.
+      if (hash !== next) window.setTimeout(() => document.getElementById(hash)?.scrollIntoView({ block: "start" }), 50);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
+  const setTab = useCallback((next: PlanTab) => {
+    setTabState(next);
+    window.history.replaceState(null, "", `#${next}`);
+  }, []);
+  return [tab, setTab];
+}
+
 export function PlanWorkspace() {
   const { ready, teamId, dashboard, loading, error, refresh, state, squad, plan, market, marketLoading } = useCockpit();
   const snapshot = useMemo(
@@ -268,6 +303,7 @@ export function PlanWorkspace() {
     [plan, state.actionsOpen, state.targetEvent, state.modelVersion, dashboard],
   );
   const { history, change } = usePlanHistory(snapshot, teamId);
+  const [tab, setTab] = usePlanTab();
 
   if (!ready || (!dashboard && loading)) return <DataState title="Loading your plan" loading>Running the decision engine on your squad.</DataState>;
   if (!dashboard && error) return <DataState tone="error" title="Your plan could not be loaded" action={<button className="btn btn-sm btn-primary" onClick={() => void refresh()}>Try again</button>}>{error}</DataState>;
@@ -304,47 +340,67 @@ export function PlanWorkspace() {
       {locked ? <DataState tone="stale" compact title={state.liveActive ? "Gameweek in progress" : "Deadline passed"}>These recommendations target GW{state.targetEvent}, whose deadline has passed. They are shown for context and cannot be acted on.</DataState> : null}
       {marketLoading ? <p className="faint loading-note">Loading incoming-player projections…</p> : null}
 
-      <div className="plan-grid">
-        <Card id="transfers" title="Transfer decision" icon={<Repeat2 size={16} />} source={(isTransfer ? plan.recommended : plan.bestRejected) ? ["model", "derived"] : "model"} tone={isTransfer ? "accent" : undefined} className="plan-transfer">
-          <div className="verdict verdict-inline">
-            <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>{isTransfer ? "Transfer" : "Hold"}</strong>
-            {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
-              <div className="rejected"><span className="eyebrow">Best move found · rolling is worth more</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
-            ) : <p className="muted">No evaluated transfer improves the squad.</p>}
-            {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
-            {isTransfer && !locked ? <PriceTiming moves={plan.recommended.moves} /> : null}
-            <NextWeekLine plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} />
-          </div>
-        </Card>
+      <PageSectionTabs<PlanTab>
+        label="Plan sections"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: "transfers", label: "Transfers" },
+          { value: "captain", label: "Captain" },
+          { value: "chips", label: <>Chips{plan.chip.recommended ? <i className="tab-dot" aria-label="a chip is recommended" /> : null}</> },
+          { value: "squad", label: "Squad" },
+          { value: "why", label: "Why" },
+        ]}
+      />
 
-        <div className="stack">
-          <CaptainCompare plan={plan} squad={squad} />
-          <ChipCard plan={plan} locked={locked} />
-        </div>
-        <ScenarioCompare plan={plan} />
-        {plan.twoWeek ? <TwoWeekCard plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} /> : null}
-        {teamId && !locked ? <OwnMoveCard teamId={teamId} plan={plan} squad={squad} market={market} /> : null}
-        <div className="plan-wide"><HorizonGrid squad={squad} /></div>
-        <Card id="why" title="Why this plan" icon={<Lightbulb size={16} />} className="plan-why">
-          <ExplainPlan plan={plan} modelVersion={state.modelVersion} />
-        </Card>
-        <div className="stack">
-          <RiskCard squad={squad} />
-          <Card title="Plan history" icon={<History size={16} />} source="derived">
-            {change ? <p className="change-line"><s>{change.previous.action}</s> → <b>{change.current.action}</b></p> : null}
-            {history.length ? (
-              <ol className="history-list">
-                {history.map((item, index) => (
-                  <li key={`${item.recordedAt}-${item.action}`}>
-                    <span className="faint">GW{item.event}</span>
-                    <span><b>{item.action}</b><small>Captain {item.captain}</small></span>
-                    <span className="faint">{index === 0 ? "Now" : new Date(item.recordedAt).toLocaleDateString([], { day: "numeric", month: "short" })}</span>
-                  </li>
-                ))}
-              </ol>
-            ) : <p className="faint">Plans are remembered in this browser when the recommendation changes meaningfully.</p>}
-          </Card>
-        </div>
+      <div className="plan-grid" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {tab === "transfers" ? (
+          <>
+            <Card id="transfers" title="Transfer decision" icon={<Repeat2 size={16} />} source={(isTransfer ? plan.recommended : plan.bestRejected) ? ["model", "derived"] : "model"} tone={isTransfer ? "accent" : undefined} className="plan-transfer">
+              <div className="verdict verdict-inline">
+                <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>{isTransfer ? "Transfer" : "Hold"}</strong>
+                {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
+                  <div className="rejected"><span className="eyebrow">Best move found · rolling is worth more</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
+                ) : <p className="muted">No evaluated transfer improves the squad.</p>}
+                {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
+                {isTransfer && !locked ? <PriceTiming moves={plan.recommended.moves} /> : null}
+                <NextWeekLine plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} />
+              </div>
+            </Card>
+            <div className="plan-wide"><ScenarioCompare plan={plan} /></div>
+            {plan.twoWeek ? <TwoWeekCard plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} /> : null}
+            {teamId && !locked ? <OwnMoveCard teamId={teamId} plan={plan} squad={squad} market={market} /> : null}
+          </>
+        ) : null}
+        {tab === "captain" ? <div className="plan-wide"><CaptainCompare plan={plan} squad={squad} /></div> : null}
+        {tab === "chips" ? <div className="plan-wide"><ChipCard plan={plan} locked={locked} /></div> : null}
+        {tab === "squad" ? (
+          <>
+            <div className="plan-wide"><HorizonGrid squad={squad} /></div>
+            <RiskCard squad={squad} />
+          </>
+        ) : null}
+        {tab === "why" ? (
+          <>
+            <Card id="why" title="Why this plan" icon={<Lightbulb size={16} />} className="plan-why">
+              <ExplainPlan plan={plan} modelVersion={state.modelVersion} />
+            </Card>
+            <Card id="history" title="Plan history" icon={<History size={16} />} source="derived">
+              {change ? <p className="change-line"><s>{change.previous.action}</s> → <b>{change.current.action}</b></p> : null}
+              {history.length ? (
+                <ol className="history-list">
+                  {history.map((item, index) => (
+                    <li key={`${item.recordedAt}-${item.action}`}>
+                      <span className="faint">GW{item.event}</span>
+                      <span><b>{item.action}</b><small>Captain {item.captain}</small></span>
+                      <span className="faint">{index === 0 ? "Now" : new Date(item.recordedAt).toLocaleDateString([], { day: "numeric", month: "short" })}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : <p className="faint">Plans are remembered in this browser when the recommendation changes meaningfully.</p>}
+            </Card>
+          </>
+        ) : null}
       </div>
     </div>
   );

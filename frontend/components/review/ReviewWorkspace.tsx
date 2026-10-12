@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BrainCircuit, Crown, History, LineChart, ShieldCheck, Timer } from "lucide-react";
+import { ArrowRight, BrainCircuit, Crown, History, LineChart, Timer } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -81,78 +81,82 @@ function ReviewBody({ data }: { data: Extract<ReviewData, { available: true }> }
         <p className="card-note">Hit cost {data.summary.hit_cost} pts · net after hits {data.summary.net_points_after_hits} pts. The projection is the model file saved before the deadline ({data.prediction_version}); it is never regenerated after the fact.</p>
       </Card>
 
-      <div className="grid-3">
-        <Card title="Captain" icon={<Crown size={16} />} source="official">
-          {data.captain ? (
-            <div className="review-call">
-              <strong>{data.captain.name}</strong>
-              <span className="faint">{data.captain.multiplier}× armband</span>
-              <dl className="mini-dl">
-                <div><dt>Projected</dt><dd>{fixed(data.captain.projected_contribution)}</dd></div>
-                <div><dt>Actual</dt><dd>{data.captain.actual_contribution}</dd></div>
-                <div><dt>Delta</dt><dd><Delta value={data.captain.contribution_delta} /></dd></div>
-              </dl>
-            </div>
-          ) : <p className="faint">Captain history was not available.</p>}
+      {data.next_signals.length ? (
+        <Card title="Signals for next Gameweek" icon={<BrainCircuit size={16} />} source="derived" action={<Link className="link" href="/plan">Open plan</Link>}>
+          <ul className="insight-list">
+            {data.next_signals.map((signal) => (
+              <li key={signal.type} className={signal.severity === "ACTION" ? "insight-warn" : undefined}>
+                <span className={`pill ${signal.severity === "ACTION" ? "pill-warn" : ""}`}>{signal.severity === "ACTION" ? "Act" : "Watch"}</span>
+                <div><strong>{signal.title}</strong><p>{signal.message}</p></div>
+              </li>
+            ))}
+          </ul>
         </Card>
-        <Card title="Decision quality" icon={<ShieldCheck size={16} />} source="model">
+      ) : null}
+
+      <Card title="Your calls" icon={<Crown size={16} />} source={["official", "model"]}>
+        <div className="review-tiles">
           <div className="review-call">
-            <strong className={`tone-${quality.tone}`}>{quality.label}</strong>
-            <span className="faint">{signed(data.decision_quality.projected_decision_value)} projected decision value</span>
-            <dl className="mini-dl">
-              <div><dt>Transfers</dt><dd>{signed(data.decision_quality.projected_transfer_value)}</dd></div>
-              <div><dt>Captain cost</dt><dd>{signed(-data.decision_quality.captain_opportunity_cost)}</dd></div>
-            </dl>
-            <p className="card-note">Rated on pre-deadline projections only. Luck after the deadline does not change it.</p>
+            <span className="eyebrow">Captain</span>
+            {data.captain ? (
+              <>
+                <strong>{data.captain.name}</strong>
+                <span className="faint">{data.captain.multiplier}× armband · {data.captain.actual_contribution} pts (model {fixed(data.captain.projected_contribution)})</span>
+                <span><Delta value={data.captain.contribution_delta} /> vs model</span>
+              </>
+            ) : <span className="faint">Captain history was not available.</span>}
           </div>
-        </Card>
-        <Card title="Bench" icon={<History size={16} />} source="official">
           <div className="review-call">
+            <span className="eyebrow">Decisions</span>
+            <strong className={`tone-${quality.tone}`}>{quality.label}</strong>
+            <span className="faint">Transfers {signed(data.decision_quality.projected_transfer_value)} · captain cost {signed(-data.decision_quality.captain_opportunity_cost)} xP</span>
+            <span className="faint">Judged on the forecast before the deadline, so luck does not count.</span>
+          </div>
+          <div className="review-call">
+            <span className="eyebrow">Bench</span>
             <strong>{data.bench.official_points} pts on the bench</strong>
             <span className="faint">{data.bench.player_count} players · model had {fixed(data.bench.projected_points)} xP</span>
           </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
 
-      <div className="grid-3">
-        <Card title="Transfers" icon={<ArrowRight size={16} />} source="derived">
-          {data.transfers.length ? (
-            <ul className="plain-list">
-              {data.transfers.map((transfer) => (
-                <li key={`${transfer.player_out.player_id}-${transfer.player_in.player_id}`}>
-                  <b>{transfer.player_out.name}</b> → <b>{transfer.player_in.name}</b>
-                  <span className="faint"> · model <Delta value={transfer.projected_delta} />, actual <Delta value={transfer.actual_delta} /></span>
-                </li>
-              ))}
-            </ul>
-          ) : <p className="faint">No transfers this Gameweek.</p>}
-        </Card>
-        <Card title="Biggest model miss" icon={<BrainCircuit size={16} />} source="model">
+      <Card title="Biggest surprises" icon={<Timer size={16} />} source="model">
+        <div className="review-tiles review-tiles-2">
           <div className="review-call">
+            <span className="eyebrow">Points</span>
             <strong>{data.largest_model_miss.name}</strong>
-            <dl className="mini-dl">
-              <div><dt>Projected</dt><dd>{fixed(data.largest_model_miss.predicted_points)}</dd></div>
-              <div><dt>Actual</dt><dd>{data.largest_model_miss.actual_points}</dd></div>
-              <div><dt>Residual</dt><dd><Delta value={data.largest_model_miss.residual} /></dd></div>
-            </dl>
+            <span className="faint">Model {fixed(data.largest_model_miss.predicted_points)} · scored {data.largest_model_miss.actual_points}</span>
+            <span><Delta value={data.largest_model_miss.residual} /> vs model</span>
           </div>
+          <div className="review-call">
+            <span className="eyebrow">Minutes</span>
+            {data.largest_xmins_miss ? (
+              <>
+                <strong>{data.largest_xmins_miss.name}</strong>
+                <span className="faint">Forecast {Math.round(data.largest_xmins_miss.predicted_xmins)}′ · played {data.largest_xmins_miss.actual_minutes}′</span>
+                <span><Delta value={data.largest_xmins_miss.residual} digits={0} /> minutes</span>
+              </>
+            ) : <span className="faint">This saved model file predates the minutes forecast.</span>}
+          </div>
+        </div>
+      </Card>
+
+      {data.transfers.length ? (
+        <Card title="Transfers" icon={<ArrowRight size={16} />} source="derived"
+          collapse={{ id: "review-transfers", defaults: { mobile: false, desktop: false }, summary: `${data.transfers.length} transfer${data.transfers.length === 1 ? "" : "s"} · model ${signed(data.transfers.reduce((total, item) => total + item.projected_delta, 0))}, actual ${signed(data.transfers.reduce((total, item) => total + item.actual_delta, 0))}` }}>
+          <ul className="plain-list">
+            {data.transfers.map((transfer) => (
+              <li key={`${transfer.player_out.player_id}-${transfer.player_in.player_id}`}>
+                <b>{transfer.player_out.name}</b> → <b>{transfer.player_in.name}</b>
+                <span className="faint"> · model <Delta value={transfer.projected_delta} />, actual <Delta value={transfer.actual_delta} /></span>
+              </li>
+            ))}
+          </ul>
         </Card>
-        <Card title="Biggest minutes miss" icon={<Timer size={16} />} source="model">
-          {data.largest_xmins_miss ? (
-            <div className="review-call">
-              <strong>{data.largest_xmins_miss.name}</strong>
-              <dl className="mini-dl">
-                <div><dt>Forecast</dt><dd>{Math.round(data.largest_xmins_miss.predicted_xmins)}′</dd></div>
-                <div><dt>Played</dt><dd>{data.largest_xmins_miss.actual_minutes}′</dd></div>
-                <div><dt>Residual</dt><dd><Delta value={data.largest_xmins_miss.residual} digits={0} /></dd></div>
-              </dl>
-            </div>
-          ) : <p className="faint">This saved model file predates the minutes forecast, so no minutes review is possible.</p>}
-        </Card>
-      </div>
+      ) : null}
 
       {picks.length ? (
-        <Card title="Player by player" source={["official", "model"]}>
+        <Card title="Player by player" source={["official", "model"]} collapse={{ id: "review-players", defaults: { mobile: false, desktop: false }, summary: "Forecast and points for each of your 15" }}>
           <div className="table-wrap">
             <table className="table">
               <caption className="sr-only">Projected and actual points for each pick in GW{data.event}</caption>
@@ -175,18 +179,6 @@ function ReviewBody({ data }: { data: Extract<ReviewData, { available: true }> }
         </Card>
       ) : null}
 
-      <Card title="Signals for next Gameweek" icon={<BrainCircuit size={16} />} source="derived" action={<Link className="link" href="/plan">Open plan</Link>}>
-        {data.next_signals.length ? (
-          <ul className="insight-list">
-            {data.next_signals.map((signal) => (
-              <li key={signal.type} className={signal.severity === "ACTION" ? "insight-warn" : undefined}>
-                <span className={`pill ${signal.severity === "ACTION" ? "pill-warn" : ""}`}>{signal.severity === "ACTION" ? "Act" : "Watch"}</span>
-                <div><strong>{signal.title}</strong><p>{signal.message}</p></div>
-              </li>
-            ))}
-          </ul>
-        ) : <p className="faint">No process signal cleared the evidence threshold.</p>}
-      </Card>
     </div>
   );
 }

@@ -17,10 +17,12 @@ afterEach(() => { localStorage.clear(); vi.restoreAllMocks(); });
 test("desktop navigation lists every destination and marks the current page", async () => {
   const { container } = render(<TeamProvider><AppShell><p>Page</p></AppShell></TeamProvider>);
   const nav = screen.getByRole("navigation", { name: "Primary" });
-  for (const label of ["Overview", "My Team", "Plan & Transfers", "Players", "Fixtures", "History & Review", "Settings"]) {
+  for (const label of ["Overview", "My Team", "Plan & Transfers", "Mini-leagues", "Explore", "History & Review", "Settings"]) {
     expect(within(nav).getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
   }
-  expect(within(nav).getByRole("link", { name: /Players/ })).toHaveAttribute("aria-current", "page");
+  // Prices and Fixtures are tabs inside Explore, not menu entries.
+  expect(within(nav).queryByRole("link", { name: /Fixtures/ })).not.toBeInTheDocument();
+  expect(within(nav).getByRole("link", { name: /Explore/ })).toHaveAttribute("aria-current", "page");
   await expectNoA11yViolations(container);
 });
 
@@ -30,8 +32,10 @@ test("the phone tab bar opens a More sheet with the remaining destinations", asy
   expect(within(tabs).getAllByRole("link")).toHaveLength(4);
   await userEvent.click(within(tabs).getByRole("button", { name: "More" }));
   const more = await screen.findByRole("navigation", { name: "More destinations" });
-  expect(within(more).getByRole("link", { name: "Fixtures" })).toBeInTheDocument();
-  expect(within(more).getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  expect(within(more).getByRole("link", { name: /Mini-leagues/ })).toBeInTheDocument();
+  expect(within(more).getByRole("link", { name: /History & Review/ })).toBeInTheDocument();
+  expect(within(more).getByRole("link", { name: /Settings/ })).toBeInTheDocument();
+  expect(within(more).getAllByRole("link")).toHaveLength(3);
 });
 
 test("shows a stale-data banner when official data is cached", async () => {

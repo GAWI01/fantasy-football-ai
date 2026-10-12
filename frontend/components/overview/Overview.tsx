@@ -1,19 +1,19 @@
 "use client";
 
-import { ArrowRight, History, LineChart, Shirt, Zap } from "lucide-react";
+import { ArrowRight, History, LineChart, Shirt } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { TrendChart } from "@/components/charts/TrendChart";
 import { SquadFixtures } from "@/components/fixtures/SquadFixtures";
 import { ConnectHero } from "@/components/overview/ConnectHero";
-import { chipSummary, GameweekPlanCard, PlanChipDetails, PlanLineupDetails } from "@/components/overview/GameweekPlanCard";
+import { GameweekPlanCard, PlanLineupDetails } from "@/components/overview/GameweekPlanCard";
 import { LiveCockpit } from "@/components/overview/LiveCockpit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
 import { DataState } from "@/components/states/DataState";
 import { CountUp } from "@/components/ui/CountUp";
-import { Card, Segmented, SourceBadge, Stat } from "@/components/ui/primitives";
-import { compact, fixed, integer, price, signed } from "@/lib/format";
+import { Card, Segmented, Stat } from "@/components/ui/primitives";
+import { compact, fixed, integer, price } from "@/lib/format";
 import { useCockpit } from "@/lib/hooks/useCockpit";
 import { usePlanHistory } from "@/lib/hooks/usePlanHistory";
 import { liveSource, officialSource } from "@/lib/model/phase";
@@ -175,23 +175,6 @@ export function Overview() {
                 </Card>
               ) : null}
 
-              {plan ? (
-                <Card
-                  title="Chip"
-                  icon={<Zap size={16} />}
-                  source={["model", "official"]}
-                  action={<Link className="link" href="/plan#chips">Outlook</Link>}
-                  collapse={{
-                    id: "chip",
-                    defaults: { mobile: false, desktop: false },
-                    summary: chipSummary(plan),
-                    signal: plan.chip.recommended ? `chip:${state.targetEvent}:${plan.chip.recommended}` : null,
-                  }}
-                >
-                  <PlanChipDetails plan={plan} />
-                </Card>
-              ) : null}
-
               <Card
                 title="Season"
                 icon={<LineChart size={16} />}
@@ -230,11 +213,6 @@ export function Overview() {
 
           <SquadFixtures squad={squad} collapse={{ id: "fixtures", defaults: { mobile: false, desktop: true } }} />
 
-          {plan?.recommended && plan.alternatives.length ? (
-            <p className="overview-footnote faint">
-              {plan.alternatives.length} alternative plan{plan.alternatives.length === 1 ? "" : "s"} evaluated · best alternative 5-GW net {signed(plan.alternatives[0].horizonNet)} xP. <Link className="link" href="/plan#compare">Compare all</Link> <SourceBadge kind="derived" />
-            </p>
-          ) : null}
         </>
       )}
     </div>
