@@ -734,6 +734,8 @@ export type ChipSquadPlayer = {
   horizon_points: number;
   owned: boolean;
   starter: boolean;
+  /** FPL's strongest price likelihood over the next two change windows (-5 … +5). */
+  price_likelihood?: number;
 };
 
 export type ChipSquad = {
@@ -757,7 +759,7 @@ export type ChipSquad = {
 };
 
 export type ChipSquadsEnvelope = {
-  data: { free_hit: ChipSquad; wildcard: ChipSquad; selling_prices_known: boolean };
+  data: { free_hit: ChipSquad; wildcard: ChipSquad; selling_prices_known: boolean; prefer_risers?: boolean };
   meta: SourceMeta & { event?: number };
   errors: AreaError[];
 };

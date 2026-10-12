@@ -121,9 +121,10 @@ class _Problem:
 
     def __init__(self, frames: Sequence[pd.DataFrame], weights: Sequence[float], owned: set[int],
                  sale_values: Mapping[int, float], bank: float, policy: DecisionPolicy,
-                 extra_candidates: Sequence[int] = ()):
+                 extra_candidates: Sequence[int] = (), selection_bonus: Mapping[int, float] | None = None):
         base = frames[0].drop_duplicates("player_id").set_index("player_id")
         self.policy = policy
+        self._selection_bonus = dict(selection_bonus or {})
         self.weights = np.asarray(weights, dtype=float)
         gameweeks = len(frames)
         points = np.zeros((len(base), gameweeks))
@@ -175,6 +176,9 @@ class _Problem:
         self.names = base["name"].astype(str).to_numpy()[keep]
         self.prices = prices[keep]
         self.owned = np.isin(self.ids, list(owned))
+        # A small per-player nudge on selection only (e.g. a likely price rise).
+        # It steers the solver between near-equal squads; reported values never include it.
+        self.bonus = np.array([float(self._selection_bonus.get(int(pid), 0.0)) for pid in self.ids])
         if self.owned.sum() != len(owned):
             raise ActionPlanningError("current players missing from predictions")
         self.costs = np.array([
@@ -238,6 +242,7 @@ class _Problem:
             objective[self._c(0, g):self._c(0, g) + n] = -self.weights[g] * self.points[:, g]
         # Deterministic tie-break: among equal plans keep owned players.
         objective[:n] -= 1e-6 * self.owned
+        objective[:n] -= self.bonus
         self.objective = objective
 
     def set_cover(self, solution: "_Solution") -> bool:
@@ -646,8 +651,13 @@ def build_chip_squads(
     bank: float,
     weights: Sequence[float] | None = None,
     policy: DecisionPolicy | None = None,
+    wildcard_bonus: Mapping[int, float] | None = None,
 ) -> dict[str, Any]:
     """The best Free Hit and Wildcard squads within the manager's budget.
+
+    `wildcard_bonus` nudges the Wildcard (only: a Free Hit squad is handed back,
+    so its prices never matter) towards or away from given players, e.g. likely
+    price risers and fallers. Players it names join the candidate pool.
 
     Free Hit: any legal 15 for the next Gameweek only (the squad returns
     afterwards), valued like every plan: the best XI and captain, the bench as
@@ -666,7 +676,10 @@ def build_chip_squads(
         ("free_hit", frames[:1], [1.0]),
         ("wildcard", frames, weights),
     ):
-        problem = _Problem(chip_frames, chip_weights, owned, sale_values, bank, policy)
+        bonus = dict(wildcard_bonus or {}) if chip == "wildcard" else {}
+        known = {int(pid) for pid in frames[0]["player_id"]}
+        problem = _Problem(chip_frames, chip_weights, owned, sale_values, bank, policy,
+                           extra_candidates=[pid for pid in bonus if pid in known], selection_bonus=bonus)
         status, hold = _solve_hold(problem)
         if hold is None:
             result[chip] = {"available": False, "status": status}

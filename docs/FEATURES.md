@@ -125,7 +125,11 @@ order: the Free Hit picked for next Gameweek only (your squad returns after),
 the Wildcard for the next five Gameweeks (it is kept). Both spend your bank
 plus your players' selling prices, keep the three-per-club rule and show the
 gain over your current team. A chip you have used is still shown, marked as
-used.
+used. On the Wildcard, **Prioritise price risers** breaks
+ties between near-equal players in favour of those FPL projects to rise in price
+over the next two nights (and against likely fallers). The nudge is about a
+tenth of a typical transfer gain, so it never gives up real points for £0.1m,
+and the sheet names the squad's likely risers and fallers either way.
 
 A chip is never recommended just because it is available. When a blank or
 double Gameweek is announced, or injuries pile up in one week, that week

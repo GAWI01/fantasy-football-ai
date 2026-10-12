@@ -62,9 +62,9 @@ export function useRival(leagueId: number | null, rivalId: number | null, teamId
 }
 
 /** Fetched only when asked for (a full rebuild takes a few seconds). */
-export function useChipSquads(teamId: string | null, enabled: boolean) {
+export function useChipSquads(teamId: string | null, enabled: boolean, preferRisers = false) {
   const version = useDataVersion();
-  return useResource<ChipSquadsEnvelope>(enabled && teamId ? `chip-squads:${teamId}:${version}` : null, (signal) => fetchChipSquads(teamId ?? "", signal), 600_000);
+  return useResource<ChipSquadsEnvelope>(enabled && teamId ? `chip-squads:${teamId}:${preferRisers ? "risers" : "plain"}:${version}` : null, (signal) => fetchChipSquads(teamId ?? "", preferRisers, signal), 600_000);
 }
 
 /** Official price-change figures; FPL updates them through the day. */

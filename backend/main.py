@@ -81,7 +81,7 @@ from .review_service import (
 
 from engine.decision_engine import build_decision
 from engine.transfer_analysis import chip_squads, evaluate_transfer_moves
-from .price_service import build_price_changes
+from .price_service import build_price_changes, price_likelihoods, riser_bonus
 from optimizer.action_planner import DEFAULT_POLICY
 
 
@@ -1168,7 +1168,7 @@ def evaluate_transfers_v1(team_id: int, sell: str, buy: str, free_transfers: int
 
 
 @app.get("/api/v1/chip-squads/{team_id}")
-def get_chip_squads_v1(team_id: int):
+def get_chip_squads_v1(team_id: int, prefer_risers: bool = False):
     """The best Free Hit (next Gameweek) and Wildcard (five Gameweeks) squads.
 
     Same inputs, horizon, prices and planner as the recommendation, so the
@@ -1181,7 +1181,18 @@ def get_chip_squads_v1(team_id: int):
         inputs = _decision_inputs(team_id, None, None)
         frames = [inputs["horizon_predictions"][key] for key in sorted(inputs["horizon_predictions"])]
         weights = [max(0.4, 1.0 - 0.15 * index) for index in range(len(frames))]
-        result = chip_squads(inputs["team"], inputs["predictions"], horizon_predictions=frames, horizon_weights=weights)
+        # FPL's own price projections: shown on every squad, and with
+        # prefer_risers they nudge the Wildcard towards likely risers.
+        try:
+            likelihoods = price_likelihoods(get_bootstrap_data())
+        except LiveDataServiceError:
+            likelihoods = {}
+        result = chip_squads(inputs["team"], inputs["predictions"], horizon_predictions=frames, horizon_weights=weights,
+                             wildcard_bonus=riser_bonus(likelihoods) if prefer_risers else None)
+        for chip in ("free_hit", "wildcard"):
+            for player in result.get(chip, {}).get("players", []):
+                player["price_likelihood"] = likelihoods.get(int(player["player_id"]), 0)
+        result["prefer_risers"] = prefer_risers
     except TeamNotFoundError as exc:
         raise HTTPException(status_code=404, detail=f"No FPL team found with ID {team_id}.") from exc
     except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:

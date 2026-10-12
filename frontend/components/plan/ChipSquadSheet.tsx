@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { TrendingUp } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
 import { DataState } from "@/components/states/DataState";
@@ -28,7 +29,7 @@ function toSquadPlayer(player: ChipSquadPlayer, squad: ChipSquad, market: Map<nu
   };
 }
 
-function SquadView({ kind, squad, market, chipStatus }: { kind: ChipSquadKind; squad: ChipSquad; market: Map<number, PlayerSummary>; chipStatus: "available" | "used" | "unknown" }) {
+function SquadView({ kind, squad, market, chipStatus, preferRisers }: { kind: ChipSquadKind; squad: ChipSquad; market: Map<number, PlayerSummary>; chipStatus: "available" | "used" | "unknown"; preferRisers: boolean }) {
   const players = useMemo(() => new Map((squad.players ?? []).map((player) => [player.player_id, player])), [squad.players]);
   const pick = (ids: number[] | undefined) => (ids ?? [])
     .map((id) => players.get(id))
@@ -77,8 +78,29 @@ function SquadView({ kind, squad, market, chipStatus }: { kind: ChipSquadKind; s
             : "A Wildcard team is kept, so it is picked for the next five Gameweeks (later weeks count less); next Gameweek's lineup is shown."}
           {" "}Budget: your bank plus your players&apos; selling prices.
         </p>
+        {kind === "wildcard" ? <PriceLine squad={squad} preferRisers={preferRisers} /> : null}
       </div>
     </SourceScope>
+  );
+}
+
+/** Which Wildcard picks FPL projects to rise or drop in price over the next two nights. */
+function PriceLine({ squad, preferRisers }: { squad: ChipSquad; preferRisers: boolean }) {
+  const players = squad.players ?? [];
+  const risers = players.filter((player) => (player.price_likelihood ?? 0) >= 4).map((player) => player.name);
+  const fallers = players.filter((player) => (player.price_likelihood ?? 0) <= -4).map((player) => player.name);
+  if (!risers.length && !fallers.length) {
+    return <p className="card-note">{preferRisers ? "No near-equal choice had a likely price rise this time, so the squad is unchanged." : "None of these players is likely to change price in the next two nights."}</p>;
+  }
+  return (
+    <p className="price-timing chip-price-line">
+      <TrendingUp size={15} aria-hidden="true" />
+      <span>
+        {risers.length ? <><b className="tone-pos">Likely to rise:</b> {risers.join(", ")}. </> : null}
+        {fallers.length ? <><b className="tone-neg">Likely to drop:</b> {fallers.join(", ")}. </> : null}
+        {preferRisers ? "Price risers win ties; points always come first." : "Turn on “Prioritise price risers” to prefer risers between near-equal players."}
+      </span>
+    </p>
   );
 }
 
@@ -91,15 +113,25 @@ export function ChipSquadSheet({ open, onClose, kind, onKind, teamId, chipStatus
   teamId: string | null;
   chipStatus: Record<ChipSquadKind, "available" | "used" | "unknown">;
 }) {
-  const squads = useChipSquads(teamId, open);
+  // Price rises only matter for a squad you keep, so the option is Wildcard-only.
+  const [preferRisers, setPreferRisers] = useState(false);
+  const squads = useChipSquads(teamId, open, preferRisers && kind === "wildcard");
   const market = useMarketProjections(open);
   const squad = squads.data?.data[kind];
   return (
     <Sheet open={open} onClose={onClose} title={`Best ${LABEL[kind]} team`} subtitle={squads.data?.meta.event ? `For GW${squads.data.meta.event}` : undefined} size="lg">
-      <Segmented<ChipSquadKind> label="Chip" value={kind} onChange={onKind} options={[{ value: "free_hit", label: "Free Hit" }, { value: "wildcard", label: "Wildcard" }]} />
+      <div className="chip-squad-controls">
+        <Segmented<ChipSquadKind> label="Chip" value={kind} onChange={onKind} options={[{ value: "free_hit", label: "Free Hit" }, { value: "wildcard", label: "Wildcard" }]} />
+        {kind === "wildcard" ? (
+          <label className="check" title="Between near-equal players, pick the one FPL projects to rise in price and avoid likely fallers">
+            <input type="checkbox" checked={preferRisers} onChange={(event) => setPreferRisers(event.target.checked)} />
+            <span>Prioritise price risers</span>
+          </label>
+        ) : null}
+      </div>
       {squads.loading && !squads.data ? <><p className="muted">Building the best squads within your budget…</p><Skeleton lines={8} /></> : null}
       {squads.error && !squads.data ? <DataState tone="error" title="The chip squads could not be built" action={<button className="btn btn-sm" onClick={squads.reload}>Try again</button>}>{squads.error}</DataState> : null}
-      {squad && squad.available ? <SquadView kind={kind} squad={squad} market={market.byId} chipStatus={chipStatus[kind]} /> : null}
+      {squad && squad.available ? <SquadView kind={kind} squad={squad} market={market.byId} chipStatus={chipStatus[kind]} preferRisers={kind === "wildcard" && preferRisers} /> : null}
       {squad && !squad.available ? <DataState tone="unavailable" title="No squad found">The search did not finish ({squad.status ?? "unknown"}). Try again in a moment.</DataState> : null}
       {squads.data && !squads.data.data.selling_prices_known ? <p className="card-note">Selling prices are estimated from your public transfer history. Check them in FPL before you spend.</p> : null}
     </Sheet>

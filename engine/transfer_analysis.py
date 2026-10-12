@@ -865,6 +865,7 @@ def chip_squads(
     horizon_predictions: Sequence[pd.DataFrame] | None = None,
     horizon_weights: Sequence[float] | None = None,
     policy: DecisionPolicy | None = None,
+    wildcard_bonus: Mapping[int, float] | None = None,
 ) -> dict[str, Any]:
     """The best Free Hit and Wildcard squads, on the recommendation's inputs."""
     picks = _validate_inputs(team, predictions)
@@ -876,7 +877,8 @@ def chip_squads(
     sales = {int(pick["player_id"]): selling_value(pick, float(prices[int(pick["player_id"])])) for pick in picks}
     try:
         result = build_chip_squads(frames, owned_ids=list(sales), sale_info=sales,
-                                   bank=float(team.get("bank") or 0.0), weights=weights, policy=policy)
+                                   bank=float(team.get("bank") or 0.0), weights=weights, policy=policy,
+                                   wildcard_bonus=wildcard_bonus)
     except ActionPlanningError as exc:
         raise TransferAnalysisError(str(exc)) from exc
     result["selling_prices_known"] = all(value[2] for value in sales.values())

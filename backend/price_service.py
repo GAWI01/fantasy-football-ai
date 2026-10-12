@@ -90,3 +90,33 @@ def build_price_changes(bootstrap: dict[str, Any], now: datetime | None = None) 
         "updated_at": status.get("price_change_last_updated"),
         "players": players,
     }
+
+
+# How much a likely price change nudges a Wildcard, in weighted horizon points.
+# Small on purpose: about a tenth of a typical transfer gain, so it only decides
+# between near-equal squads and never trades real points for £0.1m.
+RISE_BONUS = {4: 0.25, 5: 0.4}
+
+
+def price_likelihoods(bootstrap: dict[str, Any]) -> dict[int, int]:
+    """FPL's strongest likelihood over the next two change windows, per player
+    (+5 very likely to rise … -5 very likely to fall). Locked players are 0."""
+    result: dict[int, int] = {}
+    for element in bootstrap.get("elements") or []:
+        if not isinstance(element, dict) or element.get("id") is None or element.get("price_change_locked_until"):
+            continue
+        values = [int(_number(item.get("likelihood")) or 0) for item in element.get("price_change_projections") or []
+                  if isinstance(item, dict) and int(item.get("offset") or 0) <= 1]
+        if values:
+            result[int(element["id"])] = max(values, key=abs)
+    return result
+
+
+def riser_bonus(likelihoods: dict[int, int]) -> dict[int, float]:
+    """A selection nudge for likely risers and against likely fallers."""
+    bonus = {}
+    for player_id, likelihood in likelihoods.items():
+        size = RISE_BONUS.get(abs(likelihood), 0.0)
+        if size:
+            bonus[player_id] = size if likelihood > 0 else -size
+    return bonus

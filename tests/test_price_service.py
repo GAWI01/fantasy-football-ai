@@ -48,3 +48,12 @@ def test_only_future_change_windows_and_active_locks_are_kept():
 def test_missing_config_does_not_fail():
     assert build_price_changes({"elements": [], "teams": []}, NOW) == {
         "next_change_at": None, "change_windows": [], "updated_at": None, "players": []}
+
+
+def test_riser_bonus_uses_the_strongest_of_the_next_two_windows_and_skips_locks():
+    from backend.price_service import price_likelihoods, riser_bonus
+
+    likelihoods = price_likelihoods(_bootstrap())
+    assert likelihoods[10] == 5  # Riser
+    assert 11 not in likelihoods  # Faller is locked
+    assert riser_bonus({1: 5, 2: 4, 3: 3, 4: -4, 5: -5}) == {1: 0.4, 2: 0.25, 4: -0.25, 5: -0.4}

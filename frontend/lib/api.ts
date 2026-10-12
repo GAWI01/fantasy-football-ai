@@ -182,8 +182,9 @@ export async function fetchPriceChanges(signal?: AbortSignal): Promise<PriceChan
 }
 
 /** The best Free Hit and Wildcard squads within the manager's budget. */
-export async function fetchChipSquads(teamId: string, signal?: AbortSignal): Promise<ChipSquadsEnvelope> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/chip-squads/${numericId(teamId, "FPL Team ID")}`, { cache: "no-store", signal });
+export async function fetchChipSquads(teamId: string, preferRisers = false, signal?: AbortSignal): Promise<ChipSquadsEnvelope> {
+  const query = preferRisers ? "?prefer_risers=true" : "";
+  const response = await fetch(`${API_BASE_URL}/api/v1/chip-squads/${numericId(teamId, "FPL Team ID")}${query}`, { cache: "no-store", signal });
   return readJson<ChipSquadsEnvelope>(response);
 }
 
