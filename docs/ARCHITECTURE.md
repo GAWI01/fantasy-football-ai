@@ -56,6 +56,12 @@ less: the weights are 1, 0.85, 0.7, 0.55 and 0.4.
 - **A banked transfer has a value,** so a move must beat rolling it.
 - **Bench players count only as autosub cover** (10%, goalkeeper 2%), so the
   engine does not buy a reserve goalkeeper for his points.
+- **A doubtful starter is covered by the bench.** A player with a 75% chance
+  is worth 75% of his points plus 25% of the points of the best bench player
+  who would come on for him. So the engine keeps a doubtful player with a
+  good bench behind him instead of selling him for a slightly weaker fit one,
+  and the best XI starts him when that is worth more than benching him. A
+  ruled-out player (0%) is simply benched.
 - **A hit costs 4 points plus a safety margin.** The engine takes one only
   when the five-Gameweek gain clearly pays for it.
 - **Availability is applied per Gameweek.** Official news such as "Suspended

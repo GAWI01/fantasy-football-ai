@@ -110,3 +110,38 @@ def test_captain_and_vice_are_in_starting_xi_and_unique():
     assert result["captain"]["player_id"] in xi_ids
     assert result["vice_captain"]["player_id"] in xi_ids
     assert result["captain"]["player_id"] != result["vice_captain"]["player_id"]
+
+
+def test_doubtful_player_starts_when_his_substitute_covers_him():
+    # MID 4: 8 points if he plays, 60% chance, so 4.8 expected: below the
+    # healthy 5-point bench players on his own. But when he misses, a 5-point
+    # substitute comes on, so starting him is worth 4.8 + 0.4 * 5 = 6.8.
+    squad = make_squad()
+    squad["availability_multiplier"] = 1.0
+    squad.loc[squad["player_id"] == 11, ["predicted_points", "availability_multiplier"]] = [4.8, 0.6]
+
+    result = select_starting_xi(squad)
+
+    assert "MID 4" in {p["name"] for p in result["starting_xi"]}
+    assert result["bench"][0]["predicted_points"] == 5.0
+    # Reported points stay the plain expected points.
+    assert result["starting_xi_base_points"] == sum(p["predicted_points"] for p in result["starting_xi"])
+
+
+def test_without_availability_data_the_plain_ranking_is_used():
+    squad = make_squad()
+    squad.loc[squad["player_id"] == 11, "predicted_points"] = 4.8
+
+    result = select_starting_xi(squad)
+
+    assert "MID 4" not in {p["name"] for p in result["starting_xi"]}
+
+
+def test_ruled_out_player_is_benched_not_covered():
+    squad = make_squad()
+    squad["availability_multiplier"] = 1.0
+    squad.loc[squad["player_id"] == 11, ["predicted_points", "availability_multiplier"]] = [0.0, 0.0]
+
+    result = select_starting_xi(squad)
+
+    assert "MID 4" not in {p["name"] for p in result["starting_xi"]}

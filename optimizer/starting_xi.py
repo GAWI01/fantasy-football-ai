@@ -78,12 +78,26 @@ def _validate_squad(squad: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def _rank_players(players: pd.DataFrame) -> pd.DataFrame:
+def _rank_players(players: pd.DataFrame, column: str = "predicted_points") -> pd.DataFrame:
     return players.sort_values(
-        ["predicted_points", "player_id"],
+        [column, "player_id"],
         ascending=[False, True],
         kind="mergesort",
     )
+
+
+def doubt_share(squad: pd.DataFrame) -> pd.Series:
+    """Chance each player misses the Gameweek, for doubtful players only.
+
+    `availability_multiplier` is the official chance of playing (already
+    folded into `predicted_points`). Only a doubtful player (0 < chance < 1)
+    counts: a ruled-out player is simply benched, and a fit player's ordinary
+    rotation risk is not part of this.
+    """
+    if "availability_multiplier" not in squad.columns:
+        return pd.Series(0.0, index=squad.index)
+    chance = pd.to_numeric(squad["availability_multiplier"], errors="coerce").fillna(1.0)
+    return (1.0 - chance).where((chance > 0) & (chance < 1), 0.0)
 
 
 def _select_for_formation(
@@ -101,7 +115,8 @@ def _select_for_formation(
         ("FWD", forwards),
     ):
         players = _rank_players(
-            squad[squad["position"] == position]
+            squad[squad["position"] == position],
+            "_rank_points",
         )
         selected_parts.append(players.head(count))
 
@@ -116,6 +131,34 @@ def _player_records(players: pd.DataFrame) -> list[dict]:
             record["predicted_points"] = float(record["predicted_points"])
         records.append(record)
     return records
+
+
+def _cover_points(squad: pd.DataFrame, bench: pd.DataFrame) -> pd.Series:
+    """Points of the substitute who would replace each player: the best bench
+    player of the same kind (outfield or goalkeeper), never the player himself."""
+    values = []
+    for index, row in squad.iterrows():
+        keeper = row["position"] == "GK"
+        others = bench[((bench["position"] == "GK") == keeper) & (bench["player_id"] != row["player_id"])]
+        values.append(float(others["predicted_points"].max()) if len(others) else 0.0)
+    return pd.Series(values, index=squad.index)
+
+
+def _best_formation(squad: pd.DataFrame) -> dict:
+    best = None
+    for formation in LEGAL_FORMATIONS:
+        xi = _select_for_formation(squad, formation)
+        points = float(xi["_rank_points"].sum())
+        key = (
+            points,
+            formation[0],
+            formation[1],
+            tuple(sorted(int(player_id) for player_id in xi["player_id"])),
+        )
+        if best is None or key > best["key"]:
+            best = {"key": key, "formation": formation, "starting_xi": xi}
+    assert best is not None
+    return best
 
 
 def select_starting_xi(squad: pd.DataFrame) -> dict:
@@ -143,34 +186,25 @@ def select_starting_xi(squad: pd.DataFrame) -> dict:
     """
     squad = _validate_squad(squad)
 
+    # A doubtful starter is covered by the bench: when he misses, FPL brings on
+    # the first substitute who fits. So a starter is worth his own expected
+    # points plus his chance of missing times the points of the player who
+    # would come on. That substitute depends on the XI, so the XI is chosen
+    # again with the cover of the previous choice until it settles.
+    doubt = doubt_share(squad)
+    squad = squad.assign(_rank_points=squad["predicted_points"])
     best = None
-
-    for formation in LEGAL_FORMATIONS:
-        xi = _select_for_formation(squad, formation)
-        points = float(xi["predicted_points"].sum())
-
-        key = (
-            points,
-            formation[0],
-            formation[1],
-            tuple(
-                sorted(
-                    int(player_id)
-                    for player_id in xi["player_id"]
-                )
-            ),
-        )
-
-        if best is None or key > best["key"]:
-            best = {
-                "key": key,
-                "formation": formation,
-                "starting_xi": xi,
-            }
+    for _ in range(3):
+        best = _best_formation(squad)
+        bench = squad[~squad["player_id"].isin(set(best["starting_xi"]["player_id"]))]
+        ranked = squad["predicted_points"] + doubt * _cover_points(squad, bench)
+        if not doubt.any() or ranked.equals(squad["_rank_points"]):
+            break
+        squad = squad.assign(_rank_points=ranked)
 
     assert best is not None
 
-    xi = best["starting_xi"].copy()
+    xi = best["starting_xi"].drop(columns="_rank_points")
     xi = xi.sort_values(
         ["position", "predicted_points", "player_id"],
         ascending=[True, False, True],
@@ -178,7 +212,7 @@ def select_starting_xi(squad: pd.DataFrame) -> dict:
     ).reset_index(drop=True)
 
     xi_ids = set(xi["player_id"])
-    remaining = squad[~squad["player_id"].isin(xi_ids)].copy()
+    remaining = squad[~squad["player_id"].isin(xi_ids)].drop(columns="_rank_points")
 
     bench_outfield = _rank_players(
         remaining[remaining["position"] != "GK"]
