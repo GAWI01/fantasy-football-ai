@@ -463,6 +463,8 @@ export type DashboardDecision = {
     free_transfers?: number;
     /** "user" when the manager set it, "derived" from public transfer history, "unknown" when history failed. */
     free_transfers_source?: "user" | "derived" | "unknown";
+    /** Best plan over this week and next for each number of transfers now. */
+    two_week?: TwoWeekPlan | null;
     action?: string;
     hit_cost?: number;
     gross_gain?: number;
@@ -791,3 +793,18 @@ export type PriceChangesEnvelope = {
   meta: SourceMeta;
   errors: AreaError[];
 };
+
+export type TwoWeekMove = { player_out_id: number; player_out: string; player_in_id: number; player_in: string; position: string };
+
+export type TwoWeekSequence = {
+  transfers_now: number;
+  moves_now: TwoWeekMove[];
+  moves_next: TwoWeekMove[];
+  free_transfers_next: number;
+  hits_now: number;
+  hits_next: number;
+  /** Weighted horizon points over the two-week plan that holds now (hits, margins and banked transfers included). */
+  score_vs_hold: number;
+};
+
+export type TwoWeekPlan = { best_transfers_now: number; sequences: TwoWeekSequence[] };

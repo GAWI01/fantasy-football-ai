@@ -464,6 +464,24 @@ def plan_action(
 
     ranked = sorted(options.values(), key=lambda item: (-item["decision_score"], item["transfers_used"]))
     best = ranked[0]
+
+    # Two-week check (optimizer/two_week.py): the best plan over this week and
+    # next, with FPL's free-transfer rules between them. It may only lower the
+    # number of transfers made now, e.g. "hold now, two free moves next week"
+    # or "do the second move next week instead of a -4 now". It never makes the
+    # engine spend earlier: both weeks use today's projections, so waiting for
+    # team news has value the model cannot see. The moves for the chosen count
+    # are the single-step plan's, so every table stays consistent.
+    from optimizer.two_week import plan_two_weeks, summarise
+    two_week_raw = plan_two_weeks(problem, free_transfers=free_transfers,
+                                  max_transfers=min(max_transfers, free_transfers + policy.max_hits),
+                                  policy=policy, unlimited=unlimited)
+    two_week = summarise(problem, sorted(owned), two_week_raw)
+    if (two_week_raw and two_week_raw["best_count"] in options
+            and two_week_raw["best_count"] < best["transfers_used"]
+            and not any(value == "time_limit" for value in statuses.values())):
+        best = options[two_week_raw["best_count"]]
+    ranked = [best] + [item for item in ranked if item is not best]
     best_count = best["transfers_used"]
 
     # Other plans with the chosen number of transfers: the best plan without
@@ -511,6 +529,7 @@ def plan_action(
         },
         "solver_status": "time_limit" if timed_out else "optimal",
         "optimality_known": not timed_out,
+        "two_week": two_week,
     }
     if evaluate_wildcard:
         result["wildcard"] = _evaluate_wildcard(problem, hold, best, policy)

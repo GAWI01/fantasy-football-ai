@@ -11,6 +11,7 @@ import { useTeam } from "@/app/providers/TeamProvider";
 import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
 import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
 import { PriceTiming } from "@/components/prices/PriceTiming";
+import { NextWeekLine, TwoWeekCard } from "@/components/plan/TwoWeekPlan";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { DataState } from "@/components/states/DataState";
@@ -27,6 +28,17 @@ function scenarioTitle(scenario: ScenarioView): string {
   return scenario.moves.map((move) => `${move.outName} → ${move.inName}`).join(", ");
 }
 
+/** "+12.9 gain − 4 hit − 2.0 margin − 2.0 banked transfer = +4.9" */
+function scoreMath(row: ScenarioView): string {
+  const hit = row.hit ?? 0;
+  const margin = Math.max(0, (row.horizonNet ?? row.horizonGain - hit) - row.rollValue - row.modelScore);
+  const parts = [`${signed(row.horizonGain)} gain`];
+  if (hit) parts.push(`− ${hit} hit`);
+  if (margin > 0.05) parts.push(`− ${fixed(margin)} margin`);
+  if (row.rollValue > 0.05) parts.push(`− ${fixed(row.rollValue)} banked transfer`);
+  return `${parts.join(" ")} = ${signed(row.modelScore)}`;
+}
+
 function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
   const rows = useMemo(() => {
     const list: ScenarioView[] = [plan.hold];
@@ -35,7 +47,8 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
     for (const alternative of plan.alternatives) {
       if (!list.some((row) => scenarioTitle(row) === scenarioTitle(alternative))) list.push(alternative);
     }
-    return list;
+    // Ranked by the engine's own score, so the recommended option is visibly the best.
+    return list.sort((left, right) => right.modelScore - left.modelScore);
   }, [plan]);
   const recommendedTitle = scenarioTitle(plan.verdict === "TRANSFER" ? plan.recommended : plan.hold);
   const [selected, setSelected] = useState(recommendedTitle);
@@ -47,7 +60,7 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
     <Card id="compare" title="Compare options" eyebrow="What-if" icon={<GitCompareArrows size={16} />} source={["model", "derived"]}>
       <div className="scenarios" role="radiogroup" aria-label="Transfer scenarios">
         <div className="scenario scenario-head" aria-hidden="true">
-          <span>Option</span><span>Next GW</span><span>5-GW gain</span><span>Hit</span><span>5-GW net</span>
+          <span>Option</span><span>Next GW</span><span>5-GW gain</span><span>Hit</span><span>Score</span>
         </div>
         {rows.map((row) => {
           const title = scenarioTitle(row);
@@ -64,11 +77,12 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
               <span className="scenario-title">
                 {isRecommended ? <span className="pill pill-accent">Recommended</span> : null}
                 <b>{title}</b>
+                {row.moves.length ? <small className="scenario-math">{scoreMath(row)}</small> : <small className="scenario-math">Baseline: keeps the free transfer for later</small>}
               </span>
               <span data-label="Next GW"><Delta value={row.nextGwGain} /></span>
               <span data-label="5-GW gain"><Delta value={row.horizonGain} /></span>
               <span data-label="Hit" className={row.hit ? "tone-neg" : "faint"}>{row.hit == null ? "?" : row.hit ? `−${row.hit}` : "0"}</span>
-              <span data-label="5-GW net"><Delta value={row.horizonNet} /></span>
+              <span data-label="Score" className="scenario-score"><Delta value={row.modelScore} /></span>
             </button>
           );
         })}
@@ -86,7 +100,11 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
           <b>Hit check:</b> best plan with a hit nets {signed(withHit.horizonNet)} over five Gameweeks{noHit ? `, versus ${signed(noHit.horizonNet)} for the best free move` : ""}. {plan.recommended.hit ? "The engine accepts this hit." : "The engine does not take the hit."}
         </p>
       ) : null}
-      <p className="card-note">5-GW net is the five-Gameweek gain minus any hit. See <a href="#why">Why this plan</a> for how the numbers are built.</p>
+      <p className="card-note">
+        <b>Score</b> is what the engine ranks by: the five-Gameweek gain (later weeks count less), minus any hit, minus a safety margin per hit,
+        minus what the free transfers it uses would be worth if you banked them. Holding scores 0, so a move must beat keeping the transfer.
+        See <a href="#why">Why this plan</a> for more.
+      </p>
     </Card>
   );
 }
@@ -295,6 +313,7 @@ export function PlanWorkspace() {
             ) : <p className="muted">No evaluated transfer improves the squad.</p>}
             {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
             {isTransfer && !locked ? <PriceTiming moves={plan.recommended.moves} /> : null}
+            <NextWeekLine plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} />
           </div>
         </Card>
 
@@ -303,6 +322,7 @@ export function PlanWorkspace() {
           <ChipCard plan={plan} locked={locked} />
         </div>
         <ScenarioCompare plan={plan} />
+        {plan.twoWeek ? <TwoWeekCard plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} /> : null}
         {teamId && !locked ? <OwnMoveCard teamId={teamId} plan={plan} squad={squad} market={market} /> : null}
         <div className="plan-wide"><HorizonGrid squad={squad} /></div>
         <Card id="why" title="Why this plan" icon={<Lightbulb size={16} />} className="plan-why">

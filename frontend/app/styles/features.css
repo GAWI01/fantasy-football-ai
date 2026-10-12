@@ -487,6 +487,8 @@ button.scenario[aria-checked="true"] { border-color: var(--violet-line); backgro
 .scenario-head { padding-top: 0; padding-bottom: 4px; font-size: var(--fs-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); font-weight: 650; }
 .scenario-title { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
 .scenario-title b { font-weight: 650; overflow: hidden; text-overflow: ellipsis; }
+.scenario-math { flex-basis: 100%; font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.scenario-score .delta { font-weight: 800; }
 .scenario-detail { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .cap-list { display: grid; gap: 6px; }
 .cap-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(60px, 1fr) 70px; align-items: center; gap: 12px; padding: 8px 10px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface-1); text-align: left; }
@@ -913,3 +915,12 @@ button.race-row:hover { background: var(--surface-hover); }
 .price-timing p + p { margin-top: 4px; }
 .price-timing .link { display: inline-block; margin-top: 4px; font-size: var(--fs-xs); }
 .chip-squad-controls { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; }
+
+/* Two-week plan */
+.two-week-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.two-week-row { padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface-1); display: grid; gap: 4px; font-size: var(--fs-sm); }
+.two-week-row.is-recommended { border-color: var(--violet-line); background: var(--violet-soft); }
+.two-week-head { display: flex; align-items: center; gap: 8px; }
+.two-week-score { margin-left: auto; font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; }
+.two-week-line { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r-sm); background: rgba(139, 92, 246, 0.08); border: 1px solid var(--violet-line); font-size: var(--fs-sm); color: var(--text-2); }
+.two-week-line svg { color: var(--violet-text); flex: none; margin-top: 2px; }
