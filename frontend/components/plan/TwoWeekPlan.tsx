@@ -52,12 +52,15 @@ export function TwoWeekCard({ plan, transfersNow }: { plan: TwoWeekPlan; transfe
           );
         })}
       </ul>
-      <p className="card-note">
+      <details className="card-more">
+        <summary>How is this worked out?</summary>
+        <p className="card-note">
         Each row is the best plan over this Gameweek and the next for that many transfers now, with FPL&apos;s rules between them: unused free transfers carry over (up to five) and extra moves cost −4.
         The score is weighted five-Gameweek points against holding, after hits, safety margins and the value of transfers still banked.
         The engine uses this to make fewer moves now when waiting a week is as good or better (for example a free move next week instead of a hit now), never to make more:
         team news arrives in between, and both weeks are planned on today&apos;s projections.
-      </p>
+        </p>
+      </details>
     </Card>
   );
 }

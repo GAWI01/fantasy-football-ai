@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useTeam } from "@/app/providers/TeamProvider";
 import { PlayerChip } from "@/components/player/PlayerChip";
+import { PageLinkTabs } from "@/components/shell/PageTabs";
 import { DataState } from "@/components/states/DataState";
 import { Card, Segmented, Skeleton, SourceBadge } from "@/components/ui/primitives";
 import type { PriceChangePlayer } from "@/lib/contracts";
@@ -83,9 +84,10 @@ export function PricesWorkspace() {
 
   return (
     <div className="stack prices-page">
+      <PageLinkTabs parent="players" label="Explore" />
       <header className="page-head">
         <div>
-          <span className="eyebrow">Price changes</span>
+          <span className="eyebrow">Explore · Prices</span>
           <h1>Price changes</h1>
           <p className="page-lede">Who is about to rise or drop in price, from FPL&apos;s own figures. Make a transfer you were going to make anyway before a rise, or sell before a drop.</p>
         </div>

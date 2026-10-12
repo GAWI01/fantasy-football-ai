@@ -75,6 +75,7 @@ test("the explanation describes the hit and holding policy the engine actually a
   serveDashboard(mockApi(), makeDashboard());
   const { container } = render(<TeamProvider><PlanWorkspace /></TeamProvider>);
   await screen.findByRole("heading", { name: /Ekström → Castellano/ });
+  await userEvent.click(screen.getByRole("tab", { name: "Why" }));
   expect(container.textContent).toMatch(/takes a hit only when the five-Gameweek gain beats the hit plus a safety margin/);
   expect(container.textContent).toMatch(/Holding is always an option/);
   expect(container.textContent).not.toMatch(/clears its threshold/);
@@ -99,9 +100,21 @@ test("each remaining chip says whether to play it and which week suits it", asyn
   ];
   serveDashboard(fetchSpy, dashboard);
   render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  await userEvent.click(await screen.findByRole("tab", { name: "Chips" }));
 
   expect(await screen.findByText(/GW9: 4 of your starters/)).toBeInTheDocument();
   expect(screen.getByText("Best: GW9")).toBeInTheDocument();
   expect(screen.getByText(/This week 6.0 · worth it from 12.0/)).toBeInTheDocument();
   expect(screen.getByText("Used this half: Wildcard.")).toBeInTheDocument();
+});
+
+test("the plan opens on Transfers and an old #chips link opens the Chips section", async () => {
+  serveDashboard(mockApi(), makeDashboard());
+  window.history.replaceState(null, "", "#chips");
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  expect(await screen.findByRole("tab", { name: /Chips/ })).toHaveAttribute("aria-selected", "true");
+  await userEvent.click(screen.getByRole("tab", { name: "Transfers" }));
+  expect(window.location.hash).toBe("#transfers");
+  expect(screen.getByRole("heading", { name: "Compare options" })).toBeInTheDocument();
+  window.history.replaceState(null, "", "#");
 });

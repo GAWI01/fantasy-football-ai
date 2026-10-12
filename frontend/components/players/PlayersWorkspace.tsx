@@ -7,6 +7,7 @@ import { useTeam } from "@/app/providers/TeamProvider";
 import { FixtureCell } from "@/components/fixtures/FixtureCell";
 import { Kit } from "@/components/kit/Kit";
 import { PlayerChip } from "@/components/player/PlayerChip";
+import { PageLinkTabs } from "@/components/shell/PageTabs";
 import { DataState } from "@/components/states/DataState";
 import { Sheet } from "@/components/ui/Sheet";
 import { Card, Segmented, Skeleton, SourceBadge } from "@/components/ui/primitives";
@@ -197,11 +198,12 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
 
   return (
     <div className="players-page">
+      <PageLinkTabs parent="players" label="Explore" />
       <header className="page-head">
         <div>
-          <span className="eyebrow">Player market{statsEvent ? ` · GW${statsEvent} stats` : ""}{forecastEvent ? ` · GW${forecastEvent} forecast` : ""}</span>
+          <span className="eyebrow">Explore{statsEvent ? ` · GW${statsEvent} stats` : ""}{forecastEvent ? ` · GW${forecastEvent} forecast` : ""}</span>
           <h1>Players</h1>
-          <p>Every player with official stats and the model’s next-Gameweek projection. Shortlist up to four to compare.</p>
+          <p>Find any player. xP is the model’s points forecast for next Gameweek. Tick up to four to compare them side by side.</p>
         </div>
         <div className="page-head-actions"><SourceBadge kind={marketSource} /><SourceBadge kind="model" /></div>
       </header>

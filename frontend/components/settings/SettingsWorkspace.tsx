@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, LogOut, Server, ShieldCheck, Sparkles, Target } from "lucide-react";
+import { Database, LogOut, ShieldCheck, Sparkles, Tags } from "lucide-react";
 import Link from "next/link";
 
 import { useTeam } from "@/app/providers/TeamProvider";
@@ -8,7 +8,7 @@ import { Card, SourceBadge } from "@/components/ui/primitives";
 import { API_BASE_URL } from "@/lib/api";
 import { dateTime } from "@/lib/format";
 import { motionOptions, useMotionPreference, usePrefersReducedMotion, writeMotionPreference } from "@/lib/motion";
-import { seasonGoalOptions, useSeasonGoal, writeSeasonGoal, type SeasonGoal } from "@/lib/preferences";
+import { useDataLabels, writeDataLabels } from "@/lib/preferences";
 
 const SOURCE_GUIDE: Array<{ kind: Parameters<typeof SourceBadge>[0]["kind"]; text: string }> = [
   { kind: "live", text: "Scores updating during a Gameweek. They can still change until bonus is confirmed." },
@@ -20,7 +20,7 @@ const SOURCE_GUIDE: Array<{ kind: Parameters<typeof SourceBadge>[0]["kind"]; tex
 
 export function SettingsWorkspace() {
   const { teamId, dashboard, disconnect } = useTeam();
-  const seasonGoal = useSeasonGoal();
+  const dataLabels = useDataLabels();
   const motion = useMotionPreference();
   const systemReduced = usePrefersReducedMotion();
   const modelVersion = dashboard?.meta.prediction_version ?? dashboard?.data.team.prediction_file ?? null;
@@ -48,19 +48,6 @@ export function SettingsWorkspace() {
           </div>
         </Card>
 
-        <Card title="Season goal" icon={<Target size={16} />}>
-          <fieldset className="radio-list">
-            <legend className="sr-only">Season goal</legend>
-            {seasonGoalOptions.map((option) => (
-              <label key={option.id} className={`radio-card${seasonGoal === option.id ? " is-active" : ""}`}>
-                <input type="radio" name="season-goal" value={option.id} checked={seasonGoal === option.id} onChange={() => writeSeasonGoal(option.id as SeasonGoal)} />
-                <span><b>{option.label}</b><small>{option.description}</small></span>
-              </label>
-            ))}
-          </fieldset>
-          <p className="card-note">Saved in this browser as a personal goal. It does not change the model or its recommendations.</p>
-        </Card>
-
         <Card title="Motion" icon={<Sparkles size={16} />}>
           <fieldset className="radio-list">
             <legend className="sr-only">How much the app moves</legend>
@@ -74,18 +61,22 @@ export function SettingsWorkspace() {
           <p className="card-note">{systemReduced ? "Your device asks for reduced motion, so nothing moves whatever you choose here." : "Saved in this browser. Your device's reduce-motion setting always wins."}</p>
         </Card>
 
-        <Card title="Data runtime" icon={<Server size={16} />}>
-          <dl className="kv">
-            <div><dt>API origin</dt><dd>{API_BASE_URL || "Same-origin gateway"}</dd></div>
-            <div><dt>Model version</dt><dd>{modelVersion ?? "Unavailable"}</dd></div>
-            <div><dt>Plan generated</dt><dd>{dashboard?.meta.generated_at ? dateTime(dashboard.meta.generated_at) : "Unavailable"}</dd></div>
-          </dl>
-        </Card>
-
-        <Card title="Reading the labels" icon={<ShieldCheck size={16} />}>
+        <Card title="Data labels" icon={<Tags size={16} />}>
+          <label className="check check-row">
+            <input type="checkbox" checked={dataLabels} onChange={(event) => writeDataLabels(event.target.checked)} />
+            <span><b>Show where each number comes from</b><small>Off keeps screens calm. Live and Cached always show, and forecasts always carry xP.</small></span>
+          </label>
           <ul className="source-guide">
-            {SOURCE_GUIDE.map((item) => <li key={item.kind}><SourceBadge kind={item.kind} /><span>{item.text}</span></li>)}
+            {SOURCE_GUIDE.map((item) => <li key={item.kind}><SourceBadge kind={item.kind} always /><span>{item.text}</span></li>)}
           </ul>
+          <details className="tech-details">
+            <summary>Technical details</summary>
+            <dl className="kv">
+              <div><dt>API origin</dt><dd>{API_BASE_URL || "Same-origin gateway"}</dd></div>
+              <div><dt>Model version</dt><dd>{modelVersion ?? "Unavailable"}</dd></div>
+              <div><dt>Plan generated</dt><dd>{dashboard?.meta.generated_at ? dateTime(dashboard.meta.generated_at) : "Unavailable"}</dd></div>
+            </dl>
+          </details>
         </Card>
       </div>
 
