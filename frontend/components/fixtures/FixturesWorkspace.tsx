@@ -62,7 +62,7 @@ export function FixturesWorkspace() {
         <div>
           <span className="eyebrow">Fixture planner</span>
           <h1>Fixtures</h1>
-          <p className="page-lede">Every club&apos;s next run, with home and away spelled out. Lower run scores are easier; blanks count against a club and doubles count for it. Clean sheet % shows each club's chance of keeping one.</p>
+          <p className="page-lede">Every club&apos;s next run, with home and away spelled out. Lower run scores are easier; blanks count against a club and doubles count for it. Clean sheet % shows each club&apos;s chance of keeping one.</p>
         </div>
       </header>
 
