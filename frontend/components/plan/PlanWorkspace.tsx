@@ -10,6 +10,7 @@ import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview
 import { useTeam } from "@/app/providers/TeamProvider";
 import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
 import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
+import { PriceTiming } from "@/components/prices/PriceTiming";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { DataState } from "@/components/states/DataState";
@@ -293,6 +294,7 @@ export function PlanWorkspace() {
               <div className="rejected"><span className="eyebrow">Best move found · rolling is worth more</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
             ) : <p className="muted">No evaluated transfer improves the squad.</p>}
             {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
+            {isTransfer && !locked ? <PriceTiming moves={plan.recommended.moves} /> : null}
           </div>
         </Card>
 

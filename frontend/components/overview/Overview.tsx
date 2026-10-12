@@ -51,9 +51,10 @@ export function Overview() {
 
   const team = dashboard.data.team;
   const history = dashboard.data.history?.history ?? [];
-  const canShowLive = state.liveActive && live != null;
+  // After the last match the Gameweek's result stays one tap away; the plan leads.
+  const canShowLive = (state.liveActive || state.gwPlayed) && live != null;
   const canShowPlan = plan != null;
-  const activeView: View = view ?? (canShowLive ? "live" : "plan");
+  const activeView: View = view ?? (canShowLive && state.liveActive ? "live" : canShowPlan ? "plan" : canShowLive ? "live" : "plan");
   const showToggle = canShowLive && canShowPlan && state.actionsOpen;
   const lastGw = history[history.length - 1];
 
@@ -70,7 +71,7 @@ export function Overview() {
             value={activeView}
             onChange={setView}
             options={[
-              { value: "live", label: `GW${state.currentEvent} live` },
+              { value: "live", label: `GW${state.currentEvent} ${state.gwPlayed ? "result" : "live"}` },
               { value: "plan", label: `GW${state.targetEvent} plan` },
             ]}
           />
@@ -86,6 +87,7 @@ export function Overview() {
           source={liveSource(state)}
           overallRank={team.overall_rank ?? null}
           eventRank={team.event_rank ?? null}
+          gwPlayed={state.gwPlayed}
           planPreview={showToggle && plan ? {
             event: state.targetEvent,
             label: plan.verdict === "TRANSFER" ? plan.recommended.moves.map((move) => `${move.outName} → ${move.inName}`).join(", ") : "Hold the transfer",
@@ -100,6 +102,11 @@ export function Overview() {
               <i className="preview-dot" aria-hidden="true" />
               <span><b>GW{live.event} live</b> · {live.points ?? "—"} pts · {live.playing} playing · {live.remaining} to play</span>
               <span className="preview-cta">Open live<ArrowRight size={14} aria-hidden="true" /></span>
+            </button>
+          ) : state.gwPlayed && live ? (
+            <button type="button" className="preview-line preview-result" onClick={() => setView("live")}>
+              <span><b>GW{live.event} result</b> · {live.points ?? "—"} pts · full time</span>
+              <span className="preview-cta">Open result<ArrowRight size={14} aria-hidden="true" /></span>
             </button>
           ) : null}
           {plan ? (

@@ -81,6 +81,7 @@ from .review_service import (
 
 from engine.decision_engine import build_decision
 from engine.transfer_analysis import chip_squads, evaluate_transfer_moves
+from .price_service import build_price_changes, price_likelihoods, riser_bonus
 from optimizer.action_planner import DEFAULT_POLICY
 
 
@@ -610,6 +611,13 @@ def get_live_team(team_id: int):
             "gameweek_name": live["gameweek_name"],
             "status": live["status"],
             "finished": bool(live.get("finished")),
+            # Every match of the Gameweek has reached full time. FPL marks the
+            # Gameweek finished only after its data check, often hours later,
+            # so the app stops treating it as live as soon as this is true.
+            "all_played": bool(live.get("finished")) or (
+                bool(event_fixtures.get("fixtures"))
+                and all(item.get("finished") for item in event_fixtures.get("fixtures", []))
+            ),
             "next_event": live.get("next_event"),
             "next_deadline_time": live.get("next_deadline_time"),
             "picks": picks,
@@ -1160,7 +1168,7 @@ def evaluate_transfers_v1(team_id: int, sell: str, buy: str, free_transfers: int
 
 
 @app.get("/api/v1/chip-squads/{team_id}")
-def get_chip_squads_v1(team_id: int):
+def get_chip_squads_v1(team_id: int, prefer_risers: bool = False):
     """The best Free Hit (next Gameweek) and Wildcard (five Gameweeks) squads.
 
     Same inputs, horizon, prices and planner as the recommendation, so the
@@ -1173,7 +1181,18 @@ def get_chip_squads_v1(team_id: int):
         inputs = _decision_inputs(team_id, None, None)
         frames = [inputs["horizon_predictions"][key] for key in sorted(inputs["horizon_predictions"])]
         weights = [max(0.4, 1.0 - 0.15 * index) for index in range(len(frames))]
-        result = chip_squads(inputs["team"], inputs["predictions"], horizon_predictions=frames, horizon_weights=weights)
+        # FPL's own price projections: shown on every squad, and with
+        # prefer_risers they nudge the Wildcard towards likely risers.
+        try:
+            likelihoods = price_likelihoods(get_bootstrap_data())
+        except LiveDataServiceError:
+            likelihoods = {}
+        result = chip_squads(inputs["team"], inputs["predictions"], horizon_predictions=frames, horizon_weights=weights,
+                             wildcard_bonus=riser_bonus(likelihoods) if prefer_risers else None)
+        for chip in ("free_hit", "wildcard"):
+            for player in result.get(chip, {}).get("players", []):
+                player["price_likelihood"] = likelihoods.get(int(player["player_id"]), 0)
+        result["prefer_risers"] = prefer_risers
     except TeamNotFoundError as exc:
         raise HTTPException(status_code=404, detail=f"No FPL team found with ID {team_id}.") from exc
     except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
@@ -1287,6 +1306,19 @@ def get_players_v1(limit: int = 20, position: str | None = None):
     if data.get("model_error"):
         errors.append({"area": "model", "message": data["model_error"]})
     return api_envelope(data, meta, errors)
+
+
+@app.get("/api/v1/price-changes")
+def get_price_changes_v1():
+    """Official FPL price-change progress and projections for every player."""
+    trace_token = begin_gateway_trace()
+    try:
+        data = build_price_changes(get_bootstrap_data())
+    except LiveDataServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    finally:
+        official_trace = end_gateway_trace(trace_token)
+    return api_envelope(data, _gateway_source_meta("official", official_trace))
 
 
 @app.get("/api/v1/fixtures", response_model=FixtureEnvelopeModel)

@@ -47,3 +47,40 @@ def test_free_hit_plays_for_one_week_and_wildcard_for_five():
     assert 202 in squads["wildcard"]["players_in"]
     assert 201 not in squads["wildcard"]["players_in"]
     assert squads["free_hit"]["projected_points"] > squads["free_hit"]["current_projected_points"]
+
+
+def _wildcard_with(bonus, steady_points=6.5):
+    owned = [row[0] for row in SQUAD]
+    sale_info = {row[0]: (row[4], "market", False) for row in SQUAD}
+    twin = (203, "Twin", "MID", "C22", 8.0, steady_points)
+    frames = [_frame(SQUAD + [(*STEADY[:5], steady_points), twin]) for _ in range(5)]
+    return build_chip_squads(frames, owned_ids=owned, sale_info=sale_info, bank=0.0,
+                             weights=WEIGHTS, wildcard_bonus=bonus)["wildcard"]
+
+
+def test_a_likely_riser_wins_between_equal_players():
+    # Steady and Twin are identical; Twin is likely to rise in price.
+    squad = _wildcard_with({203: 0.4})
+    assert 203 in squad["players_in"] and 202 not in squad["players_in"]
+    # The nudge never shows up in the reported numbers.
+    assert squad["gain"] == _wildcard_with(None)["gain"]
+
+
+def test_the_nudge_never_trades_real_points_for_price():
+    # Twin is likely to rise but projects a point less per week: points win.
+    owned = [row[0] for row in SQUAD]
+    sale_info = {row[0]: (row[4], "market", False) for row in SQUAD}
+    frames = [_frame(SQUAD + [STEADY, (203, "Twin", "MID", "C22", 8.0, 5.5)]) for _ in range(5)]
+    squad = build_chip_squads(frames, owned_ids=owned, sale_info=sale_info, bank=0.0,
+                              weights=WEIGHTS, wildcard_bonus={203: 0.4})["wildcard"]
+    assert 202 in squad["players_in"] and 203 not in squad["players_in"]
+
+
+def test_price_nudges_never_touch_the_free_hit():
+    owned = [row[0] for row in SQUAD]
+    sale_info = {row[0]: (row[4], "market", False) for row in SQUAD}
+    frames = _frames()
+    plain = build_chip_squads(frames, owned_ids=owned, sale_info=sale_info, bank=0.0, weights=WEIGHTS)
+    nudged = build_chip_squads(frames, owned_ids=owned, sale_info=sale_info, bank=0.0, weights=WEIGHTS,
+                               wildcard_bonus={202: 5.0})
+    assert nudged["free_hit"]["players"] == plain["free_hit"]["players"]

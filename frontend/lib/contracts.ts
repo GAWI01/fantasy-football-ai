@@ -132,6 +132,8 @@ export type DashboardLive = {
   gameweek_name?: string;
   status: "LIVE" | "FINISHED" | string;
   finished?: boolean;
+  /** Every match of the Gameweek is at full time (before FPL's final data check). */
+  all_played?: boolean;
   next_event?: number | null;
   next_deadline_time?: string | null;
   picks: LivePick[];
@@ -732,6 +734,8 @@ export type ChipSquadPlayer = {
   horizon_points: number;
   owned: boolean;
   starter: boolean;
+  /** FPL's strongest price likelihood over the next two change windows (-5 … +5). */
+  price_likelihood?: number;
 };
 
 export type ChipSquad = {
@@ -755,7 +759,35 @@ export type ChipSquad = {
 };
 
 export type ChipSquadsEnvelope = {
-  data: { free_hit: ChipSquad; wildcard: ChipSquad; selling_prices_known: boolean };
+  data: { free_hit: ChipSquad; wildcard: ChipSquad; selling_prices_known: boolean; prefer_risers?: boolean };
   meta: SourceMeta & { event?: number };
+  errors: AreaError[];
+};
+
+export type PriceProjection = { offset: number; percent: number | null; likelihood: number };
+
+export type PriceChangePlayer = {
+  player_id: number;
+  name: string;
+  team: string;
+  team_short: string;
+  position: string;
+  price: number | null;
+  ownership: number | null;
+  /** Official progress towards the next change: +100 a rise is due, -100 a fall. */
+  percent: number | null;
+  hourly_rate: number | null;
+  /** Official projection per upcoming change window; likelihood -5 (fall) … +5 (rise). */
+  projections: PriceProjection[];
+  locked_until: string | null;
+  calibrating: boolean;
+  cost_change_event: number;
+  transfers_in_event: number;
+  transfers_out_event: number;
+};
+
+export type PriceChangesEnvelope = {
+  data: { next_change_at: string | null; change_windows: string[]; updated_at: string | null; players: PriceChangePlayer[] };
+  meta: SourceMeta;
   errors: AreaError[];
 };

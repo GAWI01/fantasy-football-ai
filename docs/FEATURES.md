@@ -125,7 +125,11 @@ order: the Free Hit picked for next Gameweek only (your squad returns after),
 the Wildcard for the next five Gameweeks (it is kept). Both spend your bank
 plus your players' selling prices, keep the three-per-club rule and show the
 gain over your current team. A chip you have used is still shown, marked as
-used.
+used. On the Wildcard, **Prioritise price risers** breaks
+ties between near-equal players in favour of those FPL projects to rise in price
+over the next two nights (and against likely fallers). The nudge is about a
+tenth of a typical transfer gain, so it never gives up real points for £0.1m,
+and the sheet names the squad's likely risers and fallers either way.
 
 A chip is never recommended just because it is available. When a blank or
 double Gameweek is announced, or injuries pile up in one week, that week
@@ -181,6 +185,19 @@ injury news and the five-Gameweek outlook.
     <td><b>Fixtures</b>: every club's next 3, 5 or 8 Gameweeks with official difficulty, blanks and doubles, ranked from easiest to hardest. Switch to <b>Clean sheet %</b> for each club's chance of a clean sheet per match and its expected clean sheets over the run, worked out from official xG for and against (pulled towards the league average early in the season) with home and away taken into account.</td>
   </tr>
 </table>
+
+## Price changes
+
+The **Prices** page shows who is about to rise or drop in price, from FPL's own
+published figures: each player's progress towards the next change (+100% means
+a rise is due, −100% a drop), whether it is climbing or falling through the day,
+FPL's likelihood label for tonight and its projection for the next night, and a
+countdown to the next change. Filter by rises or drops or show only your squad;
+your players who are likely to change are listed at the top. When the
+recommended transfer's incoming player is likely to rise tonight (or the
+outgoing one to drop), the Plan says to make the move before the change, and
+after it when the incoming player is likely to drop. Remember that FPL gives you
+only half of a rise when you sell, so points come first.
 
 ## History & Review
 

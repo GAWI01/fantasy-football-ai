@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  CalendarRange,
-  History,
-  LayoutDashboard,
-  Menu,
-  RefreshCw,
-  Repeat2,
-  Settings,
-  Shirt,
-  Trophy,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { CalendarRange, History, LayoutDashboard, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
@@ -37,6 +25,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
   plan: Repeat2,
   league: Trophy,
   players: Users,
+  prices: TrendingUp,
   fixtures: CalendarRange,
   review: History,
   settings: Settings,
@@ -44,6 +33,9 @@ const ICONS: Record<NavKey, LucideIcon> = {
 
 
 function PhaseChip({ state }: { state: GameState }) {
+  if (state.gwPlayed) {
+    return <span className="phase-chip phase-settled" title="Every match is played; FPL confirms the final points after its data check"><i aria-hidden="true" />GW{state.currentEvent ?? "—"} done</span>;
+  }
   if (state.phase === "live") {
     return <span className="phase-chip phase-live"><i aria-hidden="true" />GW{state.currentEvent ?? "—"} live</span>;
   }
