@@ -17,7 +17,7 @@ export function legacyModuleTarget(module: string): string | null {
 }
 
 
-export type NavKey = "overview" | "team" | "plan" | "league" | "players" | "fixtures" | "review" | "settings";
+export type NavKey = "overview" | "team" | "plan" | "league" | "players" | "prices" | "fixtures" | "review" | "settings";
 
 export type NavItem = {
   key: NavKey;
@@ -33,6 +33,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: "plan", href: "/plan", label: "Plan & Transfers", short: "Plan", group: "decide" },
   { key: "league", href: "/league", label: "Mini-leagues", short: "Leagues", group: "research" },
   { key: "players", href: "/players", label: "Players", short: "Players", group: "research" },
+  { key: "prices", href: "/prices", label: "Price changes", short: "Prices", group: "research" },
   { key: "fixtures", href: "/fixtures", label: "Fixtures", short: "Fixtures", group: "research" },
   { key: "review", href: "/review", label: "History & Review", short: "History", group: "research" },
   { key: "settings", href: "/settings", label: "Settings", short: "Settings", group: "account" },

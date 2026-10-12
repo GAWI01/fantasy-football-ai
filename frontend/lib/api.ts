@@ -7,6 +7,7 @@ import type {
   RivalEnvelope,
   FixtureMatrixEnvelope,
   PlayerMarketEnvelope,
+  PriceChangesEnvelope,
   ReviewEnvelope,
   StatusEnvelope,
 } from "./contracts";
@@ -173,6 +174,12 @@ export async function fetchEvaluation(
   return readJson<EvaluationEnvelope>(response);
 }
 
+
+/** Official FPL price-change progress and projections for every player. */
+export async function fetchPriceChanges(signal?: AbortSignal): Promise<PriceChangesEnvelope> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/price-changes`, { cache: "no-store", signal });
+  return readJson<PriceChangesEnvelope>(response);
+}
 
 /** The best Free Hit and Wildcard squads within the manager's budget. */
 export async function fetchChipSquads(teamId: string, signal?: AbortSignal): Promise<ChipSquadsEnvelope> {

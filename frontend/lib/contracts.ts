@@ -759,3 +759,31 @@ export type ChipSquadsEnvelope = {
   meta: SourceMeta & { event?: number };
   errors: AreaError[];
 };
+
+export type PriceProjection = { offset: number; percent: number | null; likelihood: number };
+
+export type PriceChangePlayer = {
+  player_id: number;
+  name: string;
+  team: string;
+  team_short: string;
+  position: string;
+  price: number | null;
+  ownership: number | null;
+  /** Official progress towards the next change: +100 a rise is due, -100 a fall. */
+  percent: number | null;
+  hourly_rate: number | null;
+  /** Official projection per upcoming change window; likelihood -5 (fall) … +5 (rise). */
+  projections: PriceProjection[];
+  locked_until: string | null;
+  calibrating: boolean;
+  cost_change_event: number;
+  transfers_in_event: number;
+  transfers_out_event: number;
+};
+
+export type PriceChangesEnvelope = {
+  data: { next_change_at: string | null; change_windows: string[]; updated_at: string | null; players: PriceChangePlayer[] };
+  meta: SourceMeta;
+  errors: AreaError[];
+};

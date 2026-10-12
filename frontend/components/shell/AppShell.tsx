@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  CalendarRange,
-  History,
-  LayoutDashboard,
-  Menu,
-  RefreshCw,
-  Repeat2,
-  Settings,
-  Shirt,
-  Trophy,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { CalendarRange, History, LayoutDashboard, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
@@ -37,6 +25,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
   plan: Repeat2,
   league: Trophy,
   players: Users,
+  prices: TrendingUp,
   fixtures: CalendarRange,
   review: History,
   settings: Settings,

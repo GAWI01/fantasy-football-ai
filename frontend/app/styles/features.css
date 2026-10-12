@@ -865,3 +865,46 @@ button.race-row:hover { background: var(--surface-hover); }
 .chip-squad-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .chip-squad { display: grid; gap: 14px; margin-top: 14px; }
 .chip-squad-metrics dd small { font-size: var(--fs-xs); color: var(--text-3); font-weight: 600; }
+
+/* Price changes */
+.price-clock-body { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.price-clock-body > div:first-child { display: grid; gap: 2px; }
+.price-countdown { font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; font-style: italic; letter-spacing: 0.02em; line-height: 1; }
+.price-counts { display: flex; gap: 16px; font-size: var(--fs-sm); color: var(--text-2); }
+.price-counts b { font-family: var(--font-display); font-size: 1.3rem; margin-right: 4px; }
+.price-alert { margin-top: 12px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--violet-soft); border: 1px solid var(--violet-line); font-size: var(--fs-sm); }
+.price-card { padding-top: 6px; }
+.price-list { list-style: none; margin: 0; padding: 0; }
+.price-row {
+  display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.2fr) 56px; align-items: center; gap: 12px;
+  padding: 10px 4px; border-bottom: 1px solid var(--line);
+}
+.price-row.is-owned { background: rgba(139, 92, 246, 0.07); border-radius: 8px; }
+.price-head { font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); padding-top: 4px; }
+.price-status { display: inline-flex; align-items: center; gap: 4px; justify-self: start; padding: 3px 8px; border-radius: 6px; font-size: var(--fs-xs); font-weight: 700; white-space: nowrap; background: rgba(255, 255, 255, 0.07); color: var(--text-2); }
+.price-status-very-likely-rise { background: #166534; color: #dcfce7; }
+.price-status-likely-rise { background: rgba(52, 211, 153, 0.9); color: #052e1f; }
+.price-status-likely-drop { background: rgba(248, 113, 113, 0.9); color: #2a0707; }
+.price-status-very-likely-drop { background: #991b1b; color: #fee2e2; }
+.price-status-locked { background: rgba(148, 163, 184, 0.16); color: var(--text-3); }
+.price-progress { display: grid; grid-template-columns: minmax(40px, 1fr) auto 14px; align-items: center; gap: 8px; }
+.price-progress b { font-size: var(--fs-sm); min-width: 54px; text-align: right; }
+.price-track { position: relative; height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.price-track::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line-3); }
+.price-track i { position: absolute; top: 0; bottom: 0; border-radius: 99px; }
+.price-track i.is-up { background: linear-gradient(90deg, #10b981, #6ee7b7); }
+.price-track i.is-down { background: linear-gradient(270deg, #dc2626, #fca5a5); }
+.price-trend { display: inline-flex; }
+.price-next { font-size: var(--fs-xs); font-weight: 700; text-align: right; }
+@media (max-width: 767px) {
+  .price-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  .price-head { display: none; }
+  .price-row .price-status { justify-self: end; }
+  .price-row .price-progress { grid-column: 1 / -1; }
+  .price-next { display: none; }
+  .price-countdown { font-size: 1.9rem; }
+}
+.price-timing { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r-sm); background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.3); font-size: var(--fs-sm); color: var(--text-2); }
+.price-timing svg { color: var(--green-text); flex: none; margin-top: 2px; }
+.price-timing p + p { margin-top: 4px; }
+.price-timing .link { display: inline-block; margin-top: 4px; font-size: var(--fs-xs); }

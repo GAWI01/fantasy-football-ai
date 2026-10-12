@@ -182,6 +182,19 @@ injury news and the five-Gameweek outlook.
   </tr>
 </table>
 
+## Price changes
+
+The **Prices** page shows who is about to rise or drop in price, from FPL's own
+published figures: each player's progress towards the next change (+100% means
+a rise is due, −100% a drop), whether it is climbing or falling through the day,
+FPL's likelihood label for tonight and its projection for the next night, and a
+countdown to the next change. Filter by rises or drops or show only your squad;
+your players who are likely to change are listed at the top. When the
+recommended transfer's incoming player is likely to rise tonight (or the
+outgoing one to drop), the Plan says to make the move before the change, and
+after it when the incoming player is likely to drop. Remember that FPL gives you
+only half of a rise when you sell, so points come first.
+
 ## History & Review
 
 ![History and Review: season record and a Gameweek set against the model](screenshots/review.png)

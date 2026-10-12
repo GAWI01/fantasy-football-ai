@@ -81,6 +81,7 @@ from .review_service import (
 
 from engine.decision_engine import build_decision
 from engine.transfer_analysis import chip_squads, evaluate_transfer_moves
+from .price_service import build_price_changes
 from optimizer.action_planner import DEFAULT_POLICY
 
 
@@ -1287,6 +1288,19 @@ def get_players_v1(limit: int = 20, position: str | None = None):
     if data.get("model_error"):
         errors.append({"area": "model", "message": data["model_error"]})
     return api_envelope(data, meta, errors)
+
+
+@app.get("/api/v1/price-changes")
+def get_price_changes_v1():
+    """Official FPL price-change progress and projections for every player."""
+    trace_token = begin_gateway_trace()
+    try:
+        data = build_price_changes(get_bootstrap_data())
+    except LiveDataServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    finally:
+        official_trace = end_gateway_trace(trace_token)
+    return api_envelope(data, _gateway_source_meta("official", official_trace))
 
 
 @app.get("/api/v1/fixtures", response_model=FixtureEnvelopeModel)
