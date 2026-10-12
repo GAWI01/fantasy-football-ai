@@ -4,6 +4,7 @@ import { createContext, useContext, useId, useLayoutEffect, useRef, type ReactNo
 
 import { CountUp } from "@/components/ui/CountUp";
 import type { SourceKind } from "@/lib/model/phase";
+import { useDataLabels } from "@/lib/preferences";
 import { useSectionOpen, type SectionDefaults } from "@/lib/sections";
 
 const SOURCE_COPY: Record<SourceKind, { label: string; hint: string }> = {
@@ -25,10 +26,15 @@ export function SourceScope({ kinds, children }: { kinds: readonly SourceKind[];
   return <ScopeSources.Provider value={kinds}>{children}</ScopeSources.Provider>;
 }
 
-/** `pinned` badges are the region's own header labels and always show. */
-export function SourceBadge({ kind, label, pinned = false }: { kind: SourceKind; label?: string; pinned?: boolean }) {
+// Labels that say something about the data right now show even when labels are off.
+const ALWAYS_SHOWN: readonly SourceKind[] = ["live", "cached"];
+
+/** `pinned` badges are the region's own header labels. `always` shows a badge even with data labels off (the Settings guide). */
+export function SourceBadge({ kind, label, pinned = false, always = false }: { kind: SourceKind; label?: string; pinned?: boolean; always?: boolean }) {
   const scope = useContext(ScopeSources);
+  const labels = useDataLabels();
   const copy = SOURCE_COPY[kind];
+  if (!always && !labels && !ALWAYS_SHOWN.includes(kind)) return null;
   if (!pinned && !label && scope.includes(kind)) return null;
   return (
     <span className={`src src-${kind}`} title={copy.hint}>

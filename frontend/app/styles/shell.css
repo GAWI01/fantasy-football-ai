@@ -143,10 +143,12 @@
 .tabbar { display: none; }
 .more-nav { display: grid; gap: 6px; margin-bottom: 18px; }
 .more-link {
-  display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px;
+  display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 14px;
   border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-1);
-  font-family: var(--font-display); font-size: 1.1rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase;
 }
+.more-link > span { display: grid; gap: 2px; min-width: 0; }
+.more-link b { font-family: var(--font-display); font-size: 1.1rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+.more-link small { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.35; }
 .more-link[aria-current="page"] { border-color: var(--violet-line); color: var(--violet-text); }
 .side-disclaimer { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.5; }
 
@@ -233,4 +235,26 @@
     height: calc(var(--tabbar-h) + max(10px, calc(env(safe-area-inset-bottom) - 8px)) + 22px);
     background: linear-gradient(180deg, rgba(4, 6, 13, 0) 0%, rgba(4, 6, 13, 0.92) 45%, #04060d 100%);
   }
+}
+
+/* Tabs inside a page: Explore's sibling pages, the Plan's sections */
+.page-tabs {
+  display: flex; gap: 4px; margin: 0 0 18px; padding: 4px; overflow-x: auto; scrollbar-width: none;
+  border-radius: 13px; background: var(--surface-1); border: 1px solid var(--line);
+}
+.page-tabs-sticky { position: sticky; top: calc(var(--topbar-h) + 8px); z-index: 6; background: rgba(18, 24, 39, 0.92); backdrop-filter: blur(14px); }
+.page-tabs::-webkit-scrollbar { display: none; }
+.page-tab {
+  flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 0 14px; border-radius: 9px; white-space: nowrap;
+  font-family: var(--font-display); font-size: 0.98rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-2); transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+.page-tab:hover { color: var(--text); }
+.page-tab[aria-current="page"], .page-tab[aria-selected="true"] {
+  background: linear-gradient(180deg, #7c3aed, #5b21b6); color: #fff; box-shadow: 0 6px 16px -8px rgba(124, 58, 237, 0.9);
+}
+.page-tab .tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn, #f59e0b); }
+@media (max-width: 520px) {
+  .page-tab { flex: 1 1 auto; min-width: 0; padding: 0 8px; font-size: 0.86rem; letter-spacing: 0.03em; }
 }

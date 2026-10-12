@@ -56,7 +56,9 @@ export function TwoWeekCard({ plan, transfersNow }: { plan: TwoWeekPlan; transfe
           );
         })}
       </ul>
-      <p className="card-note">
+      <details className="card-more">
+        <summary>How is this worked out?</summary>
+        <p className="card-note">
         Each row evaluates transfers now with a follow-up next week using today&apos;s projections. Next-week moves apply only if current info holds.
         Unused free transfers carry over (up to five); extra moves cost −4.
         The baseline is hold now, then optimize next week with the allowed moves, rather than keeping the squad unchanged throughout.
@@ -65,7 +67,8 @@ export function TwoWeekCard({ plan, transfersNow }: { plan: TwoWeekPlan; transfe
         {plan.weights?.length ? ` Horizon weights: ${plan.weights.join(", ")}.` : " Horizon weights unavailable."}
         The conservative policy can favor fewer moves now, even when another row scores higher.
         {plan.optimality_known === true ? " Follow-ups were solved within the evaluated candidate pool and current squads." : " Search optimality is unconfirmed; evaluated sequences may be incomplete."}
-      </p>
+        </p>
+      </details>
     </Card>
   );
 }

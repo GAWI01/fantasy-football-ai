@@ -126,7 +126,7 @@ def record_snapshot(
     season_start = first_deadline.year if first_deadline.month >= 7 else first_deadline.year - 1
     season = f"{season_start}-{(season_start + 1) % 100:02d}"
     key = f"{season}-gw{target['id']}-{window}"
-    if not force and any(name.startswith(f"snapshot-{key}-") and name.endswith(".tar.gz") for name in archived_assets or []):
+    if not force and any(name.startswith(f"snapshot-{key}-") and name.endswith((".tar.gz", ".tar.gz.enc")) for name in archived_assets or []):
         return None
     if force:
         key += f"-{started.strftime('%Y%m%dT%H%M%SZ')}-{uuid4().hex[:12]}"

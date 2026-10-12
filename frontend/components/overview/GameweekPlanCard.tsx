@@ -214,8 +214,10 @@ export function GameweekPlanCard({
             <span>
               <span className="hero-line-label">Chip</span>
               <b className={plan.chip.recommended ? "tone-warn" : undefined}>{plan.chip.recommended ? `Play ${CHIP_LABEL[plan.chip.recommended]}` : "Hold chips"}</b>
-              {plan.chip.recommended && plan.chip.reason ? <small>{plan.chip.reason}</small> : null}
+              {plan.chip.recommended && plan.chip.reason ? <small>{plan.chip.reason}</small> : chipHint(plan) ? <small>{chipHint(plan)}</small> : null}
+              {plan.chipBudgetIsEstimate ? <small>Squad affordability estimated from market prices.</small> : null}
             </span>
+            <Link className="hero-line-link" href="/plan#chips" aria-label="Open the chip outlook">Chips<ArrowRight size={13} aria-hidden="true" /></Link>
           </li>
         </ul>
       </div>

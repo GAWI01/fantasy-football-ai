@@ -54,34 +54,37 @@ retrain a model or certify already-inspected evaluation results.
 
 ## Durable storage and retrieval
 
-The workflow checks existing archive asset names before acquisition. It fetches
-bootstrap metadata once per run, then skips fixtures when outside the capture
-windows or when that scheduled capture is already present locally or on a
-Release. Release-index failures stop the workflow rather than assume an empty
-archive. Completed bundles are compressed and uploaded to the season-specific
-GitHub prerelease `data-archive-2026-27` (and corresponding later seasons).
-Assets are named
-`snapshot-2026-27-gw8-24h-20261016T100006Z-RUN_ID-RUN_ATTEMPT.tar.gz`.
-The timestamp describes bundle completion; the manifest retains its full
-precision. Run ID and attempt keep uploads unique. Uploads never use
-`--clobber`; an upload failure leaves any existing asset intact. Releases retain
-assets until an owner explicitly removes them; the workflow has no pruning.
-No new storage service or credentials are required beyond the repository's
-`GITHUB_TOKEN` with `contents: write`. Git contains only code and documentation.
+The repository is public, so raw FPL data is **never uploaded in readable form**.
+The workflow runs only when the repository secret `SNAPSHOT_ARCHIVE_KEY` is set;
+without it the job stops before any request to FPL. With it, each completed
+bundle is compressed, encrypted with AES-256 (`openssl enc -aes-256-cbc -pbkdf2
+-iter 200000`, key derived from the secret), and only the encrypted file is
+uploaded to the season prerelease `data-archive-2026-27` (and later seasons).
+The archive is for private model evaluation; its contents are not published.
 
-Download through the repository's Releases page or GitHub CLI:
+The workflow checks existing archive asset names before acquisition and skips
+fixtures when outside the capture windows or when that scheduled capture is
+already archived. Release-index failures stop the workflow rather than assume an
+empty archive. Assets are named
+`snapshot-2026-27-gw8-24h-20261016T100006Z-RUN_ID-RUN_ATTEMPT.tar.gz.enc`.
+Uploads never use `--clobber`; the workflow has no pruning.
+
+To set it up, create a long random key and add it under GitHub → Settings →
+Secrets and variables → Actions as `SNAPSHOT_ARCHIVE_KEY`. Keep a copy: without
+it the archive cannot be read.
+
+Download and decrypt:
 
 ```bash
 gh release download data-archive-2026-27 --repo OWNER/REPO \
-  --pattern 'snapshot-2026-27-gw8-24h-*.tar.gz' --dir output/retrieved
-tar -xzf output/retrieved/SELECTED_ASSET.tar.gz -C output/retrieved
+  --pattern 'snapshot-2026-27-gw8-24h-*.tar.gz.enc' --dir output/retrieved
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:SNAPSHOT_ARCHIVE_KEY \
+  -in output/retrieved/SELECTED_ASSET.tar.gz.enc -out output/retrieved/bundle.tar.gz
+tar -xzf output/retrieved/bundle.tar.gz -C output/retrieved
 ```
 
 Read `manifest.json`, verify each source file's SHA256 against its manifest
 entry, and check source completion times against `deadline_time` before use.
-Repository access controls govern Release visibility; assets in a public
-repository are public. Treat provider data ownership and permission separately
-from repository visibility and content hashes.
 
 For a local read-only inspection at any pre-deadline time:
 

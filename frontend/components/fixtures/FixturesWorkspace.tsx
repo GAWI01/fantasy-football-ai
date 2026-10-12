@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 import { FixtureCell } from "@/components/fixtures/FixtureCell";
 import { Kit } from "@/components/kit/Kit";
+import { PageLinkTabs } from "@/components/shell/PageTabs";
 import { DataState } from "@/components/states/DataState";
 import { Card, Segmented, SourceBadge, Skeleton } from "@/components/ui/primitives";
 import { fixed } from "@/lib/format";
@@ -58,11 +59,12 @@ export function FixturesWorkspace() {
 
   return (
     <div className="stack">
+      <PageLinkTabs parent="players" label="Explore" />
       <header className="page-head">
         <div>
-          <span className="eyebrow">Fixture planner</span>
+          <span className="eyebrow">Explore · Fixture planner</span>
           <h1>Fixtures</h1>
-          <p className="page-lede">Every club&apos;s next run, with home and away spelled out. Lower run scores are easier; blanks count against a club and doubles count for it. Clean sheet % shows each club&apos;s chance of keeping one.</p>
+          <p className="page-lede">Which clubs have easy or hard matches coming up. Green is easier, red is harder; switch to Clean sheet % for each club&apos;s chance of keeping one.</p>
         </div>
       </header>
 

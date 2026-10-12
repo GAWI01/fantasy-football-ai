@@ -1,77 +1,41 @@
 import { useSyncExternalStore } from "react";
 
-export const SEASON_GOAL_KEY = "fpl-ai-season-goal";
-const SEASON_GOAL_EVENT = "fpl-ai-season-goal-change";
+/**
+ * Whether every number carries its source label (FPL data, Model, Derived).
+ * Off by default to keep screens calm: Live and Cached still show, because they
+ * say something about the data right now, and every forecast keeps its xP unit.
+ */
+export const DATA_LABELS_KEY = "fpl-ai-data-labels";
+const DATA_LABELS_EVENT = "fpl-ai-data-labels-change";
 
-export type SeasonGoal = "mini_league" | "overall_rank" | "decision_quality";
+// When storage is blocked (private mode) the choice lasts this visit.
+let session: boolean | null = null;
 
-export const DEFAULT_SEASON_GOAL: SeasonGoal = "mini_league";
-
-export const seasonGoalOptions: Array<{
-  id: SeasonGoal;
-  label: string;
-  title: string;
-  headline: string;
-  description: string;
-}> = [
-  {
-    id: "mini_league",
-    label: "Win my mini-league",
-    title: "Mini-league edge",
-    headline: "Create separation through better decisions.",
-    description: "Use expected value, captain reliability and selective upside without inventing rival data.",
-  },
-  {
-    id: "overall_rank",
-    label: "Improve overall rank",
-    title: "Overall-rank edge",
-    headline: "Climb through repeatable expected value.",
-    description: "Keep transfer cost, squad structure and captain reliability ahead of short-term noise.",
-  },
-  {
-    id: "decision_quality",
-    label: "Improve my decisions",
-    title: "Decision-quality edge",
-    headline: "Build a repeatable FPL process.",
-    description: "Focus on evidence, uncertainty and post-Gameweek learning instead of outcome bias.",
-  },
-];
-
-export function readSeasonGoal(): SeasonGoal {
-  if (typeof window === "undefined") return DEFAULT_SEASON_GOAL;
-  const stored = window.localStorage.getItem(SEASON_GOAL_KEY);
-  return seasonGoalOptions.some((option) => option.id === stored)
-    ? stored as SeasonGoal
-    : DEFAULT_SEASON_GOAL;
+export function readDataLabels(): boolean {
+  if (typeof window === "undefined") return false;
+  try { return window.localStorage.getItem(DATA_LABELS_KEY) === "on"; } catch { return session ?? false; }
 }
 
-export function writeSeasonGoal(goal: SeasonGoal) {
+export function writeDataLabels(show: boolean) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(SEASON_GOAL_KEY, goal);
-  window.dispatchEvent(new Event(SEASON_GOAL_EVENT));
+  try {
+    if (show) window.localStorage.setItem(DATA_LABELS_KEY, "on");
+    else window.localStorage.removeItem(DATA_LABELS_KEY);
+  } catch { session = show; }
+  window.dispatchEvent(new Event(DATA_LABELS_EVENT));
 }
 
-export function seasonGoalCopy(goal: SeasonGoal) {
-  return seasonGoalOptions.find((option) => option.id === goal) ?? seasonGoalOptions[0];
-}
-
-function subscribeSeasonGoal(onStoreChange: () => void) {
+function subscribeDataLabels(onChange: () => void) {
   if (typeof window === "undefined") return () => undefined;
-  const handleStorage = (event: StorageEvent) => {
-    if (event.key === SEASON_GOAL_KEY) onStoreChange();
-  };
+  const handleStorage = (event: StorageEvent) => { if (event.key === DATA_LABELS_KEY) onChange(); };
   window.addEventListener("storage", handleStorage);
-  window.addEventListener(SEASON_GOAL_EVENT, onStoreChange);
+  window.addEventListener(DATA_LABELS_EVENT, onChange);
   return () => {
     window.removeEventListener("storage", handleStorage);
-    window.removeEventListener(SEASON_GOAL_EVENT, onStoreChange);
+    window.removeEventListener(DATA_LABELS_EVENT, onChange);
   };
 }
 
-export function useSeasonGoal() {
-  return useSyncExternalStore(
-    subscribeSeasonGoal,
-    readSeasonGoal,
-    () => DEFAULT_SEASON_GOAL,
-  );
+export function useDataLabels(): boolean {
+  return useSyncExternalStore(subscribeDataLabels, readDataLabels, () => false);
 }

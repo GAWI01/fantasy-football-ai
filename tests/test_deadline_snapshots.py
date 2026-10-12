@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -124,6 +125,10 @@ def test_no_fixtures_request_when_not_due_or_already_archived(tmp_path):
     session = Session()
     assert snapshots.record_snapshot(tmp_path, session=session, clock=Clock(DEADLINE - timedelta(hours=24)), archived_assets=["snapshot-2026-27-gw8-24h-20261016T100000Z-123-1.tar.gz"]) is None
     assert session.urls == [snapshots.SOURCE_URLS["bootstrap-static"]]
+    # Encrypted uploads count as archived too.
+    session = Session()
+    assert snapshots.record_snapshot(tmp_path, session=session, clock=Clock(DEADLINE - timedelta(hours=24)), archived_assets=["snapshot-2026-27-gw8-24h-20261016T100000Z-123-1.tar.gz.enc"]) is None
+    assert session.urls == [snapshots.SOURCE_URLS["bootstrap-static"]]
 
 
 def test_rerun_cannot_overwrite_or_make_duplicate_complete_bundle(tmp_path):
@@ -201,3 +206,12 @@ def test_no_upcoming_event_needs_no_fixtures(tmp_path):
     session = Session()
     assert snapshots.record_snapshot(tmp_path, session=session, clock=Clock(DEADLINE + timedelta(days=10))) is None
     assert session.urls == [snapshots.SOURCE_URLS["bootstrap-static"]]
+
+
+def test_workflow_never_uploads_unencrypted_data():
+    workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/deadline-snapshots.yml").read_text()
+    assert "secrets.SNAPSHOT_ARCHIVE_KEY" in workflow
+    assert "openssl enc -aes-256-cbc" in workflow
+    upload = [line for line in workflow.splitlines() if "gh release upload" in line]
+    assert upload == ['          gh release upload "$tag" "$asset"']
+    assert 'asset="${plain}.enc"' in workflow
