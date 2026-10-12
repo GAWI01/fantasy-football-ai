@@ -1,18 +1,18 @@
 "use client";
 
-import { ArrowRight, History, LineChart, Shirt } from "lucide-react";
+import { ArrowRight, History, LineChart, Shirt, Zap } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { TrendChart } from "@/components/charts/TrendChart";
 import { SquadFixtures } from "@/components/fixtures/SquadFixtures";
 import { ConnectHero } from "@/components/overview/ConnectHero";
-import { GameweekPlanCard } from "@/components/overview/GameweekPlanCard";
+import { chipSummary, GameweekPlanCard, PlanChipDetails, PlanLineupDetails } from "@/components/overview/GameweekPlanCard";
 import { LiveCockpit } from "@/components/overview/LiveCockpit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
 import { DataState } from "@/components/states/DataState";
 import { Card, Segmented, SourceBadge, Stat } from "@/components/ui/primitives";
-import { compact, integer, price, signed } from "@/lib/format";
+import { compact, fixed, integer, price, signed } from "@/lib/format";
 import { useCockpit } from "@/lib/hooks/useCockpit";
 import { usePlanHistory } from "@/lib/hooks/usePlanHistory";
 import { liveSource, officialSource } from "@/lib/model/phase";
@@ -79,9 +79,28 @@ export function Overview() {
       {error ? <DataState tone="warning" compact title="Latest refresh failed">Showing the last successful data. {error}</DataState> : null}
 
       {activeView === "live" && canShowLive && live ? (
-        <LiveCockpit live={live} squad={squad} source={liveSource(state)} overallRank={team.overall_rank ?? null} eventRank={team.event_rank ?? null} />
+        <LiveCockpit
+          live={live}
+          squad={squad}
+          source={liveSource(state)}
+          overallRank={team.overall_rank ?? null}
+          eventRank={team.event_rank ?? null}
+          planPreview={showToggle && plan ? {
+            event: state.targetEvent,
+            label: plan.verdict === "TRANSFER" ? plan.recommended.moves.map((move) => `${move.outName} → ${move.inName}`).join(", ") : "Hold the transfer",
+            provisional: state.forecastProvisional,
+            onOpen: () => setView("plan"),
+          } : null}
+        />
       ) : (
         <>
+          {state.liveActive && live ? (
+            <button type="button" className="preview-line preview-live" onClick={() => setView("live")}>
+              <i className="preview-dot" aria-hidden="true" />
+              <span><b>GW{live.event} live</b> · {live.points ?? "—"} pts · {live.playing} playing · {live.remaining} to play</span>
+              <span className="preview-cta">Open live<ArrowRight size={14} aria-hidden="true" /></span>
+            </button>
+          ) : null}
           {plan ? (
             <GameweekPlanCard plan={plan} event={state.targetEvent} modelVersion={state.modelVersion} locked={!state.actionsOpen} provisionalCutoff={state.forecastProvisional ? state.historyCutoff : null} />
           ) : (
@@ -98,7 +117,20 @@ export function Overview() {
           ) : null}
 
           <div className="overview-grid">
-            <Card title="Best XI" eyebrow={plan?.lineupAfterTransfers ? "Model lineup after the recommended transfers" : "Model lineup from your squad"} icon={<Shirt size={16} />} source="model" action={<Link className="link" href="/team">Edit lineup <ArrowRight size={13} aria-hidden="true" /></Link>} className="overview-pitch">
+            <Card
+              title="Lineup & captain"
+              eyebrow={plan?.lineupAfterTransfers ? "Model lineup after the recommended transfers" : "Model lineup from your squad"}
+              icon={<Shirt size={16} />}
+              source="model"
+              action={<Link className="link" href="/team">Edit lineup <ArrowRight size={13} aria-hidden="true" /></Link>}
+              className="overview-pitch"
+              collapse={{
+                id: "lineup",
+                defaults: { mobile: false, desktop: true },
+                summary: plan?.captain ? `Captain ${plan.captain.name} · ${fixed(plan.projectedScore)} xP${plan.formation ? ` · ${plan.formation}` : ""}` : "Model lineup",
+              }}
+            >
+              {plan ? <PlanLineupDetails plan={plan} /> : null}
               {plan?.modelXI.length === 11 ? (
                 <>
                   <PitchSurface compact label="Model starting eleven with projected points">
@@ -116,14 +148,53 @@ export function Overview() {
 
             <div className="overview-side">
               {change ? (
-                <Card title="What changed" icon={<History size={16} />} source="derived" tone="warn">
+                <Card
+                  title="What changed"
+                  icon={<History size={16} />}
+                  source="derived"
+                  tone="warn"
+                  collapse={{
+                    id: "changed",
+                    defaults: { mobile: false, desktop: true },
+                    summary: `${change.previous.action} → ${change.current.action}`,
+                    // A new change opens the section on every screen until it is closed.
+                    signal: `change:${change.previous.recordedAt}:${change.current.action}`,
+                  }}
+                >
                   <p className="change-line"><s>{change.previous.action}</s><ArrowRight size={14} aria-hidden="true" /><b>{change.current.action}</b></p>
                   <ul className="change-reasons">{change.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
                   <p className="card-note">Compared with the plan last seen in this browser on {new Date(change.previous.recordedAt).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}.</p>
                 </Card>
               ) : null}
 
-              <Card title="Season" icon={<LineChart size={16} />} source={officialSource(state)} action={<Link className="link" href="/review">History</Link>}>
+              {plan ? (
+                <Card
+                  title="Chip"
+                  icon={<Zap size={16} />}
+                  source={["model", "official"]}
+                  action={<Link className="link" href="/plan#chips">Outlook</Link>}
+                  collapse={{
+                    id: "chip",
+                    defaults: { mobile: false, desktop: false },
+                    summary: chipSummary(plan),
+                    signal: plan.chip.recommended ? `chip:${state.targetEvent}:${plan.chip.recommended}` : null,
+                  }}
+                >
+                  <PlanChipDetails plan={plan} />
+                </Card>
+              ) : null}
+
+              <Card
+                title="Season"
+                icon={<LineChart size={16} />}
+                source={officialSource(state)}
+                action={<Link className="link" href="/review">History</Link>}
+                collapse={{
+                  id: "season",
+                  defaults: { mobile: false, desktop: true },
+                  summary: `Overall rank ${compact(team.overall_rank)} · ${lastGw ? `GW${lastGw.event} ${integer(lastGw.points)} pts` : `${integer(team.total_points)} pts`}`,
+                }}
+              >
                 <div className="season-stats">
                   <Stat size="sm" label="Overall rank" value={compact(team.overall_rank)} />
                   <Stat size="sm" label={lastGw ? `GW${lastGw.event} points` : "GW points"} value={integer(lastGw?.points ?? team.event_points)} />
@@ -146,17 +217,10 @@ export function Overview() {
                   return moved >= 0 ? `up ${compact(moved)} places since GW${ranked[0].event}` : `down ${compact(-moved)} places since GW${ranked[0].event}`;
                 })()}.</p> : null}
               </Card>
-
-              {state.liveActive && live && activeView !== "live" ? (
-                <Card title={`GW${live.event} is live`} source={liveSource(state)} tone="live">
-                  <p className="row"><strong className="num live-mini">{live.points ?? "—"}</strong><span className="muted">live points · {live.playing} playing · {live.remaining} to play</span></p>
-                  <button type="button" className="link" onClick={() => setView("live")}>Open live cockpit <ArrowRight size={13} aria-hidden="true" /></button>
-                </Card>
-              ) : null}
             </div>
           </div>
 
-          <SquadFixtures squad={squad} />
+          <SquadFixtures squad={squad} collapse={{ id: "fixtures", defaults: { mobile: false, desktop: true } }} />
 
           {plan?.recommended && plan.alternatives.length ? (
             <p className="overview-footnote faint">

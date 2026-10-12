@@ -7,13 +7,13 @@ import { useMemo } from "react";
 import { FixtureCell } from "@/components/fixtures/FixtureCell";
 import { Kit } from "@/components/kit/Kit";
 import { DataState } from "@/components/states/DataState";
-import { Card, Skeleton } from "@/components/ui/primitives";
+import { Card, Skeleton, type CardCollapse } from "@/components/ui/primitives";
 import { useFixtureMatrix } from "@/lib/hooks/data";
 import { runScore } from "@/lib/fpl/fixtures";
 import type { SquadPlayer } from "@/lib/model/squad";
 
 /** Upcoming fixture runs for the clubs you own, easiest run first. */
-export function SquadFixtures({ squad, horizon = 5 }: { squad: SquadPlayer[]; horizon?: number }) {
+export function SquadFixtures({ squad, horizon = 5, collapse }: { squad: SquadPlayer[]; horizon?: number; collapse?: Omit<CardCollapse, "summary"> }) {
   const matrix = useFixtureMatrix(horizon);
   const rows = useMemo(() => {
     const data = matrix.data?.data;
@@ -26,9 +26,10 @@ export function SquadFixtures({ squad, horizon = 5 }: { squad: SquadPlayer[]; ho
       .sort((left, right) => left.score - right.score);
   }, [matrix.data, squad]);
   const gameweeks = matrix.data?.data.gameweeks ?? [];
+  const summary = rows.length ? `Easiest run: ${rows[0].team.team_short} · hardest: ${rows[rows.length - 1].team.team_short}` : "Your clubs' next Gameweeks";
 
   return (
-    <Card title="Your fixture runs" eyebrow={gameweeks.length ? `GW${gameweeks[0]}–${gameweeks[gameweeks.length - 1]}` : "Next Gameweeks"} icon={<CalendarRange size={16} />} source={matrix.data?.meta.stale ? "cached" : "official"} action={<Link className="link" href="/fixtures">Planner</Link>} className="squad-fixtures">
+    <Card title="Your fixture runs" eyebrow={gameweeks.length ? `GW${gameweeks[0]}–${gameweeks[gameweeks.length - 1]}` : "Next Gameweeks"} icon={<CalendarRange size={16} />} source={matrix.data?.meta.stale ? "cached" : "official"} action={<Link className="link" href="/fixtures">Planner</Link>} className="squad-fixtures" collapse={collapse ? { ...collapse, summary } : undefined}>
       {matrix.loading && !matrix.data ? <Skeleton lines={5} /> : matrix.error && !matrix.data ? (
         <DataState compact tone="unavailable" title="Fixtures unavailable">{matrix.error}</DataState>
       ) : (
