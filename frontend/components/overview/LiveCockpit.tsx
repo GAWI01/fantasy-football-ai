@@ -5,6 +5,7 @@ import { Activity, ArrowRight, ArrowRightLeft, Crown, Goal, Hourglass, Radio, Sp
 import { Kit } from "@/components/kit/Kit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
 import { PlayerChip } from "@/components/player/PlayerChip";
+import { CountUp } from "@/components/ui/CountUp";
 import { Card, SourceBadge, Stat } from "@/components/ui/primitives";
 import type { LiveEvent, LiveFixture } from "@/lib/contracts";
 import { compact, fixed, plural, shortTime } from "@/lib/format";
@@ -103,7 +104,7 @@ export function LiveCockpit({ live, squad, source, overallRank, eventRank, planP
           </div>
           <div className="live-stats">
             <Stat size="sm" label={<><Crown size={12} aria-hidden="true" />Captain</>} value={shownCaptain == null ? "—" : Math.round(shownCaptain)} unit="pts" sub={live.captain ? `${live.captain.name}${live.captain.multiplier && live.captain.multiplier > 2 ? " · triple" : ""}` : "No captain"} />
-            <Stat size="sm" label="Bench" value={live.benchPoints ?? "—"} unit="pts" sub="Not counted unless auto-subbed" />
+            <Stat size="sm" label="Bench" value={<CountUp value={live.benchPoints} />} unit="pts" sub="Not counted unless auto-subbed" />
             <Stat size="sm" label="GW rank" value={compact(eventRank)} sub="Official, updates after matches" />
             <Stat size="sm" label="Overall" value={compact(overallRank)} sub="From FPL" />
           </div>

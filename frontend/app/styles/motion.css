@@ -14,14 +14,57 @@
     radial-gradient(1000px 600px at 50% 120%, rgba(16, 185, 129, 0.08), transparent 60%),
     var(--bg);
 }
-.ambient-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-/* The broadcast grid stays, over the light. */
+.ambient-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0.55; }
+/* A night stadium under the light. No grid: mown grass in perspective at the
+   bottom, a faint set of pitch lines, drifting haze, fine rain in the beams and
+   a vignette that keeps the edges dark. */
+.ambient-stadium { position: absolute; inset: 0; overflow: hidden; perspective: 700px; perspective-origin: 50% 0%; }
+.ambient-pitch {
+  position: absolute; left: -40%; right: -40%; bottom: -18%; height: 78%;
+  transform: rotateX(64deg); transform-origin: 50% 100%;
+  background:
+    radial-gradient(55% 70% at 50% 45%, rgba(34, 197, 94, 0.09), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(22, 101, 52, 0.16) 0 5%, rgba(5, 46, 22, 0.1) 5% 10%);
+  -webkit-mask-image: linear-gradient(to top, #000 15%, transparent 92%);
+  mask-image: linear-gradient(to top, #000 15%, transparent 92%);
+}
+.ambient-pitch svg { position: absolute; inset: 6% 12%; width: 76%; height: 88%; fill: none; stroke: rgba(220, 252, 231, 0.07); stroke-width: 0.35; vector-effect: non-scaling-stroke; }
+.ambient-pitch svg * { vector-effect: non-scaling-stroke; stroke-width: 1.5px; }
+.ambient-haze {
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(40% 26% at 30% 62%, rgba(148, 163, 184, 0.07), transparent 70%),
+    radial-gradient(36% 22% at 72% 48%, rgba(167, 139, 250, 0.06), transparent 70%),
+    radial-gradient(50% 30% at 50% 85%, rgba(110, 231, 183, 0.05), transparent 70%);
+}
+.ambient-rain {
+  position: absolute; inset: 0; overflow: hidden; opacity: 0;
+  -webkit-mask-image: radial-gradient(38% 60% at 14% 0%, #000, transparent 75%), radial-gradient(38% 60% at 86% 0%, #000, transparent 75%);
+  mask-image: radial-gradient(38% 60% at 14% 0%, #000, transparent 75%), radial-gradient(38% 60% at 86% 0%, #000, transparent 75%);
+}
+/* The streaks move by transform (one period per loop), never by repainting. */
+.ambient-rain::before {
+  content: ""; position: absolute; top: -240px; bottom: 0; left: 0; right: -28px;
+  background-image:
+    linear-gradient(172deg, transparent 0 46%, rgba(226, 232, 240, 0.18) 50%, transparent 54%),
+    linear-gradient(170deg, transparent 0 47%, rgba(226, 232, 240, 0.12) 50%, transparent 53%);
+  background-size: 7px 120px, 14px 240px;
+}
 .ambient::after {
   content: ""; position: absolute; inset: 0;
   background:
-    linear-gradient(rgba(148, 163, 209, 0.035) 1px, transparent 1px) 0 0 / 100% 56px,
-    linear-gradient(90deg, rgba(148, 163, 209, 0.035) 1px, transparent 1px) 0 0 / 56px 100%;
+    linear-gradient(180deg, rgba(2, 3, 8, 0.35), transparent 30%, transparent 70%, rgba(2, 3, 8, 0.25)),
+    radial-gradient(120% 90% at 50% 40%, transparent 35%, rgba(2, 3, 8, 0.75) 100%);
 }
+.app:is([data-motion="lively"], [data-motion="max"]) .ambient-pitch { animation: pitch-pan 48s ease-in-out infinite alternate; }
+.app:is([data-motion="lively"], [data-motion="max"]) .ambient-haze { animation: haze-drift 38s ease-in-out infinite alternate; }
+.app:is([data-motion="lively"], [data-motion="max"]) .ambient-rain { opacity: 0.55; }
+.app:is([data-motion="lively"], [data-motion="max"]) .ambient-rain::before { animation: rain-fall 1.6s linear infinite; }
+.app[data-motion="max"] .ambient-rain { opacity: 0.8; }
+@keyframes pitch-pan { from { transform: rotateX(64deg) translateX(-3%); } to { transform: rotateX(64deg) translateX(3%); } }
+@keyframes haze-drift { from { transform: translate3d(-6%, 2%, 0) scale(1); } to { transform: translate3d(6%, -3%, 0) scale(1.12); } }
+@keyframes rain-fall { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-28px, 240px, 0); } }
+@media (max-width: 767px) { .ambient-pitch { height: 60%; } .ambient-rain { display: none; } }
 
 /* ---------- Glass ----------
    In-page cards are tinted and see-through, without a blur of their own: the
@@ -62,7 +105,7 @@
   .tabbar { background: rgba(10, 13, 26, 0.96); }
 }
 @media (prefers-contrast: more) {
-  .ambient-canvas { display: none; }
+  .ambient-canvas, .ambient-stadium, .ambient-haze, .ambient-rain { display: none; }
   .card, .card:has(table), .plan-hero, .live-hero, .stat-row { background: var(--surface-1); }
 }
 
@@ -113,7 +156,7 @@
 @keyframes card-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes card-rise-scale { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
 .app:is([data-motion="calm"], [data-motion="lively"], [data-motion="max"]) .content :is(.page-head, .card, .plan-hero, .stat-row) {
-  animation: fade-in 0.35s var(--ease) both;
+  animation: fade-in 0.35s var(--ease) backwards;
 }
 .app:is([data-motion="lively"], [data-motion="max"]) .content :is(.card, .plan-hero, .stat-row) { animation-name: card-rise; animation-duration: 0.55s; }
 .app[data-motion="max"] .content :is(.card, .plan-hero, .stat-row) { animation-name: card-rise-scale; animation-duration: 0.6s; }
@@ -141,6 +184,111 @@
 }
 .app:is([data-motion="lively"], [data-motion="max"]) .live-bar::after { opacity: 1; animation: bar-shimmer 2.8s ease-in-out infinite; }
 @keyframes bar-shimmer { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(420%); } }
+
+
+/* ---------- Pitch: the team walks out line by line ---------- */
+.pitch-row:nth-child(2) { --row: 1; }
+.pitch-row:nth-child(3) { --row: 2; }
+.pitch-row:nth-child(4) { --row: 3; }
+.pitch-row .pp:nth-child(2) { --col: 1; }
+.pitch-row .pp:nth-child(3) { --col: 2; }
+.pitch-row .pp:nth-child(4) { --col: 3; }
+.pitch-row .pp:nth-child(5) { --col: 4; }
+.app:is([data-motion="lively"], [data-motion="max"]) .pitch-row .pp {
+  animation: walk-out 0.6s cubic-bezier(0.22, 1.25, 0.36, 1) backwards;
+  animation-delay: calc(var(--row, 0) * 90ms + var(--col, 0) * 45ms + 80ms);
+}
+.app[data-motion="calm"] .pitch-row .pp { animation: fade-in 0.4s var(--ease) backwards; animation-delay: calc(var(--row, 0) * 60ms); }
+@keyframes walk-out { from { opacity: 0; transform: translateY(18px) scale(0.86); } }
+.pp-kit { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s var(--ease); }
+@media (pointer: fine) {
+  .app:is([data-motion="lively"], [data-motion="max"]) .pp:is(.is-inspectable, button):hover .pp-kit { transform: translateY(-4px) scale(1.06); filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55)); }
+}
+.app:is([data-motion="lively"], [data-motion="max"]) .pp-badge-c { animation: captain-glow 2.6s ease-in-out infinite; }
+@keyframes captain-glow {
+  0%, 100% { box-shadow: 0 0 0 2px var(--violet), 0 0 10px rgba(139, 92, 246, 0.55); }
+  50% { box-shadow: 0 0 0 2px var(--violet), 0 0 20px rgba(167, 139, 250, 1); }
+}
+.app:is([data-motion="lively"], [data-motion="max"]) .pp.is-playing .pp-plate { animation: playing-plate 2.4s ease-in-out infinite; }
+@keyframes playing-plate { 0%, 100% { box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.25); } 50% { box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.7), 0 0 14px -2px rgba(52, 211, 153, 0.6); } }
+
+/* ---------- Plan hero: the verdict lands, Out and In meet in the middle ---------- */
+.app:is([data-motion="lively"], [data-motion="max"]) .plan-hero .verdict-word { animation: verdict-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s backwards; }
+@keyframes verdict-in { from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-10px); letter-spacing: 0.02em; } to { clip-path: inset(0 -10% 0 0); } }
+.app:is([data-motion="lively"], [data-motion="max"]) .move-cards > :first-child { animation: slide-from-left 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) 0.3s backwards; }
+.app:is([data-motion="lively"], [data-motion="max"]) .move-cards > :last-child { animation: slide-from-right 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) 0.38s backwards; }
+.app:is([data-motion="lively"], [data-motion="max"]) .move-cards .move-swap > svg { animation: swap-pop 0.55s cubic-bezier(0.34, 1.7, 0.64, 1) 0.7s backwards; }
+.app:is([data-motion="lively"], [data-motion="max"]) .move-cards .move-gain { animation: fade-up 0.5s var(--ease) 0.85s backwards; }
+.app:is([data-motion="lively"], [data-motion="max"]) .move-compact { animation: fade-up 0.45s var(--ease) 0.4s backwards; }
+@keyframes slide-from-left { from { opacity: 0; transform: translateX(-28px) rotate(-2deg); } }
+@keyframes slide-from-right { from { opacity: 0; transform: translateX(28px) rotate(2deg); } }
+@keyframes swap-pop { from { opacity: 0; transform: scale(0.3) rotate(-90deg); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } }
+.app:is([data-motion="lively"], [data-motion="max"]) .hero-lines > * { animation: fade-up 0.45s var(--ease) backwards; }
+.hero-lines > :nth-child(1) { animation-delay: 0.45s; }
+.hero-lines > :nth-child(2) { animation-delay: 0.55s; }
+.hero-lines > :nth-child(3) { animation-delay: 0.65s; }
+
+/* ---------- Bars, meters and charts grow in ---------- */
+.app:is([data-motion="lively"], [data-motion="max"]) :is(.meter i, .race-track i, .cap-bar i) {
+  transform-origin: 0 50%;
+  animation: bar-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms + 200ms);
+}
+.app:is([data-motion="lively"], [data-motion="max"]) .live-bar i { transform-origin: 0 50%; animation: bar-grow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards; }
+@keyframes bar-grow { from { transform: scaleX(0); } }
+.trend-line { stroke-dasharray: 1; }
+.app:is([data-motion="lively"], [data-motion="max"]) .trend-line { animation: line-draw 1.4s cubic-bezier(0.45, 0, 0.2, 1) 0.15s backwards; }
+.app:is([data-motion="lively"], [data-motion="max"]) .trend-area { animation: fade-in 1s var(--ease) 0.7s backwards; }
+.app:is([data-motion="lively"], [data-motion="max"]) .trend-dot { transform-box: fill-box; transform-origin: center; animation: dot-pop 0.4s cubic-bezier(0.34, 1.7, 0.64, 1) backwards; animation-delay: calc(var(--i, 0) * 40ms + 0.4s); }
+.app:is([data-motion="lively"], [data-motion="max"]) .trend-bar { animation: bar-rise 0.7s cubic-bezier(0.22, 1.2, 0.36, 1) backwards; animation-delay: calc(var(--i, 0) * 28ms + 0.1s); }
+@keyframes line-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes dot-pop { from { opacity: 0; transform: scale(0); } }
+@keyframes bar-rise { from { transform: scaleY(0); } }
+
+/* ---------- Lists arrive in order ---------- */
+.app :is(.table, .heat) tbody tr:nth-child(2) { --i: 1; }
+.app :is(.table, .heat) tbody tr:nth-child(3) { --i: 2; }
+.app :is(.table, .heat) tbody tr:nth-child(4) { --i: 3; }
+.app :is(.table, .heat) tbody tr:nth-child(5) { --i: 4; }
+.app :is(.table, .heat) tbody tr:nth-child(6) { --i: 5; }
+.app :is(.table, .heat) tbody tr:nth-child(7) { --i: 6; }
+.app :is(.table, .heat) tbody tr:nth-child(8) { --i: 7; }
+.app :is(.table, .heat) tbody tr:nth-child(9) { --i: 8; }
+.app :is(.table, .heat) tbody tr:nth-child(10) { --i: 9; }
+.app :is(.table, .heat) tbody tr:nth-child(11) { --i: 10; }
+.app :is(.table, .heat) tbody tr:nth-child(12) { --i: 11; }
+.app:is([data-motion="lively"], [data-motion="max"]) :is(.table, .heat) tbody tr:nth-child(-n + 12) { animation: row-in 0.45s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 32ms + 120ms); }
+.app:is([data-motion="lively"], [data-motion="max"]) .race li { animation: row-in 0.5s var(--ease) backwards; animation-delay: calc(min(var(--i, 0), 14) * 45ms + 100ms); }
+@keyframes row-in { from { opacity: 0; transform: translateX(-10px); } }
+
+/* ---------- Controls answer the hand ---------- */
+.seg { position: relative; }
+.seg button { position: relative; z-index: 1; }
+.seg[data-slide]::before {
+  content: ""; position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  width: var(--seg-w); height: var(--seg-h); border-radius: 8px;
+  transform: translate(var(--seg-x), var(--seg-y));
+  background: linear-gradient(180deg, #7c3aed, #5b21b6); box-shadow: 0 6px 16px -8px rgba(124, 58, 237, 0.9);
+  transition: transform 0.42s cubic-bezier(0.34, 1.35, 0.64, 1), width 0.42s cubic-bezier(0.34, 1.35, 0.64, 1);
+}
+.seg[data-slide] button[aria-pressed="true"] { background: transparent; box-shadow: none; }
+.btn { transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), transform 0.18s var(--ease), box-shadow var(--dur-2) var(--ease); }
+.app:is([data-motion="lively"], [data-motion="max"]) .btn:active:not(:disabled) { transform: scale(0.96); }
+@media (pointer: fine) {
+  .app:is([data-motion="lively"], [data-motion="max"]) :is(button.race-row, .radio-card, .connect-promises li) { transition: transform 0.25s var(--ease), background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease); }
+  .app:is([data-motion="lively"], [data-motion="max"]) :is(button.race-row, .radio-card, .connect-promises li):hover { transform: translateY(-2px); }
+}
+.app:is([data-motion="lively"], [data-motion="max"]) .sheet { animation-timing-function: cubic-bezier(0.32, 1.3, 0.5, 1); animation-duration: 0.5s; }
+
+/* ---------- Landing: the pitch is set before the first click ---------- */
+.app:is([data-motion="lively"], [data-motion="max"]) .connect-copy > *, .app:is([data-motion="lively"], [data-motion="max"]) .connect-promises li { animation: fade-up 0.6s var(--ease) backwards; }
+.connect-copy > :nth-child(2), .connect-promises li:nth-child(1) { animation-delay: 0.08s; }
+.connect-copy > :nth-child(3), .connect-promises li:nth-child(2) { animation-delay: 0.16s; }
+.connect-copy > :nth-child(4), .connect-promises li:nth-child(3) { animation-delay: 0.24s; }
+.connect-copy > :nth-child(n + 5), .connect-promises li:nth-child(n + 4) { animation-delay: 0.32s; }
+.app:is([data-motion="lively"], [data-motion="max"]) .connect-copy h1 span { background-image: linear-gradient(90deg, #c4b5fd, #67e8f9, #c4b5fd); background-size: 200% 100%; animation: hue-drift 7s ease-in-out infinite alternate; }
+@keyframes hue-drift { from { background-position: 0% 0; } to { background-position: 100% 0; } }
 
 /* ---------- Max only ---------- */
 .card:not(.live-hero)::after {

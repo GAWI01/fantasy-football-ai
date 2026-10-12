@@ -8,6 +8,7 @@ import { FormationRows, PitchPlayer, PitchSurface, type ValueMode } from "@/comp
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { SquadPlayerSheet } from "@/components/player/SquadPlayerSheet";
 import { DataState } from "@/components/states/DataState";
+import { CountUp } from "@/components/ui/CountUp";
 import { Card, Delta, Segmented, SourceBadge, Stat } from "@/components/ui/primitives";
 import { fixed, sentenceCase } from "@/lib/format";
 import { formationLabel } from "@/lib/fpl/rules";
@@ -152,9 +153,9 @@ export function TeamWorkspace() {
       {error ? <DataState tone="error" compact title="Refresh failed" action={<button className="btn btn-sm" onClick={() => void refresh()}>Try again</button>}>{error} Showing the last loaded team.</DataState> : null}
       {plan?.budgetIsEstimate || plan?.chipBudgetIsEstimate ? <DataState tone="warning" compact title="Affordability is estimated">Squad budgets use market prices. Check your actual selling prices in FPL before making a move.</DataState> : null}
       <div className="team-summary card">
-        <Stat size="md" label={<>{simulated ? "Simulated XI" : "Your XI"}</>} value={fixed(projection.points)} unit="xP" source={simulated ? "derived" : "model"} sub={`${formationLabel(starters)} · incl. captain`} />
+        <Stat size="md" label={<>{simulated ? "Simulated XI" : "Your XI"}</>} value={<CountUp value={projection.points} decimals={1} fromZero={false} />} unit="xP" source={simulated ? "derived" : "model"} sub={`${formationLabel(starters)} · incl. captain`} />
         <Stat size="md" label="vs official" value={<Delta value={projection.points != null && officialProjection.points != null ? projection.points - officialProjection.points : null} />} sub={simulated ? "Your edits" : "No edits yet"} />
-        <Stat size="md" label="Model best XI" value={fixed(modelProjection?.points)} unit="xP" source="model" sub={plan?.formation ?? "Unavailable"} />
+        <Stat size="md" label="Model best XI" value={<CountUp value={modelProjection?.points} decimals={1} />} unit="xP" source="model" sub={plan?.formation ?? "Unavailable"} />
         <div className="team-summary-actions">
           {model ? <button type="button" className="btn btn-sm" onClick={() => { setLineup(model); setSelected(null); flash(true, "Model lineup, bench order and armbands applied."); }} disabled={sameLineup(current, model)}><Sparkles size={14} aria-hidden="true" />Apply model XI</button> : null}
           <button type="button" className="btn btn-sm btn-ghost" onClick={() => { setLineup(null); setSelected(null); flash(true, "Back to your official lineup."); }} disabled={!simulated}><RotateCcw size={14} aria-hidden="true" />Reset</button>

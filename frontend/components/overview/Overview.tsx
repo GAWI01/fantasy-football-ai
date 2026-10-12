@@ -11,6 +11,7 @@ import { chipSummary, GameweekPlanCard, PlanChipDetails, PlanLineupDetails } fro
 import { LiveCockpit } from "@/components/overview/LiveCockpit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
 import { DataState } from "@/components/states/DataState";
+import { CountUp } from "@/components/ui/CountUp";
 import { Card, Segmented, SourceBadge, Stat } from "@/components/ui/primitives";
 import { compact, fixed, integer, price, signed } from "@/lib/format";
 import { useCockpit } from "@/lib/hooks/useCockpit";
@@ -197,8 +198,8 @@ export function Overview() {
               >
                 <div className="season-stats">
                   <Stat size="sm" label="Overall rank" value={compact(team.overall_rank)} />
-                  <Stat size="sm" label={lastGw ? `GW${lastGw.event} points` : "GW points"} value={integer(lastGw?.points ?? team.event_points)} />
-                  <Stat size="sm" label="Total" value={integer(team.total_points)} />
+                  <Stat size="sm" label={lastGw ? `GW${lastGw.event} points` : "GW points"} value={<CountUp value={lastGw?.points ?? team.event_points} format={(n) => n.toLocaleString("en-GB")} />} />
+                  <Stat size="sm" label="Total" value={<CountUp value={team.total_points} format={(n) => n.toLocaleString("en-GB")} />} />
                   <Stat size="sm" label="Value · bank" value={price(team.value)} sub={`${price(team.bank)} in the bank`} />
                 </div>
                 {history.filter((item) => item.overall_rank).length > 1 ? (

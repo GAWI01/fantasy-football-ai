@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, type PointerEvent } from "react";
+import { useId, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
 
 const pad = { top: 14, right: 12, bottom: 22, left: 52 };
 
@@ -102,14 +102,14 @@ export function TrendChart({
           ) : null}
           {kind === "line" ? (
             <>
-              <path d={area} fill={`url(#trend-${gradientId})`} stroke="none" />
-              <path d={path} className="trend-line" fill="none" />
-              {points.length <= 24 ? points.map((point, index) => <circle key={point.x} cx={xAt(index)} cy={yAt(point.y)} r={hover === index ? 5 : 3} className="trend-dot" />) : null}
+              <path d={area} className="trend-area" fill={`url(#trend-${gradientId})`} stroke="none" />
+              <path d={path} className="trend-line" fill="none" pathLength={1} />
+              {points.length <= 24 ? points.map((point, index) => <circle key={point.x} cx={xAt(index)} cy={yAt(point.y)} r={hover === index ? 5 : 3} className="trend-dot" style={{ "--i": index } as CSSProperties} />) : null}
             </>
           ) : points.map((point, index) => {
             const y = yAt(point.y);
             const zero = yAt(Math.max(geometry.min, 0));
-            return <rect key={point.x} x={xAt(index) - barW / 2} y={Math.min(y, zero)} width={barW} height={Math.max(1, Math.abs(zero - y))} rx={3} className={`trend-bar${hover === index ? " is-hover" : ""}`} />;
+            return <rect key={point.x} x={xAt(index) - barW / 2} y={Math.min(y, zero)} width={barW} height={Math.max(1, Math.abs(zero - y))} rx={3} className={`trend-bar${hover === index ? " is-hover" : ""}`} style={{ "--i": index, transformOrigin: `0 ${zero}px` } as CSSProperties} />;
           })}
           {active && hover != null ? <line className="trend-cross" x1={xAt(hover)} x2={xAt(hover)} y1={8} y2={height - 20} /> : null}
           <text className="trend-axis" x={xAt(0)} y={height - 4} textAnchor="start">{xLabel(points[0].x)}</text>

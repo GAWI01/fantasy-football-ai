@@ -214,10 +214,16 @@ scrolling.
 
 The app is meant to feel alive during a Gameweek, without getting in the way.
 
-- **Background:** soft violet, teal and green light drifts behind the glass
-  cards like floodlights on a night pitch. It turns greener while a Gameweek is
-  live, warms towards amber in the last 24 hours before a deadline, and swells
-  green when one of your players scores.
+- **Background:** a dark stadium at night. A mown pitch fades into the dark at
+  the bottom, floodlight beams sweep from the corners, haze drifts through
+  them and fine rain catches the light. The light turns greener while a
+  Gameweek is live, warms towards amber in the last 24 hours before a
+  deadline, brightens once when new data arrives and swells green when one of
+  your players scores. It shifts a little as you scroll.
+- **Arrivals:** the team walks out onto the pitch line by line, the plan's
+  verdict lands and the Out and In players meet in the middle. Numbers count
+  up, bars and charts grow in, table rows and league standings arrive in
+  order, and the selected option in a switch slides across.
 - **Moments:** when one of your players scores or assists, a short notice
   slides in and the player pops on the pitch. Live points count up, and a
   number that changes glows once. Goals are noticed when the live data

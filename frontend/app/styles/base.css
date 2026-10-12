@@ -14,7 +14,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* The light and the grid live on the fixed ambient layer (motion.css); a fixed
+/* The light and the stadium live on the fixed ambient layer (motion.css); a fixed
    body background never stays put on iPhones. The body stays transparent so it
    does not paint over that layer; the root keeps the base colour. */
 body { font-size: 1rem; background: transparent; }

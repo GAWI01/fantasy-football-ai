@@ -7,9 +7,10 @@ import { useMemo, useState } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 import { TrendChart } from "@/components/charts/TrendChart";
 import { DataState } from "@/components/states/DataState";
+import { CountUp } from "@/components/ui/CountUp";
 import { Card, Delta, SourceBadge, SourceScope, Skeleton, Stat } from "@/components/ui/primitives";
 import type { RankHistoryItem, ReviewData } from "@/lib/contracts";
-import { compact, fixed, integer, signed } from "@/lib/format";
+import { compact, fixed, signed } from "@/lib/format";
 import { useReview } from "@/lib/hooks/data";
 
 const OUTCOME: Record<string, { label: string; tone: string }> = {
@@ -37,11 +38,11 @@ function SeasonSummary({ history }: { history: RankHistoryItem[] }) {
       <SourceScope kinds={["official"]}>
       <div className="stat-row has-source">
         <span className="stat-row-source"><SourceBadge kind="official" pinned /></span>
-        <Stat label="Total points" value={integer(last?.total_points ?? null)} source="official" size="lg" />
+        <Stat label="Total points" value={<CountUp value={last?.total_points} format={(n) => n.toLocaleString("en-GB")} />} source="official" size="lg" />
         <Stat label="Overall rank" value={compact(lastRank)} source="official" size="lg" sub={firstRank && lastRank && ranked.length > 1 ? `${lastRank < firstRank ? "Up" : lastRank > firstRank ? "Down" : "Level"} from ${compact(firstRank)} in GW${ranked[0].event}` : undefined} />
-        <Stat label="Average GW" value={fixed(average, 1)} source="derived" size="lg" />
-        <Stat label="Best GW" value={best ? best.points : "—"} sub={best ? `GW${best.event}` : undefined} source="official" size="lg" />
-        <Stat label="Transfers made" value={history.some((item) => item.transfers != null) ? transfers : "—"} source="official" size="lg" />
+        <Stat label="Average GW" value={<CountUp value={average} decimals={1} />} source="derived" size="lg" />
+        <Stat label="Best GW" value={best ? <CountUp value={best.points} /> : "—"} sub={best ? `GW${best.event}` : undefined} source="official" size="lg" />
+        <Stat label="Transfers made" value={history.some((item) => item.transfers != null) ? <CountUp value={transfers} /> : "—"} source="official" size="lg" />
       </div>
       </SourceScope>
       <div className="grid-2">
@@ -68,9 +69,9 @@ function ReviewBody({ data }: { data: Extract<ReviewData, { available: true }> }
     <div className="stack">
       <Card className="review-hero" title={`GW${data.event} against the model`} source={["official", "model"]} tone="accent">
         <div className="review-scoreline">
-          <Stat label="Model projected" value={fixed(data.summary.projected_points)} source="model" size="xl" />
+          <Stat label="Model projected" value={<CountUp value={data.summary.projected_points} decimals={1} />} source="model" size="xl" />
           <ArrowRight className="faint" aria-hidden="true" />
-          <Stat label="Official points" value={data.summary.official_points} source="official" size="xl" />
+          <Stat label="Official points" value={<CountUp value={data.summary.official_points} />} source="official" size="xl" />
           <div className={`review-outcome tone-${outcome.tone}`}>
             <span className="eyebrow">Versus model</span>
             <strong className="num"><Delta value={data.summary.actual_vs_projected} /></strong>
