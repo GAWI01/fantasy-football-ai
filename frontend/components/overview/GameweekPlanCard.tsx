@@ -8,7 +8,7 @@ import { PlayerCard } from "@/components/player/PlayerCard";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { FreeTransfersControl } from "@/components/plan/FreeTransfersControl";
 import { WhySheet } from "@/components/plan/WhySheet";
-import { Delta, SourceBadge } from "@/components/ui/primitives";
+import { Delta, SourceBadge, SourceScope } from "@/components/ui/primitives";
 import { fixed, price, sentenceCase, signed } from "@/lib/format";
 import { CHIP_LABEL, type GameweekPlan, type ScenarioView, type TransferMove } from "@/lib/model/plan";
 
@@ -81,7 +81,7 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
         <dd><Delta value={scenario.nextGwGain} unit=" xP" /></dd>
       </div>
       <div>
-        <dt>5-GW gain <SourceBadge kind="model" /></dt>
+        <dt>5-GW gain <SourceBadge kind="derived" /></dt>
         <dd><Delta value={scenario.horizonGain} unit=" xP" /></dd>
       </div>
       <div>
@@ -163,10 +163,12 @@ export function GameweekPlanCard({
           {locked ? <span className="pill pill-warn">Read-only · deadline passed</span> : null}
           {provisionalCutoff != null ? <ProvisionalPill cutoff={provisionalCutoff} event={event} /> : null}
           {confidence ? <span className={`pill ${confidence.label === "HIGH" ? "pill-pos" : confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(confidence.label)} confidence</span> : null}
-          <SourceBadge kind="model" />
+          <SourceBadge kind="model" pinned />
+          {scenario ? <SourceBadge kind="derived" pinned /> : null}
         </div>
       </header>
 
+      <SourceScope kinds={scenario ? ["model", "derived"] : ["model"]}>
       <div className="plan-hero-grid">
         <div className="verdict">
           {isTransfer ? (
@@ -237,6 +239,7 @@ export function GameweekPlanCard({
           </div>
         </div>
       </div>
+      </SourceScope>
 
       <footer className="plan-hero-foot">
         <button type="button" className="btn btn-sm" onClick={() => setWhyOpen(true)}><Info size={14} aria-hidden="true" />Why this plan</button>

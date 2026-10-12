@@ -274,7 +274,7 @@ export function PlanWorkspace() {
       {marketLoading ? <p className="faint loading-note">Loading incoming-player projections…</p> : null}
 
       <div className="plan-grid">
-        <Card id="transfers" title="Transfer decision" icon={<Repeat2 size={16} />} source="model" tone={isTransfer ? "accent" : undefined} className="plan-transfer">
+        <Card id="transfers" title="Transfer decision" icon={<Repeat2 size={16} />} source={(isTransfer ? plan.recommended : plan.bestRejected) ? ["model", "derived"] : "model"} tone={isTransfer ? "accent" : undefined} className="plan-transfer">
           <div className="verdict verdict-inline">
             <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>{isTransfer ? "Transfer" : "Hold"}</strong>
             {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (

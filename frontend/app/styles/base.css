@@ -1,6 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* 15px with a default browser font, and it follows the reader's own font-size setting. */
+html { -webkit-text-size-adjust: 100%; font-size: 93.75%; }
 
 html, body {
   margin: 0;
@@ -8,7 +9,6 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -24,6 +24,8 @@ body {
     var(--bg);
   background-attachment: fixed;
 }
+
+body { font-size: 1rem; }
 
 h1, h2, h3, h4, p { margin: 0; }
 h1 {

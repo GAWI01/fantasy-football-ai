@@ -68,8 +68,8 @@ flowchart LR
 - **Decisions:** one optimiser picks the squad, XI and captain over five
   weighted Gameweeks. Holding, free transfers and hits are scored on one
   scale.
-- **Honest labels:** every number is marked FPL data, Model or Derived, and
-  uncertainty is shown, never hidden.
+- **Honest labels:** every number's source (FPL data, Model or Derived) is
+  labelled, once per card, and uncertainty is shown, never hidden.
 
 More detail: [architecture](docs/ARCHITECTURE.md) ·
 [model](docs/MODEL_PIPELINE.md) · [API](docs/API.md)

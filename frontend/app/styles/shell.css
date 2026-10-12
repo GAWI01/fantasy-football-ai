@@ -33,7 +33,7 @@
 }
 .brand-text strong em { font-style: normal; color: var(--violet-text); margin: 0 1px; }
 .brand-short { display: none; }
-.brand-text small { color: var(--text-3); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 650; margin-top: 3px; }
+.brand-text small { color: var(--text-3); font-size: var(--fs-xs); letter-spacing: 0.16em; text-transform: uppercase; font-weight: 650; margin-top: 3px; }
 .brand-credit::before { content: "·"; margin: 0 6px; color: var(--text-3); }
 .brand-credit b { font-weight: 800; font-style: italic; color: var(--violet-text); letter-spacing: 0.08em; }
 .brand-mark { flex: none; }
@@ -68,7 +68,7 @@
 }
 .team-badge-text { display: grid; line-height: 1.15; min-width: 0; }
 .team-badge-text strong { font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.team-badge-text small { font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.team-badge-text small { font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums; }
 
 /* Status strip under the masthead */
 .statusbar {
@@ -76,6 +76,8 @@
   display: flex; align-items: center; gap: 10px;
 }
 .statusbar-end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+/* Nothing to show before a team is connected (no deadline loaded yet): no empty strip. */
+.statusbar:not(:has(> :not(.statusbar-end))):has(> .statusbar-end:empty) { display: none; }
 
 .phase-chip {
   display: inline-flex; align-items: center; gap: 8px;
@@ -90,7 +92,6 @@
 .phase-live i { animation: pulse 1.6s ease-in-out infinite; }
 .phase-decision { color: #fff; border-color: transparent; background: linear-gradient(90deg, #7c3aed, #4f46e5); box-shadow: 0 0 22px rgba(124, 58, 237, 0.45); }
 .phase-settled { color: var(--slate-text); }
-.phase-setup { color: var(--text-3); }
 
 .deadline {
   display: inline-flex; align-items: center; gap: 9px;
@@ -98,7 +99,7 @@
   border: 1px solid var(--line); background: var(--surface-1); color: var(--text-2);
 }
 .deadline > span { display: flex; align-items: baseline; gap: 8px; line-height: 1; }
-.deadline small { font-size: 10.5px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 650; }
+.deadline small { font-size: var(--fs-xs); color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 650; }
 .deadline time { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .deadline-soon { border-color: var(--amber-line); }
 .deadline-soon svg, .deadline-soon time { color: var(--amber-text); }
@@ -134,7 +135,7 @@
 .site-foot {
   max-width: var(--content-max); width: 100%; margin: 0 auto; padding: 18px var(--gutter) 28px;
   display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap;
-  font-size: 11px; color: var(--text-3); border-top: 1px solid var(--line);
+  font-size: var(--fs-xs); color: var(--text-3); border-top: 1px solid var(--line);
 }
 .site-foot a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
 
@@ -147,7 +148,7 @@
   font-family: var(--font-display); font-size: 1.1rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase;
 }
 .more-link[aria-current="page"] { border-color: var(--violet-line); color: var(--violet-text); }
-.side-disclaimer { font-size: 11px; color: var(--text-3); line-height: 1.5; }
+.side-disclaimer { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.5; }
 
 /* Below wide desktop the tagline would push the nav into the team badge; keep only the credit. */
 @media (max-width: 1439px) {
@@ -184,7 +185,7 @@
   .phase-chip { height: 26px; font-size: 0.85rem; padding: 0 9px 0 8px; }
   .deadline { height: 26px; padding: 0 8px; gap: 6px; }
   .deadline svg { display: none; }
-  .deadline small { font-size: 9.5px; }
+  .deadline small { font-size: var(--fs-xs); }
   .deadline time { font-size: 0.98rem; }
   .icon-btn { width: 30px; height: 30px; }
   .content { padding: 18px var(--gutter) calc(var(--tabbar-h) + 40px + env(safe-area-inset-bottom)); }

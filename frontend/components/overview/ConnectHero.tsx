@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { useTeam } from "@/app/providers/TeamProvider";
-import { BrandMark } from "@/components/shell/BrandMark";
 
 /** A real public team people can open to see the cockpit before entering their own. */
 const EXAMPLE_TEAM = { id: "6658075", owner: "gawi" };
@@ -43,7 +42,7 @@ export function ConnectHero() {
     <div className="connect">
       <section className="connect-hero" aria-labelledby="connect-title">
         <div className="connect-copy">
-          <span className="connect-brand"><BrandMark size={40} /><span className="eyebrow">Fantasy Football AI · Gameweek intelligence</span></span>
+          <span className="connect-brand"><span className="eyebrow">Fantasy Football AI · Gameweek intelligence</span></span>
           <h1 id="connect-title">Know your move <span>before the deadline.</span></h1>
           <p>Connect your public team and Fantasy Football AI turns official data, model projections and an optimizer into one plan: transfer or hold, captain, bench and chip, with the reasons and the risk.</p>
           <form className="connect-form" onSubmit={submit} noValidate>

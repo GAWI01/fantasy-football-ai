@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 import { TrendChart } from "@/components/charts/TrendChart";
 import { DataState } from "@/components/states/DataState";
-import { Card, Delta, SourceBadge, Skeleton, Stat } from "@/components/ui/primitives";
+import { Card, Delta, SourceBadge, SourceScope, Skeleton, Stat } from "@/components/ui/primitives";
 import type { RankHistoryItem, ReviewData } from "@/lib/contracts";
 import { compact, fixed, integer, signed } from "@/lib/format";
 import { useReview } from "@/lib/hooks/data";
@@ -34,13 +34,16 @@ function SeasonSummary({ history }: { history: RankHistoryItem[] }) {
   const lastRank = ranked[ranked.length - 1]?.overall_rank ?? null;
   return (
     <>
-      <div className="stat-row">
+      <SourceScope kinds={["official"]}>
+      <div className="stat-row has-source">
+        <span className="stat-row-source"><SourceBadge kind="official" pinned /></span>
         <Stat label="Total points" value={integer(last?.total_points ?? null)} source="official" size="lg" />
         <Stat label="Overall rank" value={compact(lastRank)} source="official" size="lg" sub={firstRank && lastRank && ranked.length > 1 ? `${lastRank < firstRank ? "Up" : lastRank > firstRank ? "Down" : "Level"} from ${compact(firstRank)} in GW${ranked[0].event}` : undefined} />
         <Stat label="Average GW" value={fixed(average, 1)} source="derived" size="lg" />
         <Stat label="Best GW" value={best ? best.points : "—"} sub={best ? `GW${best.event}` : undefined} source="official" size="lg" />
         <Stat label="Transfers made" value={history.some((item) => item.transfers != null) ? transfers : "—"} source="official" size="lg" />
       </div>
+      </SourceScope>
       <div className="grid-2">
         <Card title="Overall rank" icon={<LineChart size={16} />} source="official">
           {ranked.length > 1 ? (
