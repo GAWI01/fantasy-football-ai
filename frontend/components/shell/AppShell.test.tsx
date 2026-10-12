@@ -17,7 +17,7 @@ afterEach(() => { localStorage.clear(); vi.restoreAllMocks(); });
 test("desktop navigation lists every destination and marks the current page", async () => {
   const { container } = render(<TeamProvider><AppShell><p>Page</p></AppShell></TeamProvider>);
   const nav = screen.getByRole("navigation", { name: "Primary" });
-  for (const label of ["Overview", "My Team", "Plan & Transfers", "Mini-leagues", "Explore", "History & Review", "Settings"]) {
+  for (const label of ["Home", "My Team", "Plan & Transfers", "Mini-leagues", "Explore", "History & Review", "Settings"]) {
     expect(within(nav).getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
   }
   // Prices and Fixtures are tabs inside Explore, not menu entries.

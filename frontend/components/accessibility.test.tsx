@@ -18,7 +18,7 @@ const inProvider = (node: React.ReactNode) => render(<TeamProvider>{node}</TeamP
 test("plan workspace has no automated WCAG A/AA violations", async () => {
   mockApi();
   const { container } = inProvider(<PlanWorkspace />);
-  await screen.findByRole("heading", { name: "Compare options" });
+  await screen.findByRole("heading", { name: "Other options" });
   await expectNoA11yViolations(container);
 });
 

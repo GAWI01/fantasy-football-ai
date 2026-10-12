@@ -80,7 +80,8 @@ export function OwnMoveCard({
 
   const option = result?.legal ? result.option : null;
   return (
-    <Card id="test-move" title="Test your own move" eyebrow="What-if" icon={<FlaskConical size={16} />} source="model">
+    <Card id="test-move" title="Try your own swap" eyebrow="What-if" icon={<FlaskConical size={16} />} source="model"
+      collapse={{ id: "plan-own-move", defaults: { mobile: false, desktop: true }, summary: "Pick a player to sell and one to buy" }}>
       <form className="own-move" onSubmit={evaluate}>
         <label className="select-label">
           Sell

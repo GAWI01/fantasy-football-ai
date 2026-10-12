@@ -292,3 +292,8 @@
 @keyframes card-unclip { to { overflow: visible; } }
 .app[data-motion="off"] .card-body[data-open="true"] > .card-body-inner { overflow: visible; }
 @media (prefers-reduced-motion: reduce) { .card-body[data-open="true"] > .card-body-inner { overflow: visible; } }
+
+/* A word you can tap for its meaning */
+.term { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: help; text-decoration: underline dotted; text-decoration-color: var(--text-3); text-underline-offset: 3px; }
+.term:hover, .term:focus-visible { text-decoration-color: var(--violet-text); }
+.term-text { font-size: var(--fs-md, 1rem); line-height: 1.55; color: var(--text-2); }

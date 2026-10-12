@@ -7,7 +7,9 @@ import { useMemo, useState } from "react";
 import { TrendChart } from "@/components/charts/TrendChart";
 import { SquadFixtures } from "@/components/fixtures/SquadFixtures";
 import { ConnectHero } from "@/components/overview/ConnectHero";
-import { GameweekPlanCard, PlanLineupDetails } from "@/components/overview/GameweekPlanCard";
+import { PlanLineupDetails } from "@/components/overview/GameweekPlanCard";
+import { TodoCard } from "@/components/overview/TodoCard";
+import { WelcomeTips } from "@/components/overview/WelcomeTips";
 import { LiveCockpit } from "@/components/overview/LiveCockpit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
 import { DataState } from "@/components/states/DataState";
@@ -78,6 +80,8 @@ export function Overview() {
         ) : null}
       </header>
 
+      <WelcomeTips />
+
       {error ? <DataState tone="warning" compact title="Latest refresh failed">Showing the last successful data. {error}</DataState> : null}
 
       {activeView === "live" && canShowLive && live ? (
@@ -110,7 +114,7 @@ export function Overview() {
             </button>
           ) : null}
           {plan ? (
-            <GameweekPlanCard plan={plan} event={state.targetEvent} modelVersion={state.modelVersion} locked={!state.actionsOpen} provisionalCutoff={state.forecastProvisional ? state.historyCutoff : null} />
+            <TodoCard plan={plan} event={state.targetEvent} modelVersion={state.modelVersion} locked={!state.actionsOpen} provisional={Boolean(state.forecastProvisional && state.historyCutoff != null)} />
           ) : (
             <DataState tone="unavailable" title="No model plan right now">
               {state.failedAreas.has("decision")

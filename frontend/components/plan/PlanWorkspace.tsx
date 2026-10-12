@@ -9,12 +9,14 @@ import { clubCode } from "@/lib/fpl/kits";
 import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
 import { useTeam } from "@/app/providers/TeamProvider";
 import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
+import { FreeTransfersControl } from "@/components/plan/FreeTransfersControl";
 import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
 import { PriceTiming } from "@/components/prices/PriceTiming";
 import { NextWeekLine, TwoWeekCard } from "@/components/plan/TwoWeekPlan";
 import { ExplainPlan } from "@/components/plan/WhySheet";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { PageSectionTabs } from "@/components/shell/PageTabs";
+import { Term } from "@/components/ui/Term";
 import { DataState } from "@/components/states/DataState";
 import { Card, Delta, Meter, SourceBadge } from "@/components/ui/primitives";
 import { fixed, price, sentenceCase, signed } from "@/lib/format";
@@ -23,6 +25,20 @@ import { usePlanHistory } from "@/lib/hooks/usePlanHistory";
 import { chipAvailability, CHIP_LABEL, planSnapshot, transferHeadline, type GameweekPlan, type ScenarioView } from "@/lib/model/plan";
 import type { SquadPlayer } from "@/lib/model/squad";
 import type { ChipOutlook } from "@/lib/contracts";
+
+/** One sentence a newcomer can read: what the move is worth, in points. */
+function plainSummary(plan: GameweekPlan, scenario: ScenarioView, adopted: boolean): string {
+  const next = scenario.nextGwGain;
+  const total = scenario.horizonNet ?? scenario.horizonGain;
+  const weeks = plan.horizon ?? 5;
+  const worth = [
+    next != null ? `${signed(next)} points next Gameweek` : null,
+    total != null ? `${signed(total)} over the next ${weeks} Gameweeks` : null,
+  ].filter(Boolean).join(" and ");
+  if (!worth) return adopted ? "The model expects this to gain points." : "The best swap found does not gain enough.";
+  if (adopted) return `Expected to add about ${worth}${scenario.hit ? `, after the −${scenario.hit} hit` : ""}.`;
+  return `The best swap found would add about ${worth}: not enough to beat saving the transfer.`;
+}
 
 function scenarioTitle(scenario: ScenarioView): string {
   if (!scenario.moves.length) return "Hold · roll the transfer";
@@ -58,7 +74,8 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
   const withHit = rows.find((row) => (row.hit ?? 0) > 0);
 
   return (
-    <Card id="compare" title="Compare options" eyebrow="What-if" icon={<GitCompareArrows size={16} />} source={["model", "derived"]}>
+    <Card id="compare" title="Other options" eyebrow="What else was considered" icon={<GitCompareArrows size={16} />} source={["model", "derived"]}
+      collapse={{ id: "plan-compare", defaults: { mobile: false, desktop: true }, summary: `${rows.length} options ranked · tap to compare` }}>
       <div className="scenarios" role="radiogroup" aria-label="Transfer scenarios">
         <div className="scenario scenario-head" aria-hidden="true">
           <span>Option</span><span>Next GW</span><span>{plan.horizon ?? "Multi"}-GW projected net</span><span>Hit</span><span>Decision score</span>
@@ -326,11 +343,10 @@ export function PlanWorkspace() {
         <div>
           <span className="eyebrow">Plan & Transfers · Gameweek {state.targetEvent ?? "—"}</span>
           <h1>{isTransfer ? transferHeadline(plan) : "Hold this week"}</h1>
-          <p>{isTransfer ? "The planner recommends this move under its conservative policy, considering hits, banked transfers and next-week follow-ups." : "The planner recommends holding under its conservative policy. Rolling banks the transfer for next week's team news."}</p>
+          <p>{isTransfer ? "Our pick for this Gameweek. It weighs points over the coming weeks against hits and the value of keeping your free transfer." : "Nothing clearly beats your current squad, so save the free transfer for next week."}</p>
         </div>
         <div className="page-head-actions">
-          {plan.confidence ? <span className={`pill ${plan.confidence.label === "HIGH" ? "pill-pos" : plan.confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(plan.confidence.label)} confidence</span> : null}
-          <span className="pill">{plan.freeTransfers == null || plan.freeTransfersSource === "unknown" ? "Free transfers unknown" : `${plan.freeTransfers} FT${plan.freeTransfersSource === "user" ? "" : " (est.)"}`}</span>
+          {plan.confidence ? <span className={`pill ${plan.confidence.label === "HIGH" ? "pill-pos" : plan.confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}><Term k="confidence">{sentenceCase(plan.confidence.label)} confidence</Term></span> : null}
           <span className="pill">Bank {price(plan.bank)}</span>
           {state.forecastProvisional && state.historyCutoff != null ? <ProvisionalPill cutoff={state.historyCutoff} event={state.targetEvent} /> : null}
         </div>
@@ -356,13 +372,21 @@ export function PlanWorkspace() {
       <div className="plan-grid" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "transfers" ? (
           <>
-            <Card id="transfers" title="Transfer decision" icon={<Repeat2 size={16} />} source={(isTransfer ? plan.recommended : plan.bestRejected) ? ["model", "derived"] : "model"} tone={isTransfer ? "accent" : undefined} className="plan-transfer">
+            <Card id="transfers" title={isTransfer ? "Our pick" : "Our pick: save the transfer"} icon={<Repeat2 size={16} />} source={(isTransfer ? plan.recommended : plan.bestRejected) ? ["model", "derived"] : "model"} tone={isTransfer ? "accent" : undefined} className="plan-transfer">
               <div className="verdict verdict-inline">
-                <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>{isTransfer ? "Transfer" : "Hold"}</strong>
                 {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
                   <div className="rejected"><span className="eyebrow">Evaluated move · conservative policy recommends holding</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
                 ) : <p className="muted">No transfer alternative was returned.</p>}
-                {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
+                {(isTransfer ? plan.recommended : plan.bestRejected) ? (
+                  <>
+                    <p className="plain-summary">{plainSummary(plan, isTransfer ? plan.recommended : plan.bestRejected!, isTransfer)}</p>
+                    <FreeTransfersControl count={plan.freeTransfers} source={plan.freeTransfersSource} />
+                    <details className="card-more">
+                      <summary>See the numbers</summary>
+                      <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} showFreeTransfers={false} />
+                    </details>
+                  </>
+                ) : null}
                 {isTransfer && !locked ? <PriceTiming moves={plan.recommended.moves} /> : null}
                 <NextWeekLine plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} />
               </div>

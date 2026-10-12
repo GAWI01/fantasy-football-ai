@@ -45,6 +45,7 @@ export default function PrivacyPage() {
           <li><code>fpl-ai-team-id</code>: the Team ID you connected</li>
           <li><code>fpl-ai-free-transfers</code>: free transfers you set yourself</li>
           <li><code>fpl-ai-plan-history</code>: earlier plans, to show when the advice changes</li>
+          <li><code>fpl-ai-welcome-done</code>: that you closed the first-visit tips</li>
           <li><code>fpl-ai-data-labels</code>: whether data labels are shown (Settings → Data labels)</li>
           <li><code>fpl-ai-motion</code>: how much the app moves (Settings → Motion)</li>
           <li><code>fpl-ai-overview-sections</code>: which sections you opened or closed (Overview, History)</li>

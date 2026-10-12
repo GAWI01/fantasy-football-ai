@@ -32,7 +32,7 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { key: "overview", href: "/", label: "Overview", short: "Overview", group: "decide", hint: "This Gameweek at a glance: the plan, or your live score" },
+  { key: "overview", href: "/", label: "Home", short: "Home", group: "decide", hint: "What to do this Gameweek, or your live score" },
   { key: "team", href: "/team", label: "My Team", short: "Team", group: "decide", hint: "Your squad on the pitch: try lineups, bench order and armbands" },
   { key: "plan", href: "/plan", label: "Plan & Transfers", short: "Plan", group: "decide", hint: "Transfers, captain and chips for the next deadline" },
   { key: "league", href: "/league", label: "Mini-leagues", short: "Leagues", group: "research", hint: "Your mini-league table and how your squad differs from rivals" },

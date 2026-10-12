@@ -67,7 +67,7 @@ function serveDashboard(fetchSpy: ReturnType<typeof mockApi>, dashboard: ReturnT
 test("a hold plan explains the conservative policy without threshold claims", async () => {
   serveDashboard(mockApi(), makeDashboard({ verdict: "HOLD" }));
   const { container } = render(<TeamProvider><PlanWorkspace /></TeamProvider>);
-  expect(await screen.findByText(/The planner recommends holding under its conservative policy/)).toBeInTheDocument();
+  expect(await screen.findByText(/Nothing clearly beats your current squad/)).toBeInTheDocument();
   expect(screen.getByText(/Evaluated move · conservative policy recommends holding/)).toBeInTheDocument();
   expect(container.textContent).not.toMatch(/threshold/i);
 });
@@ -142,6 +142,6 @@ test("the plan opens on Transfers and an old #chips link opens the Chips section
   expect(await screen.findByRole("tab", { name: /Chips/ })).toHaveAttribute("aria-selected", "true");
   await userEvent.click(screen.getByRole("tab", { name: "Transfers" }));
   expect(window.location.hash).toBe("#transfers");
-  expect(screen.getByRole("heading", { name: "Compare options" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Other options" })).toBeInTheDocument();
   window.history.replaceState(null, "", "#");
 });

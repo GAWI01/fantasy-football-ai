@@ -18,7 +18,6 @@ test("separates projected FPL gains from weighted decision scores and policy val
   expect(row).toHaveTextContent("Hit cost: −4");
   expect(row).toHaveTextContent("Safety margin: 2.0");
   expect(row).toHaveTextContent("Terminal roll value: 2.0");
-  expect(container).toHaveTextContent("5-Gameweek scoring horizon");
   expect(container).toHaveTextContent("1, 0.9, 0.8, 0.7, 0.6");
   expect(container).toHaveTextContent(/hold now, then optimize next week/i);
   expect(container).toHaveTextContent(/optimality is unconfirmed/i);
@@ -36,7 +35,7 @@ test("old payloads show unavailable projected points instead of relabelling the 
   delete (sequence as { projected_net_gain?: number }).projected_net_gain;
   const { container } = render(<TwoWeekCard plan={{ ...plan, horizon: 2, weights: [1, 0.9], sequences: [sequence] } as TwoWeekPlan} transfersNow={1} />);
   expect(screen.getByText(/Projected net gain/)).toHaveTextContent("Unavailable");
-  expect(container).toHaveTextContent("2-Gameweek scoring horizon");
+  expect(container).toHaveTextContent("Scores cover the next 2 Gameweeks");
 });
 
 test("an incomplete solve keeps its status visible when no follow-up was returned", () => {

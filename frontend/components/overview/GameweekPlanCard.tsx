@@ -73,7 +73,7 @@ export function MoveRow({ move, compact = false }: { move: TransferMove; compact
   );
 }
 
-export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; plan: GameweekPlan }) {
+export function ScenarioMetrics({ scenario, plan, showFreeTransfers = true }: { scenario: ScenarioView; plan: GameweekPlan; showFreeTransfers?: boolean }) {
   return (
     <dl className="metrics">
       <div>
@@ -92,10 +92,10 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
         <dt>{plan.horizon ?? "Multi"}-GW net after hits <SourceBadge kind="derived" /></dt>
         <dd>{scenario.horizonNet == null ? "Unavailable" : <Delta value={scenario.horizonNet} unit=" xP" animate />}</dd>
       </div>
-      <div className="metrics-note">
+      {showFreeTransfers ? <div className="metrics-note">
         <dt className="sr-only">Free transfers</dt>
         <dd><FreeTransfersControl count={plan.freeTransfers} source={plan.freeTransfersSource} /></dd>
-      </div>
+      </div> : null}
       {plan.budgetIsEstimate && scenario.moves.length > 0 ? <div className="metrics-note"><dt className="sr-only">Affordability</dt><dd>Affordability is estimated from market prices. Check your actual selling prices in FPL before making the move.</dd></div> : null}
     </dl>
   );

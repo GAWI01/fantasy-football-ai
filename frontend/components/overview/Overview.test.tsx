@@ -15,31 +15,29 @@ const renderOverview = () => render(<TeamProvider><Overview /></TeamProvider>);
 test("decision mode leads with the transfer, captain, risk and a recommendation-only disclaimer", async () => {
   mockApi({ phase: "decision", verdict: "TRANSFER" });
   const { container } = renderOverview();
-  const plan = await screen.findByRole("region", { name: /Gameweek 7 plan/ });
-  expect(within(plan).getByText("Make the move")).toBeInTheDocument();
-  expect(await within(plan).findAllByText("Castellano")).not.toHaveLength(0);
-  expect(within(plan).getAllByText("Ekström").length).toBeGreaterThan(0);
-  expect(within(plan).getByText("Duarte")).toBeInTheDocument();
-  expect(within(plan).getByText(/Varga · starter at risk/)).toBeInTheDocument();
-  expect(within(plan).getByText(/Recommendation only/)).toBeInTheDocument();
-  expect(within(plan).queryByText(/Read-only/)).not.toBeInTheDocument();
+  const plan = await screen.findByRole("region", { name: "Your to-do" });
+  expect(await within(plan).findByRole("link", { name: "Ekström → Castellano" })).toHaveAttribute("href", "/plan#transfers");
+  expect(within(plan).getByRole("link", { name: "Captain Duarte" })).toHaveAttribute("href", "/plan#captain");
+  expect(within(plan).getByRole("link", { name: /Check Varga · starter at risk/ })).toBeInTheDocument();
+  expect(within(plan).getByText(/official FPL app/)).toBeInTheDocument();
+  expect(within(plan).queryByText("Deadline passed")).not.toBeInTheDocument();
   await expectNoA11yViolations(container);
 });
 
 test("hold verdict shows the rejected move as context, not as the call", async () => {
   mockApi({ phase: "decision", verdict: "HOLD" });
   renderOverview();
-  const plan = await screen.findByRole("region", { name: /Gameweek 7 plan/ });
-  expect(within(plan).getByText("Hold")).toBeInTheDocument();
-  expect(within(plan).getByText("Best move found, not recommended")).toBeInTheDocument();
-  expect(within(plan).queryByText("Make the move")).not.toBeInTheDocument();
+  const plan = await screen.findByRole("region", { name: "Your to-do" });
+  expect(within(plan).getByRole("link", { name: "No transfer this week" })).toBeInTheDocument();
+  // The rejected move is context for the Plan page, not a call on Home.
+  expect(within(plan).queryByText(/Ekström → Castellano/)).not.toBeInTheDocument();
 });
 
 test("live mode shows live points and never offers the passed-deadline plan as an action", async () => {
   mockApi({ phase: "live" });
   const { container } = renderOverview();
   expect(await screen.findByRole("heading", { name: "Live points" })).toBeInTheDocument();
-  expect(screen.queryByText("Make the move")).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "Your to-do" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /GW7 plan/ })).not.toBeInTheDocument();
   expect(screen.getByText("Your matches")).toBeInTheDocument();
   await expectNoA11yViolations(container);
@@ -48,7 +46,7 @@ test("live mode shows live points and never offers the passed-deadline plan as a
 test("after the deadline with no live games the plan is marked read-only", async () => {
   mockApi({ phase: "settled" });
   renderOverview();
-  expect(await screen.findByText("Read-only · deadline passed")).toBeInTheDocument();
+  expect(await screen.findByText("Deadline passed")).toBeInTheDocument();
   expect(screen.getByText("This plan is past its deadline")).toBeInTheDocument();
 });
 
@@ -56,7 +54,7 @@ test("missing model output is reported instead of inventing a plan", async () =>
   mockApi({ noDecision: true });
   renderOverview();
   expect(await screen.findByText("No model plan right now")).toBeInTheDocument();
-  expect(screen.queryByText("Make the move")).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "Your to-do" })).not.toBeInTheDocument();
 });
 
 test("a failed load shows the API error with recovery actions", async () => {
@@ -90,7 +88,7 @@ test("the free-transfer count is marked as an estimate and the manager can set t
   const fetchSpy = mockApi({ phase: "decision", verdict: "TRANSFER" });
   const user = userEvent.setup();
   renderOverview();
-  const plan = await screen.findByRole("region", { name: /Gameweek 7 plan/ });
+  const plan = await screen.findByRole("region", { name: "Your to-do" });
   expect(within(plan).getByText("1 free transfer, estimated from your public transfer history")).toBeInTheDocument();
 
   await user.click(within(plan).getByRole("button", { name: "Not right? Set yours" }));
@@ -98,4 +96,26 @@ test("the free-transfer count is marked as an estimate and the manager can set t
 
   expect(fetchSpy.mock.calls.some(([input]) => String(input).endsWith("/api/v1/dashboard/4242?free_transfers=0"))).toBe(true);
   expect(JSON.parse(localStorage.getItem("fpl-ai-free-transfers") ?? "null")).toMatchObject({ teamId: "4242", value: 0 });
+});
+
+test("first-visit tips show once and stay closed", async () => {
+  mockApi({ phase: "decision", verdict: "TRANSFER" });
+  const user = userEvent.setup();
+  const { unmount } = renderOverview();
+  const tips = await screen.findByRole("complementary", { name: "How this app works" });
+  await user.click(within(tips).getByRole("button", { name: "Got it" }));
+  expect(screen.queryByRole("complementary", { name: "How this app works" })).not.toBeInTheDocument();
+  unmount();
+  renderOverview();
+  await screen.findByRole("region", { name: "Your to-do" });
+  expect(screen.queryByRole("complementary", { name: "How this app works" })).not.toBeInTheDocument();
+});
+
+test("a dotted word explains itself", async () => {
+  mockApi({ phase: "decision", verdict: "TRANSFER" });
+  const user = userEvent.setup();
+  renderOverview();
+  const plan = await screen.findByRole("region", { name: "Your to-do" });
+  await user.click(within(plan).getByRole("button", { name: "What is xP (expected points)?" }));
+  expect(await screen.findByRole("dialog", { name: "xP (expected points)" })).toHaveTextContent(/forecast/);
 });
