@@ -804,6 +804,7 @@ def optimize_transfer_plan(
         "horizon_weights": plan["weights"],
         "policy": plan["policy"],
         "wildcard": plan.get("wildcard"),
+        "two_week": plan.get("two_week"),
         "solver_status": plan["solver_status"],
         "optimality_known": plan["optimality_known"],
         "optimization_warning": None if plan["optimality_known"] else "Part of the transfer search hit its time limit.",

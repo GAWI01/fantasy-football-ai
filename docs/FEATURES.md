@@ -104,6 +104,18 @@ them from your public transfer history: purchase price plus half of any rise,
 rounded down. A price is labelled as an estimate only when it cannot be traced.
 You can also set your free transfers yourself if the derived number is wrong.
 
+### Compare options and the two-week plan
+
+**Compare options** ranks every evaluated action by the engine's own score and
+spells out the sum, for example "+12.9 gain − 4 hit − 2.0 margin − 2.0 banked
+transfer = +4.9", so the recommended option is visibly the best. The
+**Two-week plan** shows, for each number of transfers now, the best follow-up
+next week with FPL's rules between the weeks (free transfers carry over, extra
+moves cost −4). The engine uses it to make fewer moves now when waiting is as
+good or better, such as holding before two players' hard fixtures or doing the
+second move free next week instead of taking a hit; the transfer card names
+next week's planned move.
+
 ## Chips
 
 <img src="screenshots/plan-chips.png" alt="Chips card: Hold your chips, with Free Hit to save and the chips already used" width="420">

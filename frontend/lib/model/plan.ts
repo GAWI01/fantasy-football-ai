@@ -1,13 +1,4 @@
-import type {
-  ChipOutlook,
-  ChipState,
-  Confidence,
-  DashboardData,
-  DecisionPlayer,
-  PlayerSummary,
-  RecommendedTransfer,
-  TransferScenario,
-} from "@/lib/contracts";
+import type { ChipOutlook, ChipState, Confidence, DashboardData, DecisionPlayer, PlayerSummary, RecommendedTransfer, TransferScenario, TwoWeekPlan } from "@/lib/contracts";
 import { INCOMING_SLOT, incomingSquadPlayer, isFlagged, type SquadPlayer } from "@/lib/model/squad";
 
 export type Verdict = "TRANSFER" | "HOLD";
@@ -99,6 +90,8 @@ export type GameweekPlan = {
   confidence: Confidence | null;
   mainRisk: MainRisk;
   insights: Array<{ type: string; severity: string; reason: string }>;
+  /** Model: the best plan over this week and next, per number of transfers now. */
+  twoWeek: TwoWeekPlan | null;
 };
 
 const num = (value: unknown): number | null =>
@@ -322,6 +315,7 @@ export function buildPlan(
     // Risk is judged on the lineup the plan leaves you with.
     mainRisk: mainRiskFor(modelXI.length === 11 ? modelXI.map((player) => ({ ...player, isStarter: true })) : squad, captain),
     insights: (intelligence?.insights ?? []).map(({ type, severity, reason }) => ({ type, severity, reason })),
+    twoWeek: decision.transfers?.two_week?.sequences?.length ? decision.transfers.two_week : null,
   };
 }
 

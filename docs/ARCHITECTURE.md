@@ -54,6 +54,12 @@ less: the weights are 1, 0.85, 0.7, 0.55 and 0.4.
   compared on one scale: the best XI and captain each plan can field, minus
   hits and the value of the free transfers it uses.
 - **A banked transfer has a value,** so a move must beat rolling it.
+- **Two-week check.** The squad may change now and next week, with FPL's
+  free-transfer rules in between (`optimizer/two_week.py`). For each number of
+  transfers now the best two-week plan is solved; when waiting is as good or
+  better (hold now and make two free moves next week, or a free move next week
+  instead of a hit now) the engine makes fewer moves now. It never makes more:
+  both weeks use today's projections, and team news arrives in between.
 - **Bench players count only as autosub cover** (10%, goalkeeper 2%), so the
   engine does not buy a reserve goalkeeper for his points.
 - **A doubtful starter is covered by the bench.** A player with a 75% chance
