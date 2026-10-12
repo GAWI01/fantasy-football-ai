@@ -303,6 +303,9 @@ export type TransferScenario = {
   next_gw_gain?: number | null;
   /** Weighted multi-GW change in the best XI + captain (bench counts only as cover). */
   horizon_gain: number;
+  /** Unweighted projected FPL points, before / after actual hit costs. */
+  projected_gain?: number | null;
+  projected_net_gain?: number | null;
   hit_cost?: number;
   net_gain?: number;
   roll_value_forgone?: number;
@@ -394,6 +397,7 @@ export type DecisionIntelligence = {
     selected_transfers: RecommendedTransfer[];
     alternatives: TransferScenario[];
     options_by_transfer_count?: TransferScenario[];
+    horizon_weights?: number[];
   };
   transfer_action?: string;
   chip_advisor: {
@@ -463,11 +467,13 @@ export type DashboardDecision = {
     free_transfers?: number;
     /** "user" when the manager set it, "derived" from public transfer history, "unknown" when history failed. */
     free_transfers_source?: "user" | "derived" | "unknown";
-    /** Best plan over this week and next for each number of transfers now. */
+    /** Evaluated now/next-week sequences per current transfer count. */
     two_week?: TwoWeekPlan | null;
     action?: string;
     hit_cost?: number;
     gross_gain?: number;
+    projected_gain?: number | null;
+    projected_net_gain?: number | null;
     net_gain?: number;
     next_gw_gain?: number;
     decision_score?: number;
@@ -803,8 +809,27 @@ export type TwoWeekSequence = {
   free_transfers_next: number;
   hits_now: number;
   hits_next: number;
-  /** Weighted horizon points over the two-week plan that holds now (hits, margins and banked transfers included). */
+  /** Unweighted gains relative to holding now, then optimizing next week. */
+  projected_gain?: number | null;
+  projected_net_gain?: number | null;
+  weighted_gain_vs_hold?: number;
+  /** Absolute costs for this sequence; score differences use baseline-relative costs. */
+  hit_cost?: number;
+  risk_margin?: number;
+  roll_value?: number;
+  recommended?: boolean;
+  /** Weighted decision score relative to holding now, then optimizing next week. */
   score_vs_hold: number;
 };
 
-export type TwoWeekPlan = { best_transfers_now: number; sequences: TwoWeekSequence[] };
+export type TwoWeekPlan = {
+  best_transfers_now: number | null;
+  sequences: TwoWeekSequence[];
+  horizon?: number;
+  weights?: number[];
+  selection_policy?: "conservative";
+  recommended_transfers_now?: number;
+  optimality_known?: boolean;
+  baseline?: "hold_now_then_optimize";
+  solver_status?: string;
+};

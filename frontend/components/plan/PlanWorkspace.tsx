@@ -32,8 +32,8 @@ function scenarioTitle(scenario: ScenarioView): string {
 /** "+12.9 gain − 4 hit − 2.0 margin − 2.0 banked transfer = +4.9" */
 function scoreMath(row: ScenarioView): string {
   const hit = row.hit ?? 0;
-  const margin = Math.max(0, (row.horizonNet ?? row.horizonGain - hit) - row.rollValue - row.modelScore);
-  const parts = [`${signed(row.horizonGain)} gain`];
+  const margin = Math.max(0, (row.weightedNet ?? row.weightedGain - hit) - row.rollValue - row.modelScore);
+  const parts = [`${signed(row.weightedGain)} weighted gain`];
   if (hit) parts.push(`− ${hit} hit`);
   if (margin > 0.05) parts.push(`− ${fixed(margin)} margin`);
   if (row.rollValue > 0.05) parts.push(`− ${fixed(row.rollValue)} banked transfer`);
@@ -48,20 +48,20 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
     for (const alternative of plan.alternatives) {
       if (!list.some((row) => scenarioTitle(row) === scenarioTitle(alternative))) list.push(alternative);
     }
-    // Ranked by the engine's own score, so the recommended option is visibly the best.
+    // Sort the single-stage scores; conservative two-stage selection may recommend a lower row.
     return list.sort((left, right) => right.modelScore - left.modelScore);
   }, [plan]);
   const recommendedTitle = scenarioTitle(plan.verdict === "TRANSFER" ? plan.recommended : plan.hold);
   const [selected, setSelected] = useState(recommendedTitle);
   const active = rows.find((row) => scenarioTitle(row) === selected) ?? rows[0];
-  const noHit = rows.filter((row) => row.moves.length && row.hit === 0).sort((left, right) => (right.horizonNet ?? -99) - (left.horizonNet ?? -99))[0];
-  const withHit = rows.filter((row) => (row.hit ?? 0) > 0).sort((left, right) => (right.horizonNet ?? -99) - (left.horizonNet ?? -99))[0];
+  const noHit = rows.find((row) => row.moves.length && row.hit === 0);
+  const withHit = rows.find((row) => (row.hit ?? 0) > 0);
 
   return (
     <Card id="compare" title="Compare options" eyebrow="What-if" icon={<GitCompareArrows size={16} />} source={["model", "derived"]}>
       <div className="scenarios" role="radiogroup" aria-label="Transfer scenarios">
         <div className="scenario scenario-head" aria-hidden="true">
-          <span>Option</span><span>Next GW</span><span>5-GW gain</span><span>Hit</span><span>Score</span>
+          <span>Option</span><span>Next GW</span><span>{plan.horizon ?? "Multi"}-GW projected net</span><span>Hit</span><span>Decision score</span>
         </div>
         {rows.map((row) => {
           const title = scenarioTitle(row);
@@ -81,9 +81,9 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
                 {row.moves.length ? <small className="scenario-math">{scoreMath(row)}</small> : <small className="scenario-math">Baseline: keeps the free transfer for later</small>}
               </span>
               <span data-label="Next GW"><Delta value={row.nextGwGain} /></span>
-              <span data-label="5-GW gain"><Delta value={row.horizonGain} /></span>
+              <span data-label={`${plan.horizon ?? "Multi"}-GW projected net`}>{row.horizonNet == null ? "Unavailable" : <Delta value={row.horizonNet} />}</span>
               <span data-label="Hit" className={row.hit ? "tone-neg" : "faint"}>{row.hit == null ? "?" : row.hit ? `−${row.hit}` : "0"}</span>
-              <span data-label="Score" className="scenario-score"><Delta value={row.modelScore} /></span>
+              <span data-label="Decision score" className="scenario-score"><Delta value={row.modelScore} /></span>
             </button>
           );
         })}
@@ -98,14 +98,14 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
       ) : rows.length > 1 ? <p className="card-note">Tap another option to see its moves next to the recommendation.</p> : null}
       {withHit ? (
         <p className="card-note">
-          <b>Hit check:</b> best plan with a hit nets {signed(withHit.horizonNet)} over five Gameweeks{noHit ? `, versus ${signed(noHit.horizonNet)} for the best free move` : ""}. {plan.recommended.hit ? "The engine accepts this hit." : "The engine does not take the hit."}
+          <b>Hit check:</b> highest-scoring evaluated hit option projects {withHit.horizonNet == null ? "unavailable net points" : `${signed(withHit.horizonNet)} xP after hits`} over {plan.horizon ?? "the available"} Gameweeks{noHit ? `, versus ${noHit.horizonNet == null ? "unavailable net points" : `${signed(noHit.horizonNet)} xP`} for the highest-scoring free move` : ""}. {plan.recommended.hit ? "The engine accepts this hit." : "The engine does not take the hit."}
         </p>
       ) : null}
       <details className="card-more">
         <summary>How is the score worked out?</summary>
         <p className="card-note">
-        <b>Score</b> is what the engine ranks by: the five-Gameweek gain (later weeks count less), minus any hit, minus a safety margin per hit,
-        minus what the free transfers it uses would be worth if you banked them. Holding scores 0, so a move must beat keeping the transfer.
+        <b>Decision score</b> uses the weighted {plan.horizon ?? "multi"}-Gameweek gain (later weeks count less), minus any hit, minus a safety margin per hit,
+        minus what the free transfers it uses would be worth if you banked them. Holding scores 0 in this single-stage comparison. The conservative policy may recommend an option with a lower single-stage score when next-week follow-ups favor fewer moves now. Projected net points use unweighted forecasts after actual hits; safety margins and roll values are policy values.
         See the <a href="#why">Why</a> tab for more.
         </p>
       </details>
@@ -326,7 +326,7 @@ export function PlanWorkspace() {
         <div>
           <span className="eyebrow">Plan & Transfers · Gameweek {state.targetEvent ?? "—"}</span>
           <h1>{isTransfer ? transferHeadline(plan) : "Hold this week"}</h1>
-          <p>{isTransfer ? "This move beats rolling the free transfer, after any hit and the value of banking the transfer." : "No move beats the value of rolling the free transfer. Rolling banks it for next week's team news."}</p>
+          <p>{isTransfer ? "The planner recommends this move under its conservative policy, considering hits, banked transfers and next-week follow-ups." : "The planner recommends holding under its conservative policy. Rolling banks the transfer for next week's team news."}</p>
         </div>
         <div className="page-head-actions">
           {plan.confidence ? <span className={`pill ${plan.confidence.label === "HIGH" ? "pill-pos" : plan.confidence.label === "LOW" ? "pill-warn" : "pill-accent"}`}>{sentenceCase(plan.confidence.label)} confidence</span> : null}
@@ -360,8 +360,8 @@ export function PlanWorkspace() {
               <div className="verdict verdict-inline">
                 <strong className={`verdict-word verdict-${isTransfer ? "transfer" : "hold"}`}>{isTransfer ? "Transfer" : "Hold"}</strong>
                 {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
-                  <div className="rejected"><span className="eyebrow">Best move found · rolling is worth more</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
-                ) : <p className="muted">No evaluated transfer improves the squad.</p>}
+                  <div className="rejected"><span className="eyebrow">Evaluated move · conservative policy recommends holding</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
+                ) : <p className="muted">No transfer alternative was returned.</p>}
                 {(isTransfer ? plan.recommended : plan.bestRejected) ? <ScenarioMetrics scenario={isTransfer ? plan.recommended : plan.bestRejected!} plan={plan} /> : null}
                 {isTransfer && !locked ? <PriceTiming moves={plan.recommended.moves} /> : null}
                 <NextWeekLine plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} />

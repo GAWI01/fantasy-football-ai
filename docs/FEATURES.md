@@ -121,15 +121,21 @@ You can also set your free transfers yourself if the derived number is wrong.
 
 ### Compare options and the two-week plan
 
-**Compare options** ranks every evaluated action by the engine's own score and
-spells out the sum, for example "+12.9 gain − 4 hit − 2.0 margin − 2.0 banked
-transfer = +4.9", so the recommended option is visibly the best. The
-**Two-week plan** shows, for each number of transfers now, the best follow-up
-next week with FPL's rules between the weeks (free transfers carry over, extra
-moves cost −4). The engine uses it to make fewer moves now when waiting is as
-good or better, such as holding before two players' hard fixtures or doing the
-second move free next week instead of taking a hit; the transfer card names
-next week's planned move.
+**Compare options** separates unweighted projected gains after actual hits
+from weighted decision scores. The score arithmetic identifies safety margins
+and the value assigned to banked transfers as policy adjustments. Rows remain
+sorted by their single-action score; a conservative two-stage recommendation
+can prefer a lower-ranked action to preserve next week's free moves, and that
+reason is explained rather than claiming the recommended row always scores
+highest.
+
+**Two-week plan** evaluates the follow-up next week from each displayed current
+action's actual squad. Free transfers carry over and extra moves cost −4. It
+values the sequence across the available forecast horizon and reports projected
+net gains separately from decision scores. The baseline holds now and can make
+optimized moves next week. Future moves are conditional; the conservative
+policy can recommend fewer transfers now, never more. Incomplete searches are
+identified rather than described as proven optimal.
 
 ## Chips
 

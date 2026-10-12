@@ -22,7 +22,7 @@ export type TransferMove = {
 
 /**
  * One action the backend's canonical planner evaluated. Every number comes
- * from the backend; the frontend never re-ranks or recomputes a plan.
+ * from the backend; display sorting never changes the selected action.
  */
 export type ScenarioView = {
   id: string;
@@ -30,10 +30,13 @@ export type ScenarioView = {
   moves: TransferMove[];
   /** Model: change in the best XI + captain's projected points this Gameweek. */
   nextGwGain: number | null;
-  /** Model: weighted five-GW change in the best XI + captain, before hits. */
-  horizonGain: number;
+  /** Unweighted projected FPL gain over the scoring horizon. */
+  horizonGain: number | null;
+  /** Weighted projection used by the decision policy, before / after hits. */
+  weightedGain: number;
+  weightedNet: number | null;
   hit: number | null;
-  /** Model: horizonGain − hit. */
+  /** Unweighted projected FPL gain after actual hit costs. */
   horizonNet: number | null;
   /** Model: value of the free transfers this option uses instead of rolling. */
   rollValue: number;
@@ -90,8 +93,9 @@ export type GameweekPlan = {
   confidence: Confidence | null;
   mainRisk: MainRisk;
   insights: Array<{ type: string; severity: string; reason: string }>;
-  /** Model: the best plan over this week and next, per number of transfers now. */
+  /** Evaluated now/next-week sequences per current transfer count. */
   twoWeek: TwoWeekPlan | null;
+  horizon: number | null;
 };
 
 const num = (value: unknown): number | null =>
@@ -141,9 +145,11 @@ function scenarioView(
     label,
     moves,
     nextGwGain: moves.length === 0 ? 0 : num(scenario.next_gw_gain),
-    horizonGain,
+    horizonGain: num(scenario.projected_gain),
+    weightedGain: horizonGain,
+    weightedNet: num(scenario.net_gain) ?? (hit == null ? null : horizonGain - hit),
     hit,
-    horizonNet: num(scenario.net_gain) ?? (hit == null ? null : horizonGain - hit),
+    horizonNet: num(scenario.projected_net_gain),
     rollValue: num(scenario.roll_value_forgone) ?? 0,
     modelScore: num(scenario.decision_score) ?? num(scenario.combined_score) ?? 0,
     coverage: num(scenario.coverage) ?? 0,
@@ -209,6 +215,8 @@ export function buildPlan(
       transfers: decision.transfers?.recommended_transfers ?? (decision.transfers?.recommended ? [decision.transfers.recommended] : []),
       next_gw_gain: decision.transfers?.next_gw_gain ?? null,
       horizon_gain: decision.transfers?.gross_gain ?? 0,
+      projected_gain: decision.transfers?.projected_gain,
+      projected_net_gain: decision.transfers?.projected_net_gain,
       hit_cost: decision.transfers?.hit_cost ?? 0,
       net_gain: decision.transfers?.net_gain ?? 0,
       decision_score: decision.transfers?.decision_score ?? decision.transfers?.net_gain ?? 0,
@@ -219,7 +227,7 @@ export function buildPlan(
 
   const selectedView = scenarioView("selected", verdict === "TRANSFER" ? "Recommended" : "Best move found", selected, squadById, market);
   const holdOption = strategy?.options_by_transfer_count?.find((option) => (option.transfers ?? []).length === 0);
-  const hold = scenarioView("hold", "Hold / roll", holdOption ?? { transfers: [], horizon_gain: 0, hit_cost: 0, net_gain: 0, decision_score: 0, coverage: strategy?.coverage ?? 0 }, squadById, market);
+  const hold = scenarioView("hold", "Hold / roll", holdOption ?? { transfers: [], horizon_gain: 0, projected_gain: 0, projected_net_gain: 0, hit_cost: 0, net_gain: 0, decision_score: 0, coverage: strategy?.coverage ?? 0 }, squadById, market);
   const alternatives = (strategy?.alternatives ?? [])
     .filter((scenario) => scenario.transfers?.length)
     .map((scenario, index) => scenarioView(`alt-${index + 1}`, `Option ${index + 1}`, scenario, squadById, market));
@@ -315,7 +323,8 @@ export function buildPlan(
     // Risk is judged on the lineup the plan leaves you with.
     mainRisk: mainRiskFor(modelXI.length === 11 ? modelXI.map((player) => ({ ...player, isStarter: true })) : squad, captain),
     insights: (intelligence?.insights ?? []).map(({ type, severity, reason }) => ({ type, severity, reason })),
-    twoWeek: decision.transfers?.two_week?.sequences?.length ? decision.transfers.two_week : null,
+    twoWeek: decision.transfers?.two_week ?? null,
+    horizon: num(decision.transfers?.two_week?.horizon) ?? (strategy?.horizon_weights?.length || null) ?? num(intelligence?.horizon.horizon),
   };
 }
 

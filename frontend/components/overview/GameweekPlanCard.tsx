@@ -81,16 +81,16 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
         <dd><Delta value={scenario.nextGwGain} unit=" xP" animate /></dd>
       </div>
       <div>
-        <dt>5-GW gain <SourceBadge kind="derived" /></dt>
-        <dd><Delta value={scenario.horizonGain} unit=" xP" animate /></dd>
+        <dt>{plan.horizon ?? "Multi"}-GW projected gain <SourceBadge kind="derived" /></dt>
+        <dd>{scenario.horizonGain == null ? "Unavailable" : <Delta value={scenario.horizonGain} unit=" xP" animate />}</dd>
       </div>
       <div>
         <dt>Hit cost</dt>
         <dd className={scenario.hit ? "tone-neg" : undefined}>{scenario.hit == null ? "Unknown" : scenario.hit ? `−${scenario.hit}` : "Free"}</dd>
       </div>
       <div>
-        <dt>5-GW net <SourceBadge kind="derived" /></dt>
-        <dd><Delta value={scenario.horizonNet} unit=" xP" animate /></dd>
+        <dt>{plan.horizon ?? "Multi"}-GW net after hits <SourceBadge kind="derived" /></dt>
+        <dd>{scenario.horizonNet == null ? "Unavailable" : <Delta value={scenario.horizonNet} unit=" xP" animate />}</dd>
       </div>
       <div className="metrics-note">
         <dt className="sr-only">Free transfers</dt>
@@ -104,10 +104,10 @@ export function ScenarioMetrics({ scenario, plan }: { scenario: ScenarioView; pl
 function holdCopy(plan: GameweekPlan): string {
   const best = plan.bestRejected;
   if (best) {
-    const roll = best.rollValue ? ` A rolled free transfer is worth about ${fixed(best.rollValue)} xP next week.` : "";
-    return `The best move found adds ${signed(best.horizonGain)} xP over five Gameweeks${best.hit ? ` after a −${best.hit} hit` : ""}, which does not beat keeping the transfer.${roll}`;
+    const points = best.horizonNet == null ? "Projected net points are unavailable." : `The evaluated move projects ${signed(best.horizonNet)} xP after hits over ${plan.horizon ?? "the available"} Gameweeks.`;
+    return `${points} The planner recommends holding under its conservative policy, which considers weighted gains, safety margins, banked transfers and next-week follow-ups.`;
   }
-  return "No legal move improves your projected lineup. Bank the transfer and keep flexibility.";
+  return "The planner recommends holding. Bank the transfer and keep flexibility for team news.";
 }
 
 export function ProvisionalPill({ cutoff, event }: { cutoff: number; event: number | null }) {

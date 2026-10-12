@@ -1,0 +1,92 @@
+name: Archive pre-deadline public data
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deadline-snapshots
+  cancel-in-progress: false
+
+jobs:
+  # The repository is public, so every archive is encrypted before upload: raw FPL
+  # data must not be redistributed. Without SNAPSHOT_ARCHIVE_KEY nothing is
+  # fetched or uploaded.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.key.outputs.ready }}
+    steps:
+      - id: key
+        env:
+          ARCHIVE_KEY: ${{ secrets.SNAPSHOT_ARCHIVE_KEY }}
+        run: |
+          if [ -n "$ARCHIVE_KEY" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"
+          else echo "SNAPSHOT_ARCHIVE_KEY is not set: skipping."; echo "ready=false" >> "$GITHUB_OUTPUT"; fi
+
+  archive:
+    needs: gate
+    if: needs.gate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install requests
+      - name: Read existing immutable archive names
+        run: |
+          mkdir -p output
+          gh api "repos/$GH_REPO/releases?per_page=100" --paginate \
+            --jq '.[] | select(.tag_name | startswith("data-archive-")) | .id' > output/archive-release-ids.txt
+          : > output/archive-asset-names.txt
+          while IFS= read -r release_id; do
+            gh api "repos/$GH_REPO/releases/$release_id/assets?per_page=100" --paginate \
+              --jq '.[] | select(.state == "uploaded" and .size > 0) | .name' >> output/archive-asset-names.txt
+          done < output/archive-release-ids.txt
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          names = Path("output/archive-asset-names.txt").read_text().splitlines()
+          Path("output/archive-assets.json").write_text(json.dumps(names))
+          PY
+      - name: Acquire only when a capture is due and missing
+        id: capture
+        run: python -m historical_data.deadline_snapshots --archived-assets output/archive-assets.json
+      - name: Encrypt and upload to the season archive
+        if: steps.capture.outputs.captured == 'true'
+        env:
+          BUNDLE: ${{ steps.capture.outputs.bundle }}
+          SEASON: ${{ steps.capture.outputs.season }}
+          ARCHIVE_KEY: ${{ secrets.SNAPSHOT_ARCHIVE_KEY }}
+        run: |
+          capture_stamp=$(python - <<'PY'
+          import json, os
+          from datetime import datetime
+          from pathlib import Path
+          manifest = json.loads((Path(os.environ["BUNDLE"]) / "manifest.json").read_text())
+          print(datetime.fromisoformat(manifest["captured_at"].replace("Z", "+00:00")).strftime("%Y%m%dT%H%M%SZ"))
+          PY
+          )
+          bundle_name=$(basename "$BUNDLE")
+          plain="output/snapshot-${bundle_name}-${capture_stamp}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.tar.gz"
+          asset="${plain}.enc"
+          tar -czf "$plain" -C "$(dirname "$BUNDLE")" "$bundle_name"
+          # AES-256 with a key derived from the secret; only the encrypted file leaves the runner.
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -in "$plain" -out "$asset" -pass env:ARCHIVE_KEY
+          rm -f "$plain"
+          tag="data-archive-$SEASON"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "$GITHUB_SHA" --prerelease \
+              --title "Encrypted pre-deadline data archive $SEASON" \
+              --notes "Encrypted captures for private model evaluation only. The contents are not published or licensed for reuse. See docs/DEADLINE_SNAPSHOTS.md."
+          fi
+          gh release upload "$tag" "$asset"

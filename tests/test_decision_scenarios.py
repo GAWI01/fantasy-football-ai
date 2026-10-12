@@ -239,3 +239,23 @@ def test_unlimited_transfers_before_a_first_deadline_have_no_hits_or_roll_value(
     assert result["hit_cost"] == 0.0
     assert result["transfers_used"] == 2
     assert result["roll_value_forgone"] == 0.0
+
+
+def test_conservative_hold_insight_explains_waiting_when_current_move_scores_positive():
+    market = [(101, "New Mid1", "MID", "C16", 7.0, 5.0),
+              (102, "New Mid2", "MID", "C17", 6.0, 4.5)]
+    horizon = {
+        week + 1: _frame([(pid, name, pos, club, price, 1.0 if week > 0 and pid in (9, 10) else pts)
+                          for pid, name, pos, club, price, pts in SQUAD + market])
+        for week in range(5)
+    }
+    decision = build_decision(_team(), horizon[1], free_transfers=1, max_transfers=3,
+                              horizon_predictions=horizon, horizon=5)
+    transfer = decision["transfers"]
+    assert transfer["action"] == "HOLD"
+    assert any(option["decision_score"] > 0 for option in transfer["alternatives"])
+    insight = next(item for item in decision["intelligence"]["insights"] if item["type"] == "TRANSFER")
+    assert "does not beat keeping the free transfer" not in insight["reason"]
+    assert "waiting" in insight["reason"].lower()
+    assert "next week" in insight["reason"].lower()
+    assert insight["evidence"]["selection_policy"] == "conservative"

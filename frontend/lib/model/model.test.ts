@@ -47,12 +47,14 @@ test("presents the backend's canonical plan numbers without recomputing them", (
   expect(plan.recommended.moves[0]).toMatchObject({ outName: "Ekström", inName: "Castellano", inTeamShort: "TOT" });
   expect(plan.recommended.nextGwGain).toBeCloseTo(2.7);
   expect(plan.recommended.hit).toBe(0);
-  expect(plan.recommended.horizonNet).toBeCloseTo(9.4);
+  expect(plan.recommended.horizonNet).toBeNull();
+  expect(plan.recommended.weightedNet).toBeCloseTo(9.4);
   expect(plan.recommended.rollValue).toBeCloseTo(2);
   expect(plan.recommended.modelScore).toBeCloseTo(7.4);
   const double = plan.alternatives.find((scenario) => scenario.moves.length === 2)!;
   expect(double.hit).toBe(4);
-  expect(double.horizonNet).toBeCloseTo(11.0);
+  expect(double.horizonNet).toBeNull();
+  expect(double.weightedNet).toBeCloseTo(11.0);
   // The shown plan is the backend's recommended_transfers, never a frontend pick.
   const engine = data.decision!.transfers!.recommended_transfers!.map((move) => move.player_in_id);
   expect(plan.recommended.moves.map((move) => move.inId)).toEqual(engine);
@@ -76,7 +78,7 @@ test("a HOLD verdict keeps the best evaluated move as context, not as the recomm
   expect(plan.recommended.moves).toHaveLength(0);
   expect(plan.bestRejected?.moves[0].inName).toBe("Castellano");
   // The rejected move is shown with why it lost: its gain is below the roll value.
-  expect(plan.bestRejected!.horizonGain).toBeLessThan(plan.bestRejected!.rollValue);
+  expect(plan.bestRejected!.weightedGain).toBeLessThan(plan.bestRejected!.rollValue);
   expect(plan.hold.moves).toHaveLength(0);
   expect(planSnapshot(plan, 7, "v1", "2026-10-03T09:00:00Z").action).toBe("Hold");
 });
@@ -228,4 +230,26 @@ test("the recommended lineup and captain come from the squad after the transfer"
   // My Team edits the squad owned now: its model lineup has no incoming player.
   expect(plan.owned.xi.map((player) => player.id)).toContain(109);
   expect(plan.owned.captain?.id).toBe(decision.owned_lineup.captain.player_id);
+});
+
+test("projected gains retain unweighted payload values and shortened scoring horizons", () => {
+  const data = makeDashboard().data;
+  const strategy = data.decision!.intelligence!.transfer_strategy;
+  Object.assign(strategy, { projected_gain: 13.5, projected_net_gain: 9.5, horizon_gain: 7, net_gain: 3, hit_cost: 4, decision_score: 0.5, horizon_weights: [1, 0.9] });
+  const plan = buildPlan(data, buildSquad(data), market)!;
+  expect(plan.recommended.horizonGain).toBe(13.5);
+  expect(plan.recommended.horizonNet).toBe(9.5);
+  expect(plan.recommended.weightedGain).toBe(7);
+  expect(plan.recommended.weightedNet).toBe(3);
+  expect(plan.horizon).toBe(2);
+  expect(planSnapshot(plan, 37, "v1", "2026-10-03T09:00:00Z").netGain).toBe(9.5);
+});
+
+test("the older dashboard shape preserves explicit projected values without intelligence", () => {
+  const data = makeDashboard().data;
+  delete data.decision!.intelligence;
+  Object.assign(data.decision!.transfers!, { projected_gain: 13.5, projected_net_gain: 9.5 });
+  const plan = buildPlan(data, buildSquad(data), market)!;
+  expect(plan.recommended.horizonGain).toBe(13.5);
+  expect(plan.recommended.horizonNet).toBe(9.5);
 });
