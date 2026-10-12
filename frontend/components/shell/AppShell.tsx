@@ -40,8 +40,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
 };
 
 
-function PhaseChip({ state, connected }: { state: GameState; connected: boolean }) {
-  if (!connected) return <span className="phase-chip phase-setup">Connect a team</span>;
+function PhaseChip({ state }: { state: GameState }) {
   if (state.phase === "live") {
     return <span className="phase-chip phase-live"><i aria-hidden="true" />GW{state.currentEvent ?? "—"} live</span>;
   }
@@ -121,7 +120,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="statusbar">
-          <PhaseChip state={state} connected={connected} />
+          {connected ? <PhaseChip state={state} /> : null}
           {showDeadline ? <DeadlineCountdown deadline={showDeadline} event={deadlineEvent} /> : null}
           <div className="statusbar-end">
             {connected ? <Freshness fetchedAt={state.officialFetchedAt} stale={state.stale} /> : null}

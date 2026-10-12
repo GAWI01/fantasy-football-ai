@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { createContext, useContext, type ReactNode } from "react";
 
 import type { SourceKind } from "@/lib/model/phase";
 
@@ -11,8 +13,21 @@ const SOURCE_COPY: Record<SourceKind, { label: string; hint: string }> = {
   cached: { label: "Cached", hint: "The official FPL service did not respond, so the last cached response is shown." },
 };
 
-export function SourceBadge({ kind, label }: { kind: SourceKind; label?: string }) {
+// Sources already labelled at the top of the surrounding card. A badge for one of
+// them inside the card would only repeat it, so it is left out: every number keeps
+// a visible source, once per card instead of once per number.
+const ScopeSources = createContext<readonly SourceKind[]>([]);
+
+/** Marks a region whose header already shows these sources (used by Card, and by heroes that are not Cards). */
+export function SourceScope({ kinds, children }: { kinds: readonly SourceKind[]; children: ReactNode }) {
+  return <ScopeSources.Provider value={kinds}>{children}</ScopeSources.Provider>;
+}
+
+/** `pinned` badges are the region's own header labels and always show. */
+export function SourceBadge({ kind, label, pinned = false }: { kind: SourceKind; label?: string; pinned?: boolean }) {
+  const scope = useContext(ScopeSources);
   const copy = SOURCE_COPY[kind];
+  if (!pinned && !label && scope.includes(kind)) return null;
   return (
     <span className={`src src-${kind}`} title={copy.hint}>
       {kind === "live" ? <i className="src-pulse" aria-hidden="true" /> : null}
@@ -58,12 +73,12 @@ export function Card({
             </div>
           </div>
           <div className="card-meta">
-            {sources.map((kind) => <SourceBadge key={kind} kind={kind} />)}
+            {sources.map((kind) => <SourceBadge key={kind} kind={kind} pinned />)}
             {action}
           </div>
         </header>
       ) : null}
-      {children}
+      {sources.length ? <SourceScope kinds={sources}>{children}</SourceScope> : children}
     </section>
   );
 }

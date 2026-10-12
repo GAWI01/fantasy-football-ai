@@ -19,7 +19,7 @@
   /* Text */
   --text: #eef1f8;
   --text-2: #aab2c7;
-  --text-3: #737d97;
+  --text-3: #8b94ad;
   --text-inv: #0b0e18;
 
   /* Brand + semantic */
@@ -85,7 +85,7 @@
   --font-display: var(--font-display-face, "Barlow Condensed"), "Arial Narrow", ui-sans-serif, sans-serif;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --fs-xs: 0.6875rem;
+  --fs-xs: 0.8rem; /* 12px: the smallest size for text people read */
   --fs-sm: 0.8125rem;
   --fs-md: 0.9375rem;
   --fs-lg: 1.125rem;
