@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlencode
@@ -415,6 +416,77 @@ def get_upcoming_team_fixtures(team_id: int, limit: int = 10) -> dict[str, Any]:
     }
 
 
+# Clean sheet chance per fixture, from official expected goals (xG/xGC).
+# A club's attack is the xG its players have produced per match, its defence
+# the xGC its goalkeepers have been on the pitch for per match. A fixture's
+# expected goals against = league average x opponent attack x own defence x
+# venue, and the chance of conceding none is exp(-that) (Poisson). Early in a
+# season a few matches say little, so each rate is pulled towards the league
+# average as if PRIOR_MATCHES average matches had been played. The venue
+# factor is a common estimate of home advantage, not fitted here.
+PRIOR_MATCHES = 4
+HOME_CONCEDED = 0.9
+AWAY_CONCEDED = 1.1
+DEFAULT_GOALS_PER_MATCH = 1.4
+
+
+def _float(value: Any) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return number if math.isfinite(number) else 0.0
+
+
+def team_strengths(bootstrap: dict[str, Any], raw_fixtures: list[dict[str, Any]]) -> dict[int, dict[str, float]]:
+    """Per club: matches played and shrunk xG for / against per match."""
+    teams = [int(team["id"]) for team in bootstrap.get("teams") or [] if isinstance(team, dict) and team.get("id") is not None]
+    played = {team_id: 0 for team_id in teams}
+    for fixture in raw_fixtures or []:
+        if isinstance(fixture, dict) and (fixture.get("finished") or fixture.get("finished_provisional")):
+            for key in ("team_h", "team_a"):
+                team_id = int(fixture.get(key) or 0)
+                if team_id in played:
+                    played[team_id] += 1
+    xg = {team_id: 0.0 for team_id in teams}
+    xgc = {team_id: 0.0 for team_id in teams}
+    for player in bootstrap.get("elements") or []:
+        team_id = int(player.get("team") or 0)
+        if team_id not in xg:
+            continue
+        xg[team_id] += _float(player.get("expected_goals"))
+        if int(player.get("element_type") or 0) == 1:
+            xgc[team_id] += _float(player.get("expected_goals_conceded"))
+    total_matches = sum(played.values())
+    average = sum(xg.values()) / total_matches if total_matches else 0.0
+    if average <= 0:
+        average = DEFAULT_GOALS_PER_MATCH
+    result = {}
+    for team_id in teams:
+        n = played[team_id]
+        result[team_id] = {
+            "matches": n,
+            "xg_per_match": (xg[team_id] + PRIOR_MATCHES * average) / (n + PRIOR_MATCHES),
+            "xgc_per_match": (xgc[team_id] + PRIOR_MATCHES * average) / (n + PRIOR_MATCHES),
+            "league_average": average,
+        }
+    return result
+
+
+def clean_sheet_chance(strengths: dict[int, dict[str, float]], team_id: int, opponent_id: int, home: bool) -> float | None:
+    own, opponent = strengths.get(team_id), strengths.get(opponent_id)
+    if not own or not opponent:
+        return None
+    average = own["league_average"]
+    expected_against = (
+        average
+        * (opponent["xg_per_match"] / average)
+        * (own["xgc_per_match"] / average)
+        * (HOME_CONCEDED if home else AWAY_CONCEDED)
+    )
+    return math.exp(-expected_against)
+
+
 def build_fixture_matrix(
     bootstrap: dict[str, Any],
     raw_fixtures: list[dict[str, Any]],
@@ -446,6 +518,7 @@ def build_fixture_matrix(
         if event in fixtures_by_event and not fixture.get("finished"):
             fixtures_by_event[event].append(fixture)
 
+    strengths = team_strengths(bootstrap, raw_fixtures)
     rows = []
     for team_id, team in sorted(
         team_map.items(), key=lambda item: str(item[1].get("name", ""))
@@ -454,17 +527,24 @@ def build_fixture_matrix(
         for event in gameweeks:
             opponents: list[str] = []
             difficulties: list[float] = []
+            clean_sheets: list[float] = []
             for fixture in fixtures_by_event[event]:
                 home_id = int(fixture.get("team_h", 0) or 0)
                 away_id = int(fixture.get("team_a", 0) or 0)
                 if team_id == home_id:
                     opponent = team_map.get(away_id, {})
                     opponents.append(f"{opponent.get('short_name', 'UNK')} (H)")
+                    chance = clean_sheet_chance(strengths, team_id, away_id, True)
+                    if chance is not None:
+                        clean_sheets.append(chance)
                     if fixture.get("team_h_difficulty") is not None:
                         difficulties.append(float(fixture["team_h_difficulty"]))
                 elif team_id == away_id:
                     opponent = team_map.get(home_id, {})
                     opponents.append(f"{opponent.get('short_name', 'UNK')} (A)")
+                    chance = clean_sheet_chance(strengths, team_id, home_id, False)
+                    if chance is not None:
+                        clean_sheets.append(chance)
                     if fixture.get("team_a_difficulty") is not None:
                         difficulties.append(float(fixture["team_a_difficulty"]))
             cells.append(
@@ -477,6 +557,8 @@ def build_fixture_matrix(
                         else None
                     ),
                     "fixture_count": len(opponents),
+                    # One chance per fixture (two in a double Gameweek).
+                    "clean_sheet_chances": [round(chance, 3) for chance in clean_sheets],
                 }
             )
         rows.append(
@@ -485,6 +567,9 @@ def build_fixture_matrix(
                 "team": str(team.get("name", "Unknown")),
                 "team_short": str(team.get("short_name", "UNK")),
                 "fixtures": cells,
+                "xg_per_match": round(strengths[team_id]["xg_per_match"], 2) if team_id in strengths else None,
+                "xgc_per_match": round(strengths[team_id]["xgc_per_match"], 2) if team_id in strengths else None,
+                "matches_played": strengths[team_id]["matches"] if team_id in strengths else 0,
             }
         )
 
