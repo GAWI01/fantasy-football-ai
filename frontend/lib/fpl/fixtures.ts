@@ -35,3 +35,28 @@ export function runScore(team: FixtureMatrixTeam, events?: number[]): number {
 export function fdrLevel(difficulty: number | null | undefined): number {
   return typeof difficulty === "number" ? Math.max(1, Math.min(5, Math.round(difficulty))) : 0;
 }
+
+/** Expected clean sheets in a cell: the sum of its fixtures' chances (a blank is 0). */
+export function cellCleanSheets(cell: FixtureMatrixCell | undefined): number | null {
+  if (!cell || !cell.fixture_count) return 0;
+  const chances = cell.clean_sheet_chances ?? [];
+  return chances.length ? chances.reduce((total, chance) => total + chance, 0) : null;
+}
+
+/** Expected clean sheets over a run; null when the feed carries no chances. */
+export function runCleanSheets(team: FixtureMatrixTeam, events?: number[]): number | null {
+  const cells = events ? team.fixtures.filter((cell) => events.includes(cell.event)) : team.fixtures;
+  const values = cells.map(cellCleanSheets);
+  if (values.some((value) => value == null)) return null;
+  return values.reduce<number>((total, value) => total + (value ?? 0), 0);
+}
+
+/** The difficulty colour (1 easiest … 5 hardest) for a clean sheet chance. */
+export function cleanSheetLevel(chance: number | null | undefined): number {
+  if (typeof chance !== "number") return 0;
+  if (chance >= 0.4) return 1;
+  if (chance >= 0.3) return 2;
+  if (chance >= 0.2) return 3;
+  if (chance >= 0.12) return 4;
+  return 5;
+}

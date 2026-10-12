@@ -12,6 +12,15 @@ class LiveDataServiceError(RuntimeError):
     """Raised when live FPL data cannot be loaded or normalized."""
 
 
+
+def _optional_float(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
 def normalize_manager_chip_state(
     current_event: int,
     payload: dict[str, Any],
@@ -391,6 +400,13 @@ def normalize_live_players(
             "creativity": float(player["creativity"]) if player.get("creativity") not in (None, "") else None,
             "threat": float(player["threat"]) if player.get("threat") not in (None, "") else None,
             "ict_index": float(player["ict_index"]) if player.get("ict_index") not in (None, "") else None,
+            # Season rates per 90 minutes, as published by FPL.
+            "season_minutes": int(player.get("minutes") or 0),
+            "expected_goals_per_90": _optional_float(player.get("expected_goals_per_90")),
+            "expected_assists_per_90": _optional_float(player.get("expected_assists_per_90")),
+            "expected_goal_involvements_per_90": _optional_float(player.get("expected_goal_involvements_per_90")),
+            "expected_goals_conceded_per_90": _optional_float(player.get("expected_goals_conceded_per_90")),
+            "season_clean_sheets": int(player.get("clean_sheets") or 0),
             "status": str(player.get("status") or "u"),
             "chance_of_playing_next_round": player.get("chance_of_playing_next_round"),
             "news": str(player.get("news") or ""),

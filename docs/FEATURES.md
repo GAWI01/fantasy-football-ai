@@ -169,8 +169,8 @@ injury news and the five-Gameweek outlook.
     <td width="50%"><img src="screenshots/fixtures.png" alt="Fixtures: fixture runs with official difficulty"></td>
   </tr>
   <tr>
-    <td><b>Players</b>: every player's official stats, next-GW forecast, expected minutes, xP per £m and next three fixtures. Search, filter, sort and compare players side by side.</td>
-    <td><b>Fixtures</b>: every club's next 3, 5 or 8 Gameweeks with official difficulty, blanks and doubles, ranked from easiest to hardest.</td>
+    <td><b>Players</b>: every player's official stats, next-GW forecast, expected minutes, xP per £m, xG and xA per 90 minutes and next three fixtures. Search, filter, sort and compare players side by side. Per-90 rates are shown from three full matches on, so a few lucky minutes do not top the list.</td>
+    <td><b>Fixtures</b>: every club's next 3, 5 or 8 Gameweeks with official difficulty, blanks and doubles, ranked from easiest to hardest. Switch to <b>Clean sheet %</b> for each club's chance of a clean sheet per match and its expected clean sheets over the run, worked out from official xG for and against (pulled towards the league average early in the season) with home and away taken into account.</td>
   </tr>
 </table>
 

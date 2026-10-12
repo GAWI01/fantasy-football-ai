@@ -201,6 +201,12 @@ export type PlayerSummary = {
   expected_goals?: number | null;
   expected_assists?: number | null;
   expected_goal_involvements?: number | null;
+  season_minutes?: number | null;
+  expected_goals_per_90?: number | null;
+  expected_assists_per_90?: number | null;
+  expected_goal_involvements_per_90?: number | null;
+  expected_goals_conceded_per_90?: number | null;
+  season_clean_sheets?: number | null;
   influence?: number | null;
   creativity?: number | null;
   threat?: number | null;
@@ -634,6 +640,8 @@ export type FixtureMatrixCell = {
   opponents: string[];
   difficulty: number | null;
   fixture_count: number;
+  /** Derived: chance of a clean sheet in each fixture (two in a double). */
+  clean_sheet_chances?: number[];
 };
 
 export type FixtureMatrixTeam = {
@@ -641,6 +649,10 @@ export type FixtureMatrixTeam = {
   team: string;
   team_short: string;
   fixtures: FixtureMatrixCell[];
+  /** Derived from official xG, pulled towards the league average early on. */
+  xg_per_match?: number | null;
+  xgc_per_match?: number | null;
+  matches_played?: number;
 };
 
 export type FixtureMatrixEnvelope = {

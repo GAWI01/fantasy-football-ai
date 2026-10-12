@@ -9,11 +9,12 @@ import { Kit } from "@/components/kit/Kit";
 import { DataState } from "@/components/states/DataState";
 import { Card, Segmented, SourceBadge, Skeleton } from "@/components/ui/primitives";
 import { fixed } from "@/lib/format";
-import { runScore } from "@/lib/fpl/fixtures";
+import { cleanSheetLevel, runCleanSheets, runScore } from "@/lib/fpl/fixtures";
 import { useFixtureMatrix } from "@/lib/hooks/data";
 
 type Horizon = "3" | "5" | "8";
 type Order = "easiest" | "hardest" | "name";
+type View = "difficulty" | "cleanSheet";
 
 /** Every club's upcoming run with explicit home/away, blanks and doubles. Clubs you own are highlighted. */
 export function FixturesWorkspace() {
@@ -21,6 +22,7 @@ export function FixturesWorkspace() {
   const [horizon, setHorizon] = useState<Horizon>("5");
   const [order, setOrder] = useState<Order>("easiest");
   const [ownedOnly, setOwnedOnly] = useState(false);
+  const [view, setView] = useState<View>("difficulty");
   const matrix = useFixtureMatrix(Number(horizon));
 
   const owned = useMemo(() => {
@@ -40,12 +42,17 @@ export function FixturesWorkspace() {
       .map((team) => ({
         team,
         score: runScore(team),
+        cleanSheets: runCleanSheets(team),
         blanks: team.fixtures.filter((cell) => cell.fixture_count === 0).length,
         doubles: team.fixtures.filter((cell) => cell.fixture_count > 1).length,
       }));
     if (order === "name") return scored.sort((left, right) => left.team.team.localeCompare(right.team.team));
-    return scored.sort((left, right) => (order === "easiest" ? left.score - right.score : right.score - left.score));
-  }, [matrix.data, order, ownedOnly, owned]);
+    // Easiest means the lowest difficulty score, or the most expected clean sheets.
+    const ease = (row: (typeof scored)[number]) => (view === "cleanSheet" ? -(row.cleanSheets ?? 0) : row.score);
+    return scored.sort((left, right) => (order === "easiest" ? ease(left) - ease(right) : ease(right) - ease(left)));
+  }, [matrix.data, order, ownedOnly, owned, view]);
+  const hasCleanSheets = rows.some((row) => row.cleanSheets != null);
+  const showCleanSheets = view === "cleanSheet" && hasCleanSheets;
 
   const columns = `minmax(148px, 1.4fr) repeat(${gameweeks.length}, minmax(58px, 1fr)) minmax(64px, 0.7fr)`;
 
@@ -55,12 +62,13 @@ export function FixturesWorkspace() {
         <div>
           <span className="eyebrow">Fixture planner</span>
           <h1>Fixtures</h1>
-          <p className="page-lede">Every club&apos;s next run, with home and away spelled out. Lower run scores are easier; blanks count against a club and doubles count for it.</p>
+          <p className="page-lede">Every club&apos;s next run, with home and away spelled out. Lower run scores are easier; blanks count against a club and doubles count for it. Clean sheet % shows each club&apos;s chance of keeping one.</p>
         </div>
       </header>
 
       <div className="toolbar" role="group" aria-label="Fixture options">
         <Segmented<Horizon> label="Horizon" value={horizon} onChange={setHorizon} options={[{ value: "3", label: "3 GWs" }, { value: "5", label: "5 GWs" }, { value: "8", label: "8 GWs" }]} />
+        {hasCleanSheets ? <Segmented<View> label="Show" value={view} onChange={setView} options={[{ value: "difficulty", label: "Difficulty" }, { value: "cleanSheet", label: "Clean sheet %" }]} /> : null}
         <Segmented<Order> label="Sort clubs" value={order} onChange={setOrder} options={[{ value: "easiest", label: "Easiest" }, { value: "hardest", label: "Hardest" }, { value: "name", label: "A–Z" }]} />
         {owned.size ? (
           <label className="check">
@@ -70,11 +78,19 @@ export function FixturesWorkspace() {
         ) : null}
       </div>
 
-      <div className="legend" aria-label="Difficulty legend">
-        <span>Difficulty</span>
-        {[1, 2, 3, 4, 5].map((level) => <span key={level} className={`fx fx-key fdr-${level}`}>{level}</span>)}
-        <span className="legend-note"><b>H</b> home · <b>A</b> away · <b>DGW</b> double · <b>Blank</b> no match</span>
-      </div>
+      {showCleanSheets ? (
+        <div className="legend" aria-label="Clean sheet legend">
+          <span>Clean sheet chance</span>
+          {[0.45, 0.35, 0.25, 0.15, 0.08].map((chance, index) => <span key={chance} className={`fx fx-key fx-key-wide fdr-${cleanSheetLevel(chance)}`}>{["40%+", "30%", "20%", "12%", "<12%"][index]}</span>)}
+          <span className="legend-note">From official xG for and against, adjusted for home and away. <SourceBadge kind="derived" pinned /></span>
+        </div>
+      ) : (
+        <div className="legend" aria-label="Difficulty legend">
+          <span>Difficulty</span>
+          {[1, 2, 3, 4, 5].map((level) => <span key={level} className={`fx fx-key fdr-${level}`}>{level}</span>)}
+          <span className="legend-note"><b>H</b> home · <b>A</b> away · <b>DGW</b> double · <b>Blank</b> no match</span>
+        </div>
+      )}
 
       {matrix.data?.meta.stale ? <DataState tone="stale" compact title="Showing cached fixtures">The official fixture feed did not respond; fixtures can move after this snapshot.</DataState> : null}
 
@@ -89,9 +105,11 @@ export function FixturesWorkspace() {
               <div className="fx-tr fx-thead" role="row" style={{ gridTemplateColumns: columns }}>
                 <span role="columnheader">Club</span>
                 {gameweeks.map((gameweek) => <span role="columnheader" key={gameweek}>GW{gameweek}</span>)}
-                <span role="columnheader" className="num" title="Sum of difficulty; blanks count 6, doubles reduce the score">Run <SourceBadge kind="derived" /></span>
+                {showCleanSheets
+                  ? <span role="columnheader" className="num" title="Expected clean sheets over the run: the sum of each fixture's chance">xCS <SourceBadge kind="derived" /></span>
+                  : <span role="columnheader" className="num" title="Sum of difficulty; blanks count 6, doubles reduce the score">Run <SourceBadge kind="derived" /></span>}
               </div>
-              {rows.map(({ team, score, blanks, doubles }) => {
+              {rows.map(({ team, score, cleanSheets, blanks, doubles }) => {
                 const count = owned.get(team.team_short);
                 return (
                   <div className={`fx-tr${count ? " is-owned" : ""}`} role="row" key={team.team_id} style={{ gridTemplateColumns: columns }}>
@@ -103,9 +121,9 @@ export function FixturesWorkspace() {
                       </span>
                     </span>
                     {gameweeks.map((gameweek) => (
-                      <span role="cell" key={gameweek}><FixtureCell cell={team.fixtures.find((cell) => cell.event === gameweek)} /></span>
+                      <span role="cell" key={gameweek}><FixtureCell cell={team.fixtures.find((cell) => cell.event === gameweek)} metric={showCleanSheets ? "cleanSheet" : "difficulty"} /></span>
                     ))}
-                    <span role="cell" className="num fx-score">{fixed(score, 1)}</span>
+                    <span role="cell" className="num fx-score">{showCleanSheets ? fixed(cleanSheets, 1) : fixed(score, 1)}</span>
                   </div>
                 );
               })}

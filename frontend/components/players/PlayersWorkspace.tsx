@@ -16,7 +16,14 @@ import { availabilityFromStatus, normalizePosition, type Position } from "@/lib/
 import { useFixtureMatrix, usePlayerMarket } from "@/lib/hooks/data";
 
 type PositionFilter = "ALL" | Position;
-type SortKey = "xp" | "value" | "form" | "price" | "ownership" | "event" | "xgi";
+type SortKey = "xp" | "value" | "form" | "price" | "ownership" | "event" | "xgi" | "xg90" | "xa90";
+
+// FPL publishes per-90 rates for every player, but a few minutes make them
+// meaningless (one lucky shot in 20 minutes is 4.5 xG per 90). Below three
+// full matches the rate is not shown or ranked.
+const MIN_RATE_MINUTES = 270;
+const per90 = (player: PlayerSummary, value: number | null | undefined) =>
+  (player.season_minutes ?? 0) >= MIN_RATE_MINUTES && value != null ? value : null;
 
 const SORTS: Array<{ key: SortKey; label: string; get: (player: PlayerSummary) => number | null }> = [
   { key: "xp", label: "xP", get: (player) => player.predicted_points ?? null },
@@ -24,6 +31,8 @@ const SORTS: Array<{ key: SortKey; label: string; get: (player: PlayerSummary) =
   { key: "form", label: "Form", get: (player) => player.form ?? null },
   { key: "event", label: "GW pts", get: (player) => player.event_points ?? null },
   { key: "xgi", label: "xGI", get: (player) => player.expected_goal_involvements ?? null },
+  { key: "xg90", label: "xG/90", get: (player) => per90(player, player.expected_goals_per_90) },
+  { key: "xa90", label: "xA/90", get: (player) => per90(player, player.expected_assists_per_90) },
   { key: "price", label: "Price", get: (player) => player.price ?? null },
   { key: "ownership", label: "Own%", get: (player) => player.ownership ?? null },
 ];
@@ -40,6 +49,9 @@ function readUrl(search: PlayersSearch) {
 
 function MarketPlayerDetail({ player, team, owned }: { player: PlayerSummary; team: FixtureMatrixTeam | undefined; owned: boolean }) {
   const availability = availabilityFromStatus(player.status, player.chance_of_playing_next_round);
+  const defensive = ["GKP", "DEF"].includes(normalizePosition(player.position) ?? "");
+  const nextCell = team?.fixtures.find((cell) => cell.fixture_count > 0);
+  const nextCleanSheet = nextCell?.clean_sheet_chances?.length ? nextCell.clean_sheet_chances.reduce((total, chance) => total + chance, 0) / nextCell.clean_sheet_chances.length : null;
   return (
     <div className="pdetail">
       <div className="pdetail-hero">
@@ -59,6 +71,7 @@ function MarketPlayerDetail({ player, team, owned }: { player: PlayerSummary; te
         <div className="fact"><span className="fact-label">Price <SourceBadge kind="official" /></span><strong className="fact-value">{price(player.price)}</strong></div>
         <div className="fact"><span className="fact-label">Form <SourceBadge kind="official" /></span><strong className="fact-value">{fixed(player.form)}</strong></div>
         <div className="fact"><span className="fact-label">Owned by <SourceBadge kind="official" /></span><strong className="fact-value">{percent(player.ownership, { digits: 1 })}</strong></div>
+        {defensive && nextCleanSheet != null ? <div className="fact"><span className="fact-label">Clean sheet GW{nextCell?.event} <SourceBadge kind="derived" /></span><strong className="fact-value">{percent(nextCleanSheet, { fraction: true })}</strong></div> : null}
       </div>
       <section className="pdetail-section">
         <h3>Upcoming fixtures <SourceBadge kind="official" /></h3>
@@ -84,6 +97,18 @@ function MarketPlayerDetail({ player, team, owned }: { player: PlayerSummary; te
           <div><dt>ICT</dt><dd>{fixed(player.ict_index)}</dd></div>
         </dl>
       </section>
+      <section className="pdetail-section">
+        <h3>Per 90 minutes <SourceBadge kind="official" /></h3>
+        {(player.season_minutes ?? 0) >= MIN_RATE_MINUTES ? (
+          <dl className="season-grid">
+            <div><dt>xG/90</dt><dd>{fixed(player.expected_goals_per_90, 2)}</dd></div>
+            <div><dt>xA/90</dt><dd>{fixed(player.expected_assists_per_90, 2)}</dd></div>
+            <div><dt>xGI/90</dt><dd>{fixed(player.expected_goal_involvements_per_90, 2)}</dd></div>
+            {defensive ? <div><dt>xGC/90</dt><dd>{fixed(player.expected_goals_conceded_per_90, 2)}</dd></div> : <div><dt>Minutes</dt><dd>{player.season_minutes ?? "—"}</dd></div>}
+            {defensive ? <div><dt>Clean sheets</dt><dd>{player.season_clean_sheets ?? "—"}</dd></div> : null}
+          </dl>
+        ) : <p className="faint">Too few minutes this season ({player.season_minutes ?? 0}) for a fair per-90 rate.</p>}
+      </section>
       {player.news ? <section className="pdetail-section pdetail-news"><div><h3>Official news</h3><p>{player.news}</p></div></section> : null}
     </div>
   );
@@ -96,6 +121,8 @@ const COMPARE_ROWS: Array<{ label: string; get: (player: PlayerSummary) => numbe
   { label: "Price", get: (player) => player.price ?? null, format: (value) => price(value), higher: false, source: "official" },
   { label: "Form", get: (player) => player.form ?? null, format: (value) => fixed(value), higher: true, source: "official" },
   { label: "Season xGI", get: (player) => player.expected_goal_involvements ?? null, format: (value) => fixed(value, 2), higher: true, source: "official" },
+  { label: "xG per 90", get: (player) => per90(player, player.expected_goals_per_90), format: (value) => fixed(value, 2), higher: true, source: "official" },
+  { label: "xA per 90", get: (player) => per90(player, player.expected_assists_per_90), format: (value) => fixed(value, 2), higher: true, source: "official" },
   { label: "Ownership", get: (player) => player.ownership ?? null, format: (value) => percent(value, { digits: 1 }), source: "official" },
 ];
 
@@ -219,6 +246,8 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
                     {header("xp", forecastEvent ? `xP GW${forecastEvent}` : "xP")}
                     <th scope="col" className="num">xMins</th>
                     {header("value", "xP/£")}
+                    {header("xg90", "xG/90")}
+                    {header("xa90", "xA/90")}
                     {header("form", "Form")}
                     {header("event", statsEvent ? `GW${statsEvent} pts` : "GW pts")}
                     {header("price", "Price")}
@@ -243,6 +272,8 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
                         <td className="num"><b className="tone-accent">{fixed(player.predicted_points)}</b></td>
                         <td className="num">{player.xmins == null ? "—" : Math.round(player.xmins)}</td>
                         <td className="num">{player.predicted_points != null && player.price ? fixed(player.predicted_points / player.price, 2) : "—"}</td>
+                        <td className="num">{fixed(per90(player, player.expected_goals_per_90), 2)}</td>
+                        <td className="num">{fixed(per90(player, player.expected_assists_per_90), 2)}</td>
                         <td className="num">{fixed(player.form)}</td>
                         <td className="num">{player.event_points ?? "—"}</td>
                         <td className="num">{price(player.price)}</td>
