@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 import { PlayerChip } from "@/components/player/PlayerChip";
 import { PageLinkTabs } from "@/components/shell/PageTabs";
+import { PriceSwapsCard } from "@/components/prices/PriceSwapsCard";
 import { DataState } from "@/components/states/DataState";
 import { Card, Segmented, Skeleton, SourceBadge } from "@/components/ui/primitives";
 import type { PriceChangePlayer } from "@/lib/contracts";
@@ -56,7 +57,7 @@ function ProgressBar({ player }: { player: PriceChangePlayer }) {
 }
 
 export function PricesWorkspace() {
-  const { dashboard } = useTeam();
+  const { dashboard, teamId } = useTeam();
   const prices = usePriceChanges();
   const now = useNow();
   const [filter, setFilter] = useState<Filter>("both");
@@ -119,6 +120,8 @@ export function PricesWorkspace() {
           </p>
         ) : null}
       </Card>
+
+      {teamId && dashboard ? <PriceSwapsCard teamId={teamId} /> : null}
 
       <div className="toolbar" role="group" aria-label="Price change filters">
         <label className="search"><Search size={16} aria-hidden="true" /><span className="sr-only">Search players or clubs</span><input className="input" value={query} onChange={(event) => { setQuery(event.target.value); setLimit(40); }} placeholder="Search player or club" /></label>

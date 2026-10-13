@@ -634,6 +634,45 @@ def evaluate_moves(
     return {"legal": True, "option": option, "hold": _option(problem, hold, hold, owned, sale_info, free_transfers, policy)}
 
 
+def evaluate_swaps(
+    frames: Sequence[pd.DataFrame],
+    *,
+    owned_ids: Sequence[int],
+    sale_info: Mapping[int, tuple[float, str, bool]],
+    bank: float,
+    free_transfers: int,
+    pairs: Sequence[tuple[int, int]],
+    weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+) -> list[dict[str, Any]]:
+    """Score many single swaps (sell one, buy one) against one shared hold.
+
+    Same scale as `evaluate_moves`, but the hold plan is solved once. Illegal
+    swaps (budget, club limit, position) are left out.
+    """
+    policy = policy or DEFAULT_POLICY
+    weights = list(weights) if weights is not None else [1.0] * len(frames)
+    owned = {int(pid) for pid in owned_ids}
+    pairs = [(int(out_id), int(in_id)) for out_id, in_id in pairs if int(out_id) in owned and int(in_id) not in owned]
+    if not pairs:
+        return []
+    problem = _Problem(frames, weights, owned, {pid: info[0] for pid, info in sale_info.items()}, bank, policy,
+                       extra_candidates=sorted({in_id for _, in_id in pairs}))
+    status, hold = _solve_hold(problem)
+    if hold is None:
+        raise SolverUnavailable(status)
+    results = []
+    for out_id, in_id in pairs:
+        _, solution = problem.solve(newcomers_low=1, newcomers_high=1, banned=[out_id], required=[in_id])
+        if solution is None:
+            continue
+        option = _option(problem, solution, hold, owned, {**sale_info}, free_transfers, policy)
+        option.pop("squad", None)
+        option["player_out_id"], option["player_in_id"] = out_id, in_id
+        results.append(option)
+    return results
+
+
 def _squad_view(problem: _Problem, solution: _Solution, hold: _Solution, owned: set[int],
                 sale_values: Mapping[int, float]) -> dict[str, Any]:
     """A chip squad as the app shows it: the first Gameweek's XI on a pitch."""

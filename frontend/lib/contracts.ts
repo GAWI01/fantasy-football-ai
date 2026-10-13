@@ -772,6 +772,39 @@ export type ChipSquadsEnvelope = {
   errors: AreaError[];
 };
 
+export type PriceSwap = {
+  player_out_id: number;
+  player_out: string;
+  player_in_id: number;
+  player_in: string;
+  position: string;
+  sell_price: number;
+  buy_price: number;
+  /** FPL's price likelihood over the next two change windows, -5 … +5. */
+  out_likelihood: number;
+  in_likelihood: number;
+  next_gw_gain: number;
+  projected_gain: number;
+  projected_net_gain: number;
+  hit_cost: number;
+  decision_score: number;
+};
+
+export type PriceSwapsEnvelope = {
+  data: {
+    swaps: PriceSwap[];
+    owned_fallers: Array<{ player_id: number; name: string; likelihood: number }>;
+    risers_considered: number;
+    pairs_evaluated: number;
+    point_floor: number;
+    free_transfers: number;
+    selling_prices_known: boolean;
+    horizon?: number;
+  };
+  meta: SourceMeta & { event?: number };
+  errors: AreaError[];
+};
+
 export type PriceProjection = { offset: number; percent: number | null; likelihood: number };
 
 export type PriceChangePlayer = {

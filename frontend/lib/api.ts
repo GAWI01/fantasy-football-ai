@@ -1,4 +1,5 @@
 import type {
+  PriceSwapsEnvelope,
   ChipSquadsEnvelope,
   DashboardEnvelope,
   EvaluationEnvelope,
@@ -186,6 +187,12 @@ export async function fetchChipSquads(teamId: string, preferRisers = false, sign
   const query = preferRisers ? "?prefer_risers=true" : "";
   const response = await fetch(`${API_BASE_URL}/api/v1/chip-squads/${numericId(teamId, "FPL Team ID")}${query}`, { cache: "no-store", signal });
   return readJson<ChipSquadsEnvelope>(response);
+}
+
+export async function fetchPriceSwaps(teamId: string, freeTransfers?: number | null, signal?: AbortSignal): Promise<PriceSwapsEnvelope> {
+  const query = freeTransfers != null ? `?free_transfers=${freeTransfers}` : "";
+  const response = await fetch(`${API_BASE_URL}/api/v1/price-swaps/${numericId(teamId, "FPL Team ID")}${query}`, { cache: "no-store", signal });
+  return readJson<PriceSwapsEnvelope>(response);
 }
 
 function numericId(value: string | number, label: string): string {
