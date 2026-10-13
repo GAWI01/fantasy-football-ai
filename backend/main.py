@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api_contract import api_envelope, source_meta
 from .availability import official_multiplier
 from .selling_prices import attach_selling_prices
+from .league_captain import league_captain
 from .league_service import (
     LeagueNotFoundError,
     LeagueServiceError,
@@ -1315,6 +1316,26 @@ def get_league_v1(league_id: int, team_id: int):
     def build():
         bootstrap = get_bootstrap_data()
         return build_league(team_id, league_id, bootstrap=bootstrap, projections=_next_gw_projections(bootstrap))
+    return _league_errors(build)
+
+
+@app.get("/api/v1/league/{league_id}/captain")
+def get_league_captain_v1(league_id: int, team_id: int, free_transfers: int | None = None):
+    """Captain candidates judged against one mini-league: safe, differential, and the pick for your position."""
+    if league_id <= 0 or team_id <= 0:
+        raise HTTPException(status_code=400, detail="league_id and team_id must be positive")
+
+    def build():
+        bootstrap = get_bootstrap_data()
+        league = build_league(team_id, league_id, bootstrap=bootstrap, projections=_next_gw_projections(bootstrap))
+        decision = get_decision(team_id, free_transfers=free_transfers)
+        xi = decision.get("starting_xi") or {}
+        players = xi.get("players", []) if isinstance(xi, dict) else xi
+        starters = [player for player in players if str(player.get("position", "")).upper() not in {"GK", "GKP"}]
+        starters.sort(key=lambda player: -float(player.get("predicted_points") or 0.0))
+        result = league_captain(starters[:5], league, team_id)
+        result["league_id"], result["league_name"] = league_id, league.get("name")
+        return result
     return _league_errors(build)
 
 

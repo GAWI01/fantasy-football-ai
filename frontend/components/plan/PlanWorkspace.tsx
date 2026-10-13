@@ -10,6 +10,7 @@ import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview
 import { useTeam } from "@/app/providers/TeamProvider";
 import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
 import { FreeTransfersControl } from "@/components/plan/FreeTransfersControl";
+import { LeagueCaptainCard } from "@/components/plan/LeagueCaptainCard";
 import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
 import { PriceSwapsCard } from "@/components/prices/PriceSwapsCard";
 import { PriceTiming } from "@/components/prices/PriceTiming";
@@ -24,6 +25,7 @@ import { fixed, price, sentenceCase, signed } from "@/lib/format";
 import { useCockpit } from "@/lib/hooks/useCockpit";
 import { usePlanHistory } from "@/lib/hooks/usePlanHistory";
 import { chipAvailability, CHIP_LABEL, planSnapshot, transferHeadline, type GameweekPlan, type ScenarioView } from "@/lib/model/plan";
+import { rangeLabel } from "@/lib/model/pointRanges";
 import type { SquadPlayer } from "@/lib/model/squad";
 import type { ChipOutlook } from "@/lib/contracts";
 
@@ -142,7 +144,7 @@ function CaptainCompare({ plan, squad }: { plan: GameweekPlan; squad: SquadPlaye
       <div className="cap-list" role="radiogroup" aria-label="Captain options">
         {options.map(({ player, captainScore }) => (
           <button type="button" role="radio" aria-checked={active?.id === player.id} key={player.id} className={`cap-row${plan.captain?.id === player.id ? " is-recommended" : ""}`} onClick={() => setPick(player.id)}>
-            <PlayerChip name={player.name} team={player.team} teamShort={player.teamShort} position={player.position} size={30} badge={plan.captain?.id === player.id ? "C" : plan.vice?.id === player.id ? "V" : undefined} meta={`${player.opponent ?? "Fixture —"}${player.home == null ? "" : player.home ? " (H)" : " (A)"} · ${player.xmins == null ? "—" : Math.round(player.xmins)} xMins`} />
+            <PlayerChip name={player.name} team={player.team} teamShort={player.teamShort} position={player.position} size={30} badge={plan.captain?.id === player.id ? "C" : plan.vice?.id === player.id ? "V" : undefined} meta={`${player.opponent ?? "Fixture —"}${player.home == null ? "" : player.home ? " (H)" : " (A)"} · ${player.xmins == null ? "—" : Math.round(player.xmins)} xMins${rangeLabel(player.xp) ? ` · usually ${rangeLabel(player.xp)} pts` : ""}`} />
             <span className="cap-bar" aria-hidden="true"><i style={{ width: `${((player.xp ?? 0) / max) * 100}%` }} /></span>
             <span className="cap-xp num"><b>{fixed(player.xp)}</b><small>{captainScore != null ? `score ${fixed(captainScore, 2)}` : "xP"}</small></span>
           </button>
@@ -403,7 +405,12 @@ export function PlanWorkspace() {
             {teamId && !locked ? <OwnMoveCard teamId={teamId} plan={plan} squad={squad} market={market} /> : null}
           </>
         ) : null}
-        {tab === "captain" ? <div className="plan-wide"><CaptainCompare plan={plan} squad={squad} /></div> : null}
+        {tab === "captain" ? (
+          <>
+            <div className="plan-wide"><CaptainCompare plan={plan} squad={squad} /></div>
+            <div className="plan-wide"><LeagueCaptainCard teamId={teamId} freeTransfers={plan.freeTransfersSource === "user" ? plan.freeTransfers : null} /></div>
+          </>
+        ) : null}
         {tab === "chips" ? <div className="plan-wide"><ChipCard plan={plan} locked={locked} /></div> : null}
         {tab === "squad" ? (
           <>

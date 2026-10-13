@@ -137,6 +137,21 @@ optimized moves next week. Future moves are conditional; the conservative
 policy can recommend fewer transfers now, never more. Incomplete searches are
 identified rather than described as proven optimal.
 
+### Captain against your mini-league
+
+Plan → Captain shows a realistic range for every candidate ("usually 2–10
+points", 10th–90th percentile, with the chance of 10+). The ranges come from what
+players with the same expected score actually scored in an out-of-sample
+backtest (`scripts/build_point_ranges.py`).
+
+**Against your league** reads your rivals' latest public squads. A captain is
+worth the same on average whoever else owns him; the league changes the risk:
+*Safe* when many rivals captain him (you move together), *Differential* when
+none do (his score swings you against everyone). At or near the top it picks the
+safe option within a point of the best; far behind in the run-in (or very far
+behind at any time) it may pick a differential within 1.5 points; otherwise it
+keeps the highest expected points. Any expected points given up are shown.
+
 ## Chips
 
 <img src="screenshots/plan-chips.png" alt="Chips card: Hold your chips, with Free Hit to save and the chips already used" width="420">
