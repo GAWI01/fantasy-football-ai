@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from engine.fpl_rules import detect_club_changes, validate_transfer_squad
-from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, build_chip_squads, evaluate_moves, plan_action
+from optimizer.action_planner import ActionPlanningError, DecisionPolicy, SolverUnavailable, build_chip_squads, evaluate_moves, evaluate_swaps, plan_action
 
 
 class TransferAnalysisError(ValueError):
@@ -891,3 +891,120 @@ def chip_squads(
         raise TransferAnalysisError(str(exc)) from exc
     result["selling_prices_known"] = all(value[2] for value in sales.values())
     return result
+
+
+# FPL's price likelihood runs from -5 (very likely to fall) to +5 (very likely to rise).
+LIKELY_RISE = 4
+LIKELY_FALL = -4
+# A price-smart swap may not cost points: at worst this many projected points over the horizon.
+PRICE_SWAP_POINT_FLOOR = -0.5
+
+
+def price_swaps(
+    team: dict[str, Any],
+    predictions: pd.DataFrame,
+    *,
+    likelihoods: Mapping[int, int],
+    free_transfers: int,
+    horizon_predictions: Sequence[pd.DataFrame] | None = None,
+    horizon_weights: Sequence[float] | None = None,
+    policy: DecisionPolicy | None = None,
+    max_evaluated: int = 12,
+    limit: int = 3,
+) -> dict[str, Any]:
+    """Swaps that sell a likely price faller or buy a likely riser without losing points.
+
+    Candidates: owned players FPL projects to fall (or any owned player, when the
+    incoming player is a likely riser) replaced by likely risers in the same
+    position that the squad can afford. The best pairs by a quick horizon
+    estimate are then scored exactly, on the recommendation's planner and
+    scale; only swaps that keep projected points (within a small floor) are kept.
+    Points always come first: price is a tie-breaker, not a reason to lose points.
+    """
+    picks = _validate_inputs(team, predictions)
+    frames = list(horizon_predictions) if horizon_predictions else [predictions]
+    frames = [frame.assign(position=frame["position"].astype(str).str.upper().replace({"GKP": "GK"}))
+              for frame in frames]
+    weights = list(horizon_weights) if horizon_weights is not None else [1.0] * len(frames)
+    first = frames[0].copy()
+    first["player_id"] = pd.to_numeric(first["player_id"]).astype(int)
+    prices = dict(zip(first["player_id"], pd.to_numeric(first["price"])))
+    sales = {int(pick["player_id"]): selling_value(pick, float(prices[int(pick["player_id"])])) for pick in picks}
+    bank = float(team.get("bank") or 0.0)
+
+    # Weighted horizon points per player, for a quick first ranking.
+    horizon: dict[int, float] = {}
+    for weight, frame in zip(weights, frames):
+        ids = pd.to_numeric(frame["player_id"]).astype(int)
+        for pid, points in zip(ids, pd.to_numeric(frame["predicted_points"], errors="coerce").fillna(0.0)):
+            horizon[int(pid)] = horizon.get(int(pid), 0.0) + weight * float(points)
+    info = {int(row.player_id): row for row in first.itertuples(index=False)}
+    owned = [pid for pid in sales if pid in info]
+    risers = [pid for pid, row in info.items() if pid not in sales and likelihoods.get(pid, 0) >= LIKELY_RISE]
+
+    candidates: list[tuple[float, int, int]] = []
+    for in_id in risers:
+        incoming = info[in_id]
+        for out_id in owned:
+            outgoing = info[out_id]
+            if str(outgoing.position) != str(incoming.position):
+                continue
+            if float(prices[in_id]) > bank + sales[out_id][0] + 1e-6:
+                continue
+            falling = likelihoods.get(out_id, 0) <= LIKELY_FALL
+            estimate = horizon.get(in_id, 0.0) - horizon.get(out_id, 0.0)
+            # Selling a likely faller is worth looking at even when the points are close.
+            candidates.append((estimate + (1.0 if falling else 0.0), out_id, in_id))
+    candidates.sort(reverse=True)
+    pairs = [(out_id, in_id) for _, out_id, in_id in candidates[:max_evaluated]]
+    try:
+        scored = evaluate_swaps(frames, owned_ids=list(sales), sale_info=sales, bank=bank,
+                                free_transfers=free_transfers, pairs=pairs, weights=weights, policy=policy)
+    except SolverUnavailable as exc:
+        raise TransferAnalysisError(str(exc)) from exc
+    except ActionPlanningError:
+        scored = []
+
+    swaps = []
+    for option in scored:
+        if option["projected_net_gain"] < PRICE_SWAP_POINT_FLOOR:
+            continue
+        out_id, in_id = option["player_out_id"], option["player_in_id"]
+        swaps.append({
+            "player_out_id": out_id,
+            "player_out": str(info[out_id].name),
+            "player_in_id": in_id,
+            "player_in": str(info[in_id].name),
+            "position": str(info[in_id].position),
+            "sell_price": round(sales[out_id][0], 1),
+            "buy_price": round(float(prices[in_id]), 1),
+            "out_likelihood": int(likelihoods.get(out_id, 0)),
+            "in_likelihood": int(likelihoods.get(in_id, 0)),
+            "next_gw_gain": option["next_gw_gain"],
+            "projected_gain": option["projected_gain"],
+            "projected_net_gain": option["projected_net_gain"],
+            "hit_cost": option["hit_cost"],
+            "decision_score": option["decision_score"],
+        })
+    # Points first; between near-equal swaps, the stronger price signals win.
+    swaps.sort(key=lambda swap: (round(swap["projected_net_gain"], 1),
+                                 swap["in_likelihood"] - swap["out_likelihood"]), reverse=True)
+    # One suggestion per incoming and per outgoing player, so the list offers real choices.
+    distinct, seen_in, seen_out = [], set(), set()
+    for swap in swaps:
+        if swap["player_in_id"] in seen_in or swap["player_out_id"] in seen_out:
+            continue
+        seen_in.add(swap["player_in_id"])
+        seen_out.add(swap["player_out_id"])
+        distinct.append(swap)
+    owned_fallers = [{"player_id": pid, "name": str(info[pid].name), "likelihood": int(likelihoods[pid])}
+                     for pid in owned if likelihoods.get(pid, 0) <= LIKELY_FALL]
+    return {
+        "swaps": distinct[:limit],
+        "owned_fallers": owned_fallers,
+        "risers_considered": len(risers),
+        "pairs_evaluated": len(pairs),
+        "point_floor": PRICE_SWAP_POINT_FLOOR,
+        "free_transfers": free_transfers,
+        "selling_prices_known": all(value[2] for value in sales.values()),
+    }

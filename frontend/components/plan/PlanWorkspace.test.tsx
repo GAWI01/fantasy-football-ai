@@ -145,3 +145,14 @@ test("the plan opens on Transfers and an old #chips link opens the Chips section
   expect(screen.getByRole("heading", { name: "Other options" })).toBeInTheDocument();
   window.history.replaceState(null, "", "#");
 });
+
+test("price-smart swaps keep points first and compare with our pick", async () => {
+  serveDashboard(mockApi(), makeDashboard());
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  const card = (await screen.findByRole("heading", { name: "Price-smart swaps" })).closest("section")!;
+  expect(await within(card).findByText("Brennan")).toBeInTheDocument();
+  expect(within(card).getByText("Very likely to rise")).toBeInTheDocument();
+  expect(within(card).getAllByText("Likely to drop").length).toBeGreaterThan(0);
+  expect(card).toHaveTextContent("+1.9 points over the next 5 Gameweeks");
+  expect(card).toHaveTextContent(/Our pick is worth more this week/);
+});

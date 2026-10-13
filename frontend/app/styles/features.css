@@ -1016,3 +1016,15 @@ button.race-row:hover { background: var(--surface-hover); }
 .squad-fixtures .fx-table { min-width: 440px; }
 /* Keep the first Gameweek clear of the pinned column's solid edge. */
 .fx-tr > :nth-child(2) { margin-left: 6px; }
+
+/* Price-smart swaps */
+.card-lede { margin: 0 0 12px; color: var(--text-2); font-size: var(--fs-sm); line-height: 1.5; }
+.swap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.swap-row { padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(4, 6, 13, 0.38); display: grid; gap: 8px; }
+.swap-players { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); align-items: center; gap: 10px; }
+.swap-side { display: grid; gap: 2px; min-width: 0; }
+.swap-side b { font-size: 1rem; overflow-wrap: anywhere; }
+.swap-side small { color: var(--text-3); font-size: var(--fs-xs); }
+.swap-tag { font-size: var(--fs-xs); font-weight: 650; }
+.swap-arrow { color: var(--violet-text); }
+.swap-points { margin: 0; font-size: var(--fs-sm); color: var(--text-2); line-height: 1.45; }

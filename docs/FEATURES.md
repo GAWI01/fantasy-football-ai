@@ -232,6 +232,15 @@ outgoing one to drop), the Plan says to make the move before the change, and
 after it when the incoming player is likely to drop. Remember that FPL gives you
 only half of a rise when you sell, so points come first.
 
+**Price-smart swaps** (on Prices, and folded in Plan → Transfers) look for a
+single swap that sells a player FPL expects to drop, or buys one it expects to
+rise in the next two price changes, without losing points. Candidates are
+likely risers you can afford in the same position; the best pairs are scored on
+the same planner and horizon as the recommendation, and any swap that loses more
+than half a point over the horizon is never shown. Each player appears at most
+once. When the recommendation itself is worth more, the card says so: a swap
+uses the same free transfer.
+
 ## History & Review
 
 ![History and Review: season record and a Gameweek set against the model](screenshots/review.png)

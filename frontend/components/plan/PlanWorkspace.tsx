@@ -11,6 +11,7 @@ import { useTeam } from "@/app/providers/TeamProvider";
 import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
 import { FreeTransfersControl } from "@/components/plan/FreeTransfersControl";
 import { OwnMoveCard } from "@/components/plan/OwnMoveCard";
+import { PriceSwapsCard } from "@/components/prices/PriceSwapsCard";
 import { PriceTiming } from "@/components/prices/PriceTiming";
 import { NextWeekLine, TwoWeekCard } from "@/components/plan/TwoWeekPlan";
 import { ExplainPlan } from "@/components/plan/WhySheet";
@@ -392,6 +393,12 @@ export function PlanWorkspace() {
               </div>
             </Card>
             <div className="plan-wide"><ScenarioCompare plan={plan} /></div>
+            {!locked ? (
+              <div className="plan-wide">
+                <PriceSwapsCard teamId={teamId} collapsible freeTransfers={plan.freeTransfersSource === "user" ? plan.freeTransfers : null}
+                  recommended={{ label: isTransfer ? transferHeadline(plan) : "save your free transfer", decisionScore: isTransfer ? plan.recommended.modelScore : 0 }} />
+              </div>
+            ) : null}
             {plan.twoWeek ? <TwoWeekCard plan={plan.twoWeek} transfersNow={isTransfer ? plan.recommended.moves.length : 0} /> : null}
             {teamId && !locked ? <OwnMoveCard teamId={teamId} plan={plan} squad={squad} market={market} /> : null}
           </>

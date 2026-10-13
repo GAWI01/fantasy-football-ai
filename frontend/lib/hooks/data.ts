@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 
-import { fetchChipSquads, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
-import type { ChipSquadsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
+import { fetchChipSquads, fetchPriceSwaps, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
+import type { ChipSquadsEnvelope, PriceSwapsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
 import { useResource } from "@/lib/hooks/useResource";
 
 function useDataVersion() {
@@ -65,6 +65,12 @@ export function useRival(leagueId: number | null, rivalId: number | null, teamId
 export function useChipSquads(teamId: string | null, enabled: boolean, preferRisers = false) {
   const version = useDataVersion();
   return useResource<ChipSquadsEnvelope>(enabled && teamId ? `chip-squads:${teamId}:${preferRisers ? "risers" : "plain"}:${version}` : null, (signal) => fetchChipSquads(teamId ?? "", preferRisers, signal), 600_000);
+}
+
+/** Swaps that sell a likely faller or buy a likely riser without losing points. */
+export function usePriceSwaps(teamId: string | null, enabled: boolean, freeTransfers?: number | null) {
+  const version = useDataVersion();
+  return useResource<PriceSwapsEnvelope>(enabled && teamId ? `price-swaps:${teamId}:${freeTransfers ?? "est"}:${version}` : null, (signal) => fetchPriceSwaps(teamId ?? "", freeTransfers, signal), 300_000);
 }
 
 /** Official price-change figures; FPL updates them through the day. */

@@ -82,7 +82,7 @@ from .review_service import (
 )
 
 from engine.decision_engine import build_decision
-from engine.transfer_analysis import chip_squads, evaluate_transfer_moves
+from engine.transfer_analysis import chip_squads, evaluate_transfer_moves, price_swaps
 from .price_service import build_price_changes, price_likelihoods, riser_bonus
 from optimizer.action_planner import DEFAULT_POLICY
 
@@ -1202,6 +1202,36 @@ def evaluate_transfers_v1(team_id: int, sell: str, buy: str, free_transfers: int
         "net_gain": recommendation.get("net_gain"),
     }
     result["free_transfers"] = inputs["free_transfers"]
+    meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
+    meta["event"] = inputs["manifest"].prediction_event
+    return api_envelope(result, meta)
+
+
+@app.get("/api/v1/price-swaps/{team_id}")
+def get_price_swaps_v1(team_id: int, free_transfers: int | None = None):
+    """Swaps that sell a likely price faller or buy a likely riser without losing points.
+
+    Price likelihoods are FPL's own projections for the next two change windows;
+    the points use the recommendation's inputs, horizon and planner.
+    """
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="team_id must be positive")
+    if free_transfers is not None and not 0 <= free_transfers <= 5:
+        raise HTTPException(status_code=400, detail="free_transfers must be between 0 and 5")
+    try:
+        inputs = _decision_inputs(team_id, free_transfers, None)
+        frames = [inputs["horizon_predictions"][key] for key in sorted(inputs["horizon_predictions"])]
+        weights = [max(0.4, 1.0 - 0.15 * index) for index in range(len(frames))]
+        likelihoods = price_likelihoods(get_bootstrap_data())
+        result = price_swaps(inputs["team"], inputs["predictions"], likelihoods=likelihoods,
+                             free_transfers=inputs["free_transfers"], horizon_predictions=frames, horizon_weights=weights)
+        result["horizon"] = len(frames)
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"No FPL team found with ID {team_id}.") from exc
+    except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except (DataLoaderError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
     meta["event"] = inputs["manifest"].prediction_event
     return api_envelope(result, meta)
