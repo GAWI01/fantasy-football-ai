@@ -137,6 +137,18 @@ optimized moves next week. Future moves are conditional; the conservative
 policy can recommend fewer transfers now, never more. Incomplete searches are
 identified rather than described as proven optimal.
 
+### Season chip plan
+
+Plan → Chips plans the rest of the chip period around the official fixture
+list, which shows blank and double Gameweeks far beyond the model's horizon.
+For each remaining Gameweek it counts, for your squad, the points lost to
+starters with no match (Free Hit), the bench's points with doubles counted twice
+(Bench Boost) and the best captain's extra (Triple Captain). Only real blank or
+double weeks are proposed, one chip per week, most valuable first; in the last
+few weeks of a period it names the best week left, since unused chips are lost.
+It previews the next period and lists matches without a date, which usually
+become doubles later.
+
 ### Captain against your mini-league
 
 Plan → Captain shows a realistic range for every candidate ("usually 2–10

@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 
-import { fetchChipSquads, fetchLeagueCaptain, fetchPriceSwaps, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
-import type { ChipSquadsEnvelope, LeagueCaptainEnvelope, PriceSwapsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
+import { fetchChipPlan, fetchChipSquads, fetchLeagueCaptain, fetchPriceSwaps, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
+import type { ChipPlanEnvelope, ChipSquadsEnvelope, LeagueCaptainEnvelope, PriceSwapsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
 import { useResource } from "@/lib/hooks/useResource";
 
 function useDataVersion() {
@@ -71,6 +71,12 @@ export function useRival(leagueId: number | null, rivalId: number | null, teamId
 export function useChipSquads(teamId: string | null, enabled: boolean, preferRisers = false) {
   const version = useDataVersion();
   return useResource<ChipSquadsEnvelope>(enabled && teamId ? `chip-squads:${teamId}:${preferRisers ? "risers" : "plain"}:${version}` : null, (signal) => fetchChipSquads(teamId ?? "", preferRisers, signal), 600_000);
+}
+
+/** When to play each chip for the rest of the period, from the fixture list. */
+export function useChipPlan(teamId: string | null, freeTransfers?: number | null) {
+  const version = useDataVersion();
+  return useResource<ChipPlanEnvelope>(teamId ? `chip-plan:${teamId}:${freeTransfers ?? "est"}:${version}` : null, (signal) => fetchChipPlan(teamId ?? "", freeTransfers, signal), 600_000);
 }
 
 /** Swaps that sell a likely faller or buy a likely riser without losing points. */

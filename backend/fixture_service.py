@@ -584,6 +584,14 @@ def build_fixture_matrix(
     }
 
 
+def get_all_fixtures() -> list[dict[str, Any]]:
+    """Every fixture of the season, including matches that have no Gameweek yet."""
+    fixtures = _get_json("fixtures/")
+    if not isinstance(fixtures, list):
+        raise FixtureServiceError("FPL fixtures response is invalid")
+    return fixtures
+
+
 def get_fixture_matrix(
     start_event: int | None = None,
     horizon: int = 5,

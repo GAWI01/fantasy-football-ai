@@ -16,6 +16,20 @@ export function mockApi(options: DashboardOptions & { dashboardStatus?: number; 
     }
     if (url.pathname === "/api/v1/players") return json(makePlayerMarket());
     if (url.pathname === "/api/v1/fixture-matrix") return json(makeFixtureMatrix(Number(url.searchParams.get("horizon") ?? 5)));
+    if (url.pathname.startsWith("/api/v1/chip-plan/")) {
+      return json({
+        data: {
+          period: { first: 7, last: 19 },
+          plans: [{ chip: "FREE_HIT", label: "Free Hit", gameweek: 16, scheduled: true, value: 14.2, reason: "GW16: 4 of your starters have no match (Duarte, Varga)." }],
+          next_period: { first: 20, last: 38, plans: [{ chip: "BENCH_BOOST", label: "Bench Boost", gameweek: null, scheduled: false, value: 0, reason: "No double Gameweek is scheduled in this period yet." }] },
+          timeline: [{ gameweek: 16, blank_clubs: 4, double_clubs: 0, blank_starters: ["Duarte", "Varga"], doubles_in_squad: [] }],
+          unscheduled: [{ home: "ARS", away: "LIV" }],
+          chip_state_known: true,
+        },
+        meta: { source: "derived", fetched_at: "2026-10-03T09:00:00Z", stale: false },
+        errors: [],
+      });
+    }
     if (url.pathname.startsWith("/api/v1/leagues/")) {
       return json({ data: { team_id: 4242, leagues: [{ league_id: 77, name: "Office league", managers: 7, rank: 4, last_rank: 5, analysed_managers: 7 }] }, meta: { source: "official", fetched_at: "2026-10-03T09:00:00Z", stale: false }, errors: [] });
     }

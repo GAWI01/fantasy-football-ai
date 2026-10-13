@@ -8,6 +8,7 @@ import { Kit } from "@/components/kit/Kit";
 import { clubCode } from "@/lib/fpl/kits";
 import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
 import { useTeam } from "@/app/providers/TeamProvider";
+import { ChipSeasonPlan } from "@/components/plan/ChipSeasonPlan";
 import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
 import { FreeTransfersControl } from "@/components/plan/FreeTransfersControl";
 import { LeagueCaptainCard } from "@/components/plan/LeagueCaptainCard";
@@ -411,7 +412,12 @@ export function PlanWorkspace() {
             <div className="plan-wide"><LeagueCaptainCard teamId={teamId} freeTransfers={plan.freeTransfersSource === "user" ? plan.freeTransfers : null} /></div>
           </>
         ) : null}
-        {tab === "chips" ? <div className="plan-wide"><ChipCard plan={plan} locked={locked} /></div> : null}
+        {tab === "chips" ? (
+          <>
+            <div className="plan-wide"><ChipCard plan={plan} locked={locked} /></div>
+            <div className="plan-wide"><ChipSeasonPlan teamId={teamId} freeTransfers={plan.freeTransfersSource === "user" ? plan.freeTransfers : null} /></div>
+          </>
+        ) : null}
         {tab === "squad" ? (
           <>
             <div className="plan-wide"><HorizonGrid squad={squad} /></div>

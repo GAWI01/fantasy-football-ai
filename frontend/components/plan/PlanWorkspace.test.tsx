@@ -170,3 +170,16 @@ test("the captain tab weighs the choice against your mini-league", async () => {
   expect(card).toHaveTextContent("No rival captained him");
   expect(card).toHaveTextContent("usually 2–10 points");
 });
+
+test("the chips tab plans the season around blank and double Gameweeks", async () => {
+  serveDashboard(mockApi(), makeDashboard());
+  const user = userEvent.setup();
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  await user.click(await screen.findByRole("tab", { name: /Chips/ }));
+  const card = (await screen.findByRole("heading", { name: "Season chip plan" })).closest("section")!;
+  expect((await within(card).findAllByText("GW16")).length).toBeGreaterThan(0);
+  expect(card).toHaveTextContent("4 of your starters have no match");
+  expect(card).toHaveTextContent("From GW20: all four chips again");
+  expect(card).toHaveTextContent("4 clubs blank");
+  expect(card).toHaveTextContent("ARS v LIV");
+});
