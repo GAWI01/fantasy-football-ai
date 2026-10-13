@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Mapping
+import numpy as np
 import pandas as pd
 
 from engine.decision_contract import DecisionInput, validate_decision_output
@@ -73,7 +74,14 @@ def build_decision(
         .loc[owned_ids]
         .reset_index()
     )
-    optimal=optimize_squad(predictions.copy(),budget=budget)
+    # One malformed row (missing price, club or forecast) must not sink the
+    # reference squad; owned players stay in `predictions` for the rest.
+    usable=predictions[
+        np.isfinite(pd.to_numeric(predictions["price"],errors="coerce"))
+        & np.isfinite(pd.to_numeric(predictions["predicted_points"],errors="coerce"))
+        & predictions["team"].notna()
+    ]
+    optimal=optimize_squad(usable.copy(),budget=budget)
     xi=select_starting_xi(current_squad)
     transfers=optimize_transfers(
         team,

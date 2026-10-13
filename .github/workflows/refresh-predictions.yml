@@ -2,7 +2,9 @@ name: Refresh predictions
 
 on:
   schedule:
-    - cron: "23 */3 * * *"
+    # Every 30 minutes: the next forecast is published soon after a deadline,
+    # and decision endpoints refuse a stale one until then.
+    - cron: "23,53 * * * *"
   workflow_dispatch:
   push:
     branches: [master]

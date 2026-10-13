@@ -1,5 +1,5 @@
 # Forecast pipeline (fetch, validate, publish), pinned to the environment that
-# trained and certified models/fpl_model_v3.pkl. The model certificate records
+# trained and certified models/fpl_model_v4.pkl. The model certificate records
 # the scikit-learn version; publication refuses a different one.
 certifi==2026.7.22
 charset-normalizer==3.5.1
