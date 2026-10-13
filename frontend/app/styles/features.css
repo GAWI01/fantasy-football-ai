@@ -1012,3 +1012,7 @@ button.race-row:hover { background: var(--surface-hover); }
 .fx-thead > :first-child { background: #0e1426; }
 .fx-tr.is-owned { box-shadow: none; }
 .fx-tr.is-owned > :first-child { background: linear-gradient(rgba(139, 92, 246, 0.14), rgba(139, 92, 246, 0.14)), #0e1426; box-shadow: inset 2px 0 0 var(--violet), -24px 0 0 #0e1426, 8px 0 0 #0e1426, 18px 0 12px -10px rgba(0, 0, 0, 0.8); }
+/* Home's table is as wide as its columns need, so it scrolls instead of squeezing. */
+.squad-fixtures .fx-table { min-width: 440px; }
+/* Keep the first Gameweek clear of the pinned column's solid edge. */
+.fx-tr > :nth-child(2) { margin-left: 6px; }

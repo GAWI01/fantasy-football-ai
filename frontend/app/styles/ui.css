@@ -283,9 +283,10 @@
 .card-chevron { width: 9px; height: 9px; flex: none; margin-top: -4px; border-right: 2px solid var(--text-3); border-bottom: 2px solid var(--text-3); transform: rotate(45deg); transition: transform var(--dur-3) var(--ease), margin var(--dur-3) var(--ease); }
 .card-toggle[aria-expanded="true"] .card-chevron { transform: rotate(225deg); margin-top: 4px; }
 .card-summary { display: block; margin-top: 4px; font-size: var(--fs-sm); color: var(--text-2); }
-.card-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.34s var(--ease); }
+/* minmax(0, 1fr): wide content (tables) scrolls inside the card instead of widening it. */
+.card-body { display: grid; grid-template-rows: 1fr; grid-template-columns: minmax(0, 1fr); transition: grid-template-rows 0.34s var(--ease); }
 .card-body[data-open="false"] { grid-template-rows: 0fr; }
-.card-body-inner { min-height: 0; overflow: hidden; }
+.card-body-inner { min-height: 0; min-width: 0; overflow: hidden; }
 /* Once open, stop clipping (pop-overs and focus rings inside can overflow), but
    only after the unfold so content does not spill over the cards below. */
 .card-body[data-open="true"] > .card-body-inner { animation: card-unclip 0s linear 0.34s forwards; }
