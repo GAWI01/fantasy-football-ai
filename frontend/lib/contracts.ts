@@ -209,6 +209,10 @@ export type PlayerSummary = {
   expected_goal_involvements_per_90?: number | null;
   expected_goals_conceded_per_90?: number | null;
   season_clean_sheets?: number | null;
+  /** Club set-piece order from FPL (1 = first choice). */
+  penalties_order?: number | null;
+  direct_freekicks_order?: number | null;
+  corners_order?: number | null;
   influence?: number | null;
   creativity?: number | null;
   threat?: number | null;

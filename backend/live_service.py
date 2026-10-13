@@ -13,6 +13,13 @@ class LiveDataServiceError(RuntimeError):
 
 
 
+def _optional_int(value: Any) -> int | None:
+    try:
+        return int(value) if value not in (None, "") else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _optional_float(value: Any) -> float | None:
     if value in (None, ""):
         return None
@@ -407,6 +414,10 @@ def normalize_live_players(
             "expected_goal_involvements_per_90": _optional_float(player.get("expected_goal_involvements_per_90")),
             "expected_goals_conceded_per_90": _optional_float(player.get("expected_goals_conceded_per_90")),
             "season_clean_sheets": int(player.get("clean_sheets") or 0),
+            # Club set-piece order as FPL publishes it (1 = first choice); informational, not a model input.
+            "penalties_order": _optional_int(player.get("penalties_order")),
+            "direct_freekicks_order": _optional_int(player.get("direct_freekicks_order")),
+            "corners_order": _optional_int(player.get("corners_and_indirect_freekicks_order")),
             "status": str(player.get("status") or "u"),
             "chance_of_playing_next_round": player.get("chance_of_playing_next_round"),
             "news": str(player.get("news") or ""),

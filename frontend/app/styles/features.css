@@ -1053,3 +1053,4 @@ button.race-row:hover { background: var(--surface-hover); }
 .season-timeline { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
 .season-week { display: grid; gap: 1px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); font-size: var(--fs-xs); }
 .season-wait { margin: 6px 0 12px; font-size: var(--fs-sm); line-height: 1.5; }
+.pdetail-setpieces { margin: 6px 0 0; font-size: var(--fs-sm); color: var(--text-2); }

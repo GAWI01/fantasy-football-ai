@@ -127,6 +127,27 @@ certificate. `backend.data_manifest.model_validation_state()` reports
   adjudication or inputs to the bonus system are missing. Missing defensive
   contributions must not be interpreted as zero contributions.
 
+### Tested and not adopted: rest days and club rotation
+
+Rolling-origin test on 2023-24, 2024-25 and 2025-26 (each scored by a model
+trained only on earlier seasons), same model settings as production:
+
+| Features | MAE | Spearman by GW | Top-10 actual points |
+| --- | --- | --- | --- |
+| Contract v4 (production) | 0.9749 | 0.6853 | 4.96 |
+| + days since the club's previous league match | 0.9755 | 0.6851 | 5.06 |
+| + club rotation index and start share (last 5) | 0.9783 | 0.6864 | 5.05 |
+| + both | 0.9764 | 0.6858 | 5.00 |
+
+No variant improves the error; the top-10 differences are within noise. Recent
+starts and minutes already carry the rotation signal, so the features were not
+added. European and cup fixtures, the main cause of rotation the model cannot
+see, are not in the training data.
+
+Set-piece roles (penalties, free kicks, corners) are shown in the app as FPL
+publishes them but are not model inputs: the historical data only has
+end-of-season roles, which would leak the future into a backtest.
+
 ## Deadline-time evidence and self-collected history
 
 The existing current-season collector provides completed outcomes. The separate
