@@ -1,4 +1,5 @@
 import type {
+  LeagueCaptainEnvelope,
   PriceSwapsEnvelope,
   ChipSquadsEnvelope,
   DashboardEnvelope,
@@ -212,6 +213,13 @@ export async function fetchLeague(leagueId: number, teamId: string, signal?: Abo
     { cache: "no-store", signal },
   );
   return readJson<LeagueEnvelope>(response);
+}
+
+export async function fetchLeagueCaptain(leagueId: number, teamId: string, freeTransfers?: number | null, signal?: AbortSignal): Promise<LeagueCaptainEnvelope> {
+  const params = new URLSearchParams({ team_id: numericId(teamId, "FPL Team ID") });
+  if (freeTransfers != null) params.set("free_transfers", String(freeTransfers));
+  const response = await fetch(`${API_BASE_URL}/api/v1/league/${numericId(leagueId, "league ID")}/captain?${params}`, { cache: "no-store", signal });
+  return readJson<LeagueCaptainEnvelope>(response);
 }
 
 export async function fetchRival(leagueId: number, rivalId: number, teamId: string, signal?: AbortSignal): Promise<RivalEnvelope> {

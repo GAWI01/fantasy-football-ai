@@ -9,6 +9,7 @@ import { WhySheet } from "@/components/plan/WhySheet";
 import { Term } from "@/components/ui/Term";
 import { fixed, signed } from "@/lib/format";
 import { CHIP_LABEL, type GameweekPlan } from "@/lib/model/plan";
+import { rangeLabel } from "@/lib/model/pointRanges";
 
 function Row({ href, icon, tone, title, children }: { href: string; icon: ReactNode; tone?: "accent" | "warn" | "calm"; title: ReactNode; children?: ReactNode }) {
   return (
@@ -76,7 +77,7 @@ export function TodoCard({ plan, event, modelVersion, locked, provisional }: {
       <ol className="todo-list">
         <Row href="/plan#transfers" icon={<Repeat2 size={18} />} tone={plan.verdict === "TRANSFER" ? "accent" : undefined} title={transfer.title}>{transfer.detail}</Row>
         <Row href="/plan#captain" icon={<Crown size={18} />} title={plan.captain ? `Captain ${plan.captain.name}` : "Captain"}>
-          {plan.captain ? <>{fixed(plan.captain.xp)} <Term k="xp">xP</Term>{plan.captain.opponent ? ` vs ${plan.captain.opponent}${plan.captain.home == null ? "" : plan.captain.home ? " (home)" : " (away)"}` : ""}{plan.vice ? ` · vice ${plan.vice.name}` : ""}</> : "Unavailable"}
+          {plan.captain ? <>{fixed(plan.captain.xp)} <Term k="xp">xP</Term>{rangeLabel(plan.captain.xp) ? ` (usually ${rangeLabel(plan.captain.xp)})` : ""}{plan.captain.opponent ? ` vs ${plan.captain.opponent}${plan.captain.home == null ? "" : plan.captain.home ? " (home)" : " (away)"}` : ""}{plan.vice ? ` · vice ${plan.vice.name}` : ""}</> : "Unavailable"}
         </Row>
         <Row href="/plan#chips" icon={<Zap size={18} />} tone={plan.chip.recommended ? "warn" : undefined} title={chip.title}>{chip.detail}{plan.chipBudgetIsEstimate ? <>{chip.detail ? " · " : ""}<span>Squad affordability estimated from market prices.</span></> : null}</Row>
         {plan.mainRisk.tone !== "calm" ? (

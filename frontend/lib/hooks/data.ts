@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 
-import { fetchChipSquads, fetchPriceSwaps, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
-import type { ChipSquadsEnvelope, PriceSwapsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
+import { fetchChipSquads, fetchLeagueCaptain, fetchPriceSwaps, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
+import type { ChipSquadsEnvelope, LeagueCaptainEnvelope, PriceSwapsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
 import { useResource } from "@/lib/hooks/useResource";
 
 function useDataVersion() {
@@ -54,6 +54,12 @@ export function useLeagues(teamId: string | null) {
 export function useLeague(leagueId: number | null, teamId: string | null) {
   const version = useDataVersion();
   return useResource<LeagueEnvelope>(leagueId && teamId ? `league:${leagueId}:${teamId}:${version}` : null, (signal) => fetchLeague(leagueId ?? 0, teamId ?? "", signal), 300_000);
+}
+
+/** Captain candidates judged against one mini-league. */
+export function useLeagueCaptain(leagueId: number | null, teamId: string | null, freeTransfers?: number | null) {
+  const version = useDataVersion();
+  return useResource<LeagueCaptainEnvelope>(leagueId && teamId ? `league-captain:${leagueId}:${teamId}:${freeTransfers ?? "est"}:${version}` : null, (signal) => fetchLeagueCaptain(leagueId ?? 0, teamId ?? "", freeTransfers, signal), 300_000);
 }
 
 export function useRival(leagueId: number | null, rivalId: number | null, teamId: string | null) {

@@ -701,6 +701,37 @@ export type ManagerLeague = { league_id: number; name: string; managers: number 
 
 export type LeaguesEnvelope = { data: { team_id: number; leagues: ManagerLeague[] }; meta: SourceMeta; errors: AreaError[] };
 
+export type LeagueCaptainCandidate = {
+  player_id: number;
+  name: string;
+  expected: number;
+  range: { low: number; high: number; median: number; haul_chance: number; blank_chance: number };
+  rival_captain_share: number;
+  rival_eo: number;
+  kind: "safe" | "differential" | "split";
+  swing_high: number;
+  swing_low: number;
+};
+
+export type LeagueCaptainEnvelope = {
+  data: {
+    league_id: number;
+    league_name: string;
+    mode: { mode: "protect" | "balanced" | "chase"; text: string };
+    rivals: number;
+    gap_to_leader?: number;
+    gameweeks_left?: number;
+    candidates: LeagueCaptainCandidate[];
+    best_id?: number;
+    safe_id?: number;
+    differential_id?: number | null;
+    pick: { player_id: number; name: string; reason: string; cost: number } | null;
+    basis?: string;
+  };
+  meta: SourceMeta;
+  errors: AreaError[];
+};
+
 export type LeagueStanding = {
   team_id: number; team_name: string; rank: number | null; last_rank: number | null;
   event_points: number | null; total: number | null; gap_to_you: number; active_chip: string | null; is_you: boolean;

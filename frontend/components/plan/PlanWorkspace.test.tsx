@@ -156,3 +156,17 @@ test("price-smart swaps keep points first and compare with our pick", async () =
   expect(card).toHaveTextContent("+1.9 points over the next 5 Gameweeks");
   expect(card).toHaveTextContent(/Our pick is worth more this week/);
 });
+
+test("the captain tab weighs the choice against your mini-league", async () => {
+  serveDashboard(mockApi(), makeDashboard());
+  const user = userEvent.setup();
+  render(<TeamProvider><PlanWorkspace /></TeamProvider>);
+  await user.click(await screen.findByRole("tab", { name: "Captain" }));
+  const card = (await screen.findByRole("heading", { name: "Against your league" })).closest("section")!;
+  expect(await within(card).findByText(/plenty of time, so expected points come first/)).toBeInTheDocument();
+  expect(within(card).getByText("Safe")).toBeInTheDocument();
+  expect(within(card).getByText("Differential")).toBeInTheDocument();
+  expect(card).toHaveTextContent("4 of 6 rivals captained him");
+  expect(card).toHaveTextContent("No rival captained him");
+  expect(card).toHaveTextContent("usually 2–10 points");
+});

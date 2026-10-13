@@ -1028,3 +1028,15 @@ button.race-row:hover { background: var(--surface-hover); }
 .swap-tag { font-size: var(--fs-xs); font-weight: 650; }
 .swap-arrow { color: var(--violet-text); }
 .swap-points { margin: 0; font-size: var(--fs-sm); color: var(--text-2); line-height: 1.45; }
+
+/* Captain against your league */
+.league-captain-select { margin-bottom: 10px; }
+.league-mode { margin: 0 0 12px; color: var(--text-2); font-size: var(--fs-sm); line-height: 1.5; }
+.league-pick { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--violet-line); background: rgba(124, 58, 237, 0.12); margin-bottom: 12px; }
+.league-pick strong { font-size: 1.2rem; }
+.league-pick small { color: var(--text-2); font-size: var(--fs-sm); }
+.league-cap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.league-cap-list li { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(4, 6, 13, 0.36); display: grid; gap: 4px; }
+.league-cap-list li.is-pick { border-color: var(--violet-line); }
+.league-cap-list p { margin: 0; font-size: var(--fs-sm); line-height: 1.45; color: var(--text-2); }
+.league-cap-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
