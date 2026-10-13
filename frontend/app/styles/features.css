@@ -1040,3 +1040,16 @@ button.race-row:hover { background: var(--surface-hover); }
 .league-cap-list li.is-pick { border-color: var(--violet-line); }
 .league-cap-list p { margin: 0; font-size: var(--fs-sm); line-height: 1.45; color: var(--text-2); }
 .league-cap-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* Season chip plan */
+.season-chips { list-style: none; margin: 8px 0 14px; padding: 0; display: grid; gap: 8px; }
+.season-chip { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(4, 6, 13, 0.36); }
+.season-chip.is-set { border-color: var(--violet-line); }
+.season-chip-week { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+.season-chip.is-set .season-chip-week { color: var(--violet-text); }
+.season-chip-text { display: grid; gap: 2px; min-width: 0; }
+.season-chip-text small { color: var(--text-2); font-size: var(--fs-sm); line-height: 1.45; }
+.season-next { display: block; margin-top: 4px; }
+.season-timeline { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.season-week { display: grid; gap: 1px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); font-size: var(--fs-xs); }
+.season-wait { margin: 6px 0 12px; font-size: var(--fs-sm); line-height: 1.5; }

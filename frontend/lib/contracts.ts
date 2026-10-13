@@ -836,6 +836,21 @@ export type PriceSwapsEnvelope = {
   errors: AreaError[];
 };
 
+export type ChipPlanEntry = { chip: "FREE_HIT" | "BENCH_BOOST" | "TRIPLE_CAPTAIN" | "WILDCARD"; label: string; gameweek: number | null; scheduled: boolean; value: number; reason: string };
+
+export type ChipPlanEnvelope = {
+  data: {
+    period: { first: number; last: number };
+    plans: ChipPlanEntry[];
+    next_period: { first: number; last: number; plans: ChipPlanEntry[] } | null;
+    timeline: Array<{ gameweek: number; blank_clubs: number; double_clubs: number; blank_starters: string[]; doubles_in_squad: string[] }>;
+    unscheduled: Array<{ home: string; away: string }>;
+    chip_state_known?: boolean;
+  };
+  meta: SourceMeta;
+  errors: AreaError[];
+};
+
 export type PriceProjection = { offset: number; percent: number | null; likelihood: number };
 
 export type PriceChangePlayer = {

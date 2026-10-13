@@ -52,6 +52,7 @@ from .fpl_gateway import (
 from .team_service import TeamNotFoundError, TeamServiceError, fetch_public_team
 from .fixture_service import (
     FixtureServiceError,
+    get_all_fixtures,
     get_fixture_matrix,
     get_team_fixtures,
     get_upcoming_team_fixtures,
@@ -83,6 +84,7 @@ from .review_service import (
 )
 
 from engine.decision_engine import build_decision
+from engine.chip_season import plan_chip_season
 from engine.transfer_analysis import chip_squads, evaluate_transfer_moves, price_swaps
 from .price_service import build_price_changes, price_likelihoods, riser_bonus
 from optimizer.action_planner import DEFAULT_POLICY
@@ -1236,6 +1238,45 @@ def get_price_swaps_v1(team_id: int, free_transfers: int | None = None):
     meta = source_meta("model", inputs["manifest"].generated_at, version=inputs["manifest"].prediction_file)
     meta["event"] = inputs["manifest"].prediction_event
     return api_envelope(result, meta)
+
+
+@app.get("/api/v1/chip-plan/{team_id}")
+def get_chip_plan_v1(team_id: int, free_transfers: int | None = None):
+    """When to play each chip for the rest of the chip period, from the official fixture list."""
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="team_id must be positive")
+    try:
+        decision = get_decision(team_id, free_transfers=free_transfers)
+        bootstrap = get_bootstrap_data()
+        clubs = {int(team["id"]): str(team.get("short_name") or team.get("name") or team["id"]) for team in bootstrap.get("teams") or []}
+        club_by_name = {str(team.get("name")): int(team["id"]) for team in bootstrap.get("teams") or []}
+
+        def squad(block: Any) -> list[dict[str, Any]]:
+            players = block.get("players", []) if isinstance(block, dict) else block or []
+            rows = []
+            for player in players:
+                club = club_by_name.get(str(player.get("team")))
+                if club is None:
+                    continue
+                strength = player.get("ml_per_fixture", player.get("predicted_points"))
+                rows.append({"name": str(player.get("name")), "club_id": club, "strength": float(strength or 0.0)})
+            return rows
+
+        state = (decision.get("intelligence") or {}).get("chip_state") or {}
+        # The next deadline: FPL can take hours to mark a played Gameweek finished.
+        upcoming = [event for event in bootstrap.get("events") or [] if event.get("is_next")]
+        start = int(upcoming[0]["id"]) if upcoming else min(
+            (int(event["id"]) for event in bootstrap.get("events") or [] if not event.get("finished")), default=38)
+        result = plan_chip_season(fixtures=get_all_fixtures(), clubs=clubs, starters=squad(decision.get("starting_xi")),
+                                  bench=squad(decision.get("bench")), chip_state=state, start_event=start)
+        result["chip_state_known"] = bool(state.get("known"))
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"No FPL team found with ID {team_id}.") from exc
+    except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except (DataLoaderError, ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return api_envelope(result, source_meta("derived", datetime.now(timezone.utc)))
 
 
 @app.get("/api/v1/chip-squads/{team_id}")
