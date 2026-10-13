@@ -10,6 +10,7 @@ import copy
 import hashlib
 import json
 import logging
+import math
 import os
 
 import pandas as pd
@@ -116,6 +117,18 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     """Answer unexpected failures as JSON without internal details."""
     logger.exception("Unhandled error on %s", request.url.path)
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
+def _finite_or_none(value):
+    """JSON has no NaN: a missing number (e.g. FPL's blank chance of playing,
+    meaning fully available) is sent as null."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {key: _finite_or_none(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_finite_or_none(item) for item in value]
+    return value
 
 
 def _require_positive_team_id(team_id: int) -> None:
@@ -1091,7 +1104,7 @@ def get_decision(
                 chip_state=chip_state,
             ),
         )
-        decision = copy.deepcopy(decision)
+        decision = _finite_or_none(copy.deepcopy(decision))
         # Public FPL data cannot see every transfer rule, so tell clients
         # whether the count came from the user or was derived.
         decision["transfers"]["free_transfers_source"] = (
