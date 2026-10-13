@@ -117,3 +117,14 @@ def test_manager_beyond_the_first_standings_page_is_found():
         _, rows = _standings(77, 55)
     assert len(rows) == 51
     assert rows[-1]["entry"] == 55
+
+
+def test_decision_sends_missing_numbers_as_null(monkeypatch):
+    from tests.test_decision_api import mock_plan_context, predictions, team
+    rows = predictions().assign(chance_of_playing_next_round=float("nan"))
+    monkeypatch.setattr(main, "get_team_data", lambda _: team())
+    monkeypatch.setattr(main, "load_predictions", lambda: rows)
+    mock_plan_context(monkeypatch)
+    response = TestClient(main.app).get("/api/decision/123")
+    assert response.status_code == 200
+    assert "NaN" not in response.text
