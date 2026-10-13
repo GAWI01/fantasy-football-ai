@@ -12,9 +12,13 @@ import { Delta, SourceBadge, SourceScope } from "@/components/ui/primitives";
 import { fixed, price, sentenceCase, signed } from "@/lib/format";
 import { CHIP_LABEL, type GameweekPlan, type ScenarioView, type TransferMove } from "@/lib/model/plan";
 
-export function MoveRow({ move, compact = false }: { move: TransferMove; compact?: boolean }) {
+/**
+ * `gain` is the change in your best XI's projected points for the move, which
+ * accounts for formation and bench. It is not the incoming minus the outgoing
+ * player's points, which overstates the gain when the sold player was benched.
+ */
+export function MoveRow({ move, compact = false, gain = null }: { move: TransferMove; compact?: boolean; gain?: number | null }) {
   if (!compact) {
-    const gain = move.inXp != null && move.outXp != null ? move.inXp - move.outXp : null;
     return (
       <div className="move move-cards">
         <PlayerCard
@@ -29,7 +33,7 @@ export function MoveRow({ move, compact = false }: { move: TransferMove; compact
         />
         <span className="move-swap">
           <ArrowRight size={22} role="img" aria-label="replaced by" />
-          {gain != null ? <span className="move-gain"><Delta value={gain} /><small>next GW</small></span> : null}
+          {gain != null ? <span className="move-gain"><Delta value={gain} /><small>your XI, next GW</small></span> : null}
         </span>
         <PlayerCard
           tone="in"
@@ -71,6 +75,27 @@ export function MoveRow({ move, compact = false }: { move: TransferMove; compact
       </div>
     </div>
   );
+}
+
+/** Who starts and who drops to the bench once the moves are made. */
+export function LineupEffect({ plan, scenario }: { plan: GameweekPlan; scenario: ScenarioView }) {
+  if (!plan.lineupAfterTransfers || !scenario.moves.length || !plan.modelXI.length || !plan.owned.xi.length) return null;
+  const ownedXi = new Set(plan.owned.xi.map((player) => player.id));
+  const newXi = new Set(plan.modelXI.map((player) => player.id));
+  const sold = new Set(scenario.moves.map((move) => move.outId));
+  const names = (items: string[]) => items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : items[0];
+  const starting = scenario.moves.filter((move) => newXi.has(move.inId)).map((move) => move.inName);
+  const benchedBuys = scenario.moves.filter((move) => !newXi.has(move.inId)).map((move) => move.inName);
+  const dropped = plan.owned.xi.filter((player) => !newXi.has(player.id) && !sold.has(player.id)).map((player) => player.name);
+  const promoted = plan.owned.bench.filter((player) => newXi.has(player.id)).map((player) => player.name);
+  const benchSales = scenario.moves.filter((move) => !ownedXi.has(move.outId)).map((move) => move.outName);
+  const parts: string[] = [];
+  if (starting.length) parts.push(`${names(starting)} ${starting.length > 1 ? "go" : "goes"} straight into your best XI${dropped.length ? `, and ${names(dropped)} ${dropped.length > 1 ? "move" : "moves"} to the bench` : ""}.`);
+  if (promoted.length) parts.push(`${names(promoted)} ${promoted.length > 1 ? "come" : "comes"} off the bench.`);
+  if (benchedBuys.length) parts.push(`${names(benchedBuys)} ${benchedBuys.length > 1 ? "start" : "starts"} on your bench, as cover.`);
+  if (benchSales.length) parts.push(`${names(benchSales)} ${benchSales.length > 1 ? "were" : "was"} on your bench, so the gain is measured on your best XI, not on ${benchSales.length > 1 ? "their" : "his"} points.`);
+  if (!parts.length) return null;
+  return <p className="card-note lineup-effect">{parts.join(" ")} <SourceBadge kind="derived" /></p>;
 }
 
 export function ScenarioMetrics({ scenario, plan, showFreeTransfers = true }: { scenario: ScenarioView; plan: GameweekPlan; showFreeTransfers?: boolean }) {
@@ -171,7 +196,7 @@ export function GameweekPlanCard({
       <div className="plan-hero-grid">
         <div className="verdict">
           {isTransfer ? (
-            <div className="move-list">{plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />)}</div>
+            <div className="move-list">{plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} gain={plan.recommended.moves.length === 1 ? plan.recommended.nextGwGain : null} />)}</div>
           ) : (
             <p className="verdict-copy">{holdCopy(plan)}</p>
           )}
@@ -181,6 +206,7 @@ export function GameweekPlanCard({
               {plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}
             </div>
           ) : null}
+          {isTransfer ? <LineupEffect plan={plan} scenario={plan.recommended} /> : null}
           {scenario ? <ScenarioMetrics scenario={scenario} plan={plan} /> : null}
           {isTransfer && (plan.recommended.hit ?? 0) > 0 ? (
             <p className="hit-note"><Info size={14} aria-hidden="true" />This plan takes a −{plan.recommended.hit} hit. The engine only accepts hits when the multi-GW edge clearly exceeds the cost.</p>

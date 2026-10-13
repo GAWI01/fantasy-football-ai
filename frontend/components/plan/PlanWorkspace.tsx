@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Kit } from "@/components/kit/Kit";
 import { clubCode } from "@/lib/fpl/kits";
-import { MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
+import { LineupEffect, MoveRow, ProvisionalPill, ScenarioMetrics } from "@/components/overview/GameweekPlanCard";
 import { useTeam } from "@/app/providers/TeamProvider";
 import { ChipSeasonPlan } from "@/components/plan/ChipSeasonPlan";
 import { ChipSquadSheet, type ChipSquadKind } from "@/components/plan/ChipSquadSheet";
@@ -113,7 +113,7 @@ function ScenarioCompare({ plan }: { plan: GameweekPlan }) {
       {active && scenarioTitle(active) !== recommendedTitle ? (
         <div className="scenario-detail">
           <span className="eyebrow">Selected: {scenarioTitle(active)}</span>
-          {active.moves.length ? active.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : <p className="muted">Keep the squad and carry the free transfer. Nothing changes this Gameweek, and you keep flexibility for team news.</p>}
+          {active.moves.length ? active.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} gain={active.moves.length === 1 ? active.nextGwGain : null} />) : <p className="muted">Keep the squad and carry the free transfer. Nothing changes this Gameweek, and you keep flexibility for team news.</p>}
           <ScenarioMetrics scenario={active} plan={plan} />
         </div>
       ) : rows.length > 1 ? <p className="card-note">Tap another option to see its moves next to the recommendation.</p> : null}
@@ -378,7 +378,10 @@ export function PlanWorkspace() {
           <>
             <Card id="transfers" title={isTransfer ? "Our pick" : "Our pick: save the transfer"} icon={<Repeat2 size={16} />} source={(isTransfer ? plan.recommended : plan.bestRejected) ? ["model", "derived"] : "model"} tone={isTransfer ? "accent" : undefined} className="plan-transfer">
               <div className="verdict verdict-inline">
-                {isTransfer ? plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} />) : plan.bestRejected ? (
+                {isTransfer ? <>
+                  {plan.recommended.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} gain={plan.recommended.moves.length === 1 ? plan.recommended.nextGwGain : null} />)}
+                  <LineupEffect plan={plan} scenario={plan.recommended} />
+                </> : plan.bestRejected ? (
                   <div className="rejected"><span className="eyebrow">Evaluated move · conservative policy recommends holding</span>{plan.bestRejected.moves.map((move) => <MoveRow key={`${move.outId}-${move.inId}`} move={move} compact />)}</div>
                 ) : <p className="muted">No transfer alternative was returned.</p>}
                 {(isTransfer ? plan.recommended : plan.bestRejected) ? (
