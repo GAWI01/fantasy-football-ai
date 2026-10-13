@@ -16,6 +16,7 @@ import { Card, Segmented, Skeleton, SourceBadge } from "@/components/ui/primitiv
 import type { FixtureMatrixTeam, PlayerSummary } from "@/lib/contracts";
 import { fixed, percent, price } from "@/lib/format";
 import { availabilityFromStatus, normalizePosition, type Position } from "@/lib/fpl/rules";
+import { setPieceRoles, setPieceTag } from "@/lib/fpl/setPieces";
 import { useFixtureMatrix, usePlayerMarket } from "@/lib/hooks/data";
 
 type PositionFilter = "ALL" | Position;
@@ -65,6 +66,7 @@ function MarketPlayerDetail({ player, team, owned }: { player: PlayerSummary; te
             <span className={`pill ${availability.tone === "ok" ? "pill-pos" : availability.tone === "warn" ? "pill-warn" : availability.tone === "risk" ? "pill-neg" : ""}`}><i className={`dot dot-${availability.tone}`} />{availability.label}</span>
             {owned ? <span className="pill pill-accent">In your squad</span> : null}
           </div>
+          {setPieceRoles(player).length ? <p className="pdetail-setpieces">Takes: {setPieceRoles(player).join(", ")} <SourceBadge kind="official" /></p> : null}
         </div>
       </div>
       <div className="facts">
@@ -274,7 +276,7 @@ export function PlayersWorkspace({ search = {} }: { search?: PlayersSearch }) {
                       <tr key={player.player_id} className={owned ? "is-owned" : undefined}>
                         <td>
                           <button type="button" className="row-link" onClick={() => setDetail(player.player_id)} aria-label={`Open ${player.name} details`}>
-                            <PlayerChip name={player.name} team={player.team} teamShort={player.team_short} position={normalizePosition(player.position)} size={28} meta={<><span>{player.position} · {player.team_short}</span>{availability.tone !== "ok" ? <span className={`tone-${availability.tone === "risk" ? "neg" : "warn"}`}> · {availability.label}</span> : null}{owned ? <span className="tone-accent"> · Owned</span> : null}</>} />
+                            <PlayerChip name={player.name} team={player.team} teamShort={player.team_short} position={normalizePosition(player.position)} size={28} meta={<><span>{player.position} · {player.team_short}</span>{availability.tone !== "ok" ? <span className={`tone-${availability.tone === "risk" ? "neg" : "warn"}`}> · {availability.label}</span> : null}{setPieceTag(player) ? <span className="tone-accent"> · {setPieceTag(player)}</span> : null}{owned ? <span className="tone-accent"> · Owned</span> : null}</>} />
                           </button>
                         </td>
                         <td className="phone-hide"><span className="fx-mini">{team ? team.fixtures.slice(0, 3).map((cell) => <FixtureCell key={cell.event} cell={cell} compact />) : <span className="faint">—</span>}</span></td>
