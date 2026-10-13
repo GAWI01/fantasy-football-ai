@@ -2,17 +2,19 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
-from concurrent.futures import Future
+from concurrent.futures import Future, TimeoutError as FutureTimeoutError
 from pathlib import Path
 from datetime import datetime, timezone
 from threading import RLock
 import copy
 import hashlib
 import json
+import logging
 import os
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_contract import api_envelope, source_meta
@@ -90,6 +92,8 @@ from .price_service import build_price_changes, price_likelihoods, riser_bonus
 from optimizer.action_planner import DEFAULT_POLICY
 
 
+logger = logging.getLogger(__name__)
+
 app = FastAPI(
     title="FPL-AI API",
     version="1.0.0",
@@ -105,6 +109,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.middleware("http")(request_logging_middleware)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Answer unexpected failures as JSON without internal details."""
+    logger.exception("Unhandled error on %s", request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
+def _require_positive_team_id(team_id: int) -> None:
+    if team_id <= 0:
+        raise HTTPException(status_code=400, detail="Team ID must be a positive integer")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PREDICTIONS_DIR = BASE_DIR / "historical_data" / "current_data"
@@ -499,6 +515,7 @@ def get_upcoming_fixtures(
 
 @app.get("/team/{team_id}/live")
 def get_live_team(team_id: int):
+    _require_positive_team_id(team_id)
     try:
         team = get_team_data(team_id)
         live = get_live_players(limit=700)
@@ -630,6 +647,8 @@ def get_live_team(team_id: int):
             "fixtures": relevant_fixtures,
             "events": events,
         }
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Team not found") from exc
     except (TeamServiceError, LiveDataServiceError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except ValueError as exc:
@@ -693,6 +712,7 @@ def get_official_team(team_id: int) -> dict:
 
 @app.get("/team/{team_id}")
 def get_team(team_id: int):
+    _require_positive_team_id(team_id)
     try:
         team = get_official_team(team_id)
 
@@ -771,6 +791,9 @@ def get_team(team_id: int):
     except HTTPException:
         raise
 
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Team not found") from exc
+
     except TeamServiceError as exc:
         raise HTTPException(
             status_code=502,
@@ -806,8 +829,15 @@ def get_team(team_id: int):
 
 
 def get_team_data(team_id: int) -> dict:
-    """Compatibility wrapper for the decision endpoint and future API layers."""
     return fetch_public_team(team_id)
+
+
+def get_planning_team(team_id: int) -> dict:
+    """The squad to plan from: after a Free Hit, the squad it reverts to."""
+    team = get_team_data(team_id)
+    if team.get("active_chip") == "freehit":
+        return fetch_public_team(team_id, planning=True)
+    return team
 
 
 def load_predictions() -> pd.DataFrame:
@@ -843,6 +873,7 @@ class _DecisionCache:
         self._pending: dict[str, Future[dict]] = {}
         self._max = max_entries
         self._lock = RLock()
+        self.wait_timeout = 120.0
 
     def get(self, key: str) -> dict | None:
         with self._lock:
@@ -874,7 +905,15 @@ class _DecisionCache:
                 pending = Future()
                 self._pending[key] = pending
         if not owner:
-            return pending.result()
+            # A solve is bounded by the solver's time limits; never hold a
+            # request thread forever if the owner hangs.
+            try:
+                return pending.result(timeout=self.wait_timeout)
+            except FutureTimeoutError as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail="The plan is still being calculated; try again shortly.",
+                ) from exc
         try:
             result = calculate()
         except BaseException as exc:
@@ -925,7 +964,7 @@ def _decision_cache_key(team: dict, bootstrap: dict, manifest, chip_state: dict,
 def _decision_inputs(team_id: int, free_transfers: int | None, max_transfers: int | None) -> dict:
     """Everything a decision for `team_id` is computed from (official data,
     served forecast, horizon, transfer and chip state)."""
-    team = get_team_data(team_id)
+    team = get_planning_team(team_id)
     predictions = load_predictions()
     manifest = load_current_manifest(PREDICTIONS_DIR / "manifest.json")
     bootstrap = get_bootstrap_data()
@@ -1008,20 +1047,23 @@ def get_decision(
     max_transfers: int | None = None,
 ):
     """Return the unified standard-mode FPL decision result."""
-    if budget <= 0:
+    _require_positive_team_id(team_id)
+    # Every distinct value is a fresh cache key and solver run, so keep the
+    # inputs to what an FPL squad can actually have.
+    if not 0 < budget <= 200:
         raise HTTPException(
             status_code=400,
-            detail="budget must be greater than 0",
+            detail="budget must be greater than 0 and at most 200",
         )
     if free_transfers is not None and not 0 <= free_transfers <= 5:
         raise HTTPException(
             status_code=400,
             detail="free_transfers must be between 0 and 5",
         )
-    if max_transfers is not None and max_transfers < 0:
+    if max_transfers is not None and not 0 <= max_transfers <= 15:
         raise HTTPException(
             status_code=400,
-            detail="max_transfers cannot be negative",
+            detail="max_transfers must be between 0 and 15",
         )
 
     try:
@@ -1061,6 +1103,8 @@ def get_decision(
 
     except HTTPException:
         raise
+    except TeamNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Team not found") from exc
     except (TeamServiceError, FixtureServiceError, LiveDataServiceError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except (DataLoaderError, ValueError, TypeError, KeyError) as exc:

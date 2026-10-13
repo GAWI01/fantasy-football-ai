@@ -74,10 +74,27 @@ def _deadline_event(bootstrap: Mapping[str, Any]) -> int | None:
     return max(finished) if finished else None
 
 
-def _standings(league_id: int) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+MAX_STANDINGS_PAGES = 20
+
+
+def _standings(league_id: int, team_id: int | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """The first standings page (50 managers), plus the manager's own row when
+    they rank further down: FPL pages the table, so follow it to find them."""
     payload = _get(f"leagues-classic/{league_id}/standings/", STANDINGS_TTL_SECONDS)
     league = payload.get("league") or {}
-    rows = (payload.get("standings") or {}).get("results") or []
+    standings = payload.get("standings") or {}
+    rows = list(standings.get("results") or [])
+    if team_id is None or any(int(r["entry"]) == team_id for r in rows):
+        return league, rows
+    page, has_next = 1, bool(standings.get("has_next"))
+    while has_next and page < MAX_STANDINGS_PAGES:
+        page += 1
+        more = (_get(f"leagues-classic/{league_id}/standings/?page_standings={page}",
+                     STANDINGS_TTL_SECONDS).get("standings") or {})
+        own = next((r for r in more.get("results") or [] if int(r["entry"]) == team_id), None)
+        if own is not None:
+            return league, rows + [own]
+        has_next = bool(more.get("has_next"))
     return league, rows
 
 
@@ -100,7 +117,7 @@ def build_league(
     projections: Mapping[int, float] | None = None,
 ) -> dict[str, Any]:
     """Standings, gaps and league effective ownership for one mini-league."""
-    league, rows = _standings(league_id)
+    league, rows = _standings(league_id, team_id)
     if not rows:
         raise LeagueNotFoundError(f"League {league_id} has no standings")
     event = _deadline_event(bootstrap)

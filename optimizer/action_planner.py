@@ -300,9 +300,12 @@ class _Problem:
             constraints=LinearConstraint(matrix, np.array(lower), np.array(upper)),
             options={"disp": False, "time_limit": self.policy.solver_time_limit},
         )
-        if not result.success or result.x is None:
+        if result.x is None or (not result.success and result.status != 1):
             status = {1: "time_limit", 2: "infeasible", 3: "unbounded"}.get(result.status, "solver_error")
             return status, None
+        # On a time limit HiGHS still returns its best feasible squad: use it rather than
+        # dropping to "hold", and say it was not proven optimal.
+        status = "optimal" if result.success else "time_limit_feasible"
         x = result.x
         selected = x[: self.n] >= 0.5
         starters, captains, gameweek_values = [], [], []
@@ -316,7 +319,7 @@ class _Problem:
                 self._starter_value()[start, g].sum() + self.points[captain, g]
                 + (self.points[bench, g] * self.bench[bench]).sum()))
         value = float(np.dot(self.weights, gameweek_values))
-        return "optimal", _Solution([int(pid) for pid in self.ids[selected]], starters, captains,
+        return status, _Solution([int(pid) for pid in self.ids[selected]], starters, captains,
                                     value, gameweek_values)
 
     def contains(self, player_id: int) -> bool:

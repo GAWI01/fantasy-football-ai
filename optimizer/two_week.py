@@ -115,7 +115,9 @@ def solve_two_stage(problem: Any, *, stage1_count: int, free_transfers: int, pol
         add([(IN2 + i, 1.0), (X2 + i, -1.0), (X1 + i, 1.0)], 0, np.inf)
         add([(IN2 + i, 1.0), (X2 + i, -1.0)], -np.inf, 0)
         add([(IN2 + i, 1.0), (X1 + i, 1.0)], -np.inf, 1)
-    add([(IN2 + i, 1.0) for i in range(n)], 0, max_stage2_transfers)
+    # Banked free transfers can all be used next week; the default cap only
+    # bounds paid moves.
+    add([(IN2 + i, 1.0) for i in range(n)], 0, max(max_stage2_transfers, free_next))
     # Hits next week: h2 >= transfers - free; unused free = free - transfers + h2.
     add([(H2, 1.0)] + [(IN2 + i, -1.0) for i in range(n)], -free_next, np.inf)
     add([(H2, 1.0)], 0, policy.max_hits)
@@ -145,7 +147,7 @@ def solve_two_stage(problem: Any, *, stage1_count: int, free_transfers: int, pol
     result = milp(c=objective, integrality=integrality, bounds=Bounds(lower_bounds, upper_bounds),
                   constraints=LinearConstraint(matrix, np.array(lower), np.array(upper)),
                   options={"disp": False, "time_limit": policy.solver_time_limit})
-    if not result.success or result.x is None:
+    if result.x is None or (not result.success and result.status != 1):
         status = {1: "time_limit", 2: "infeasible", 3: "unbounded"}.get(result.status, "solver_error")
         return {"solver_status": status, "stage1_count": stage1_count}
     x = result.x
@@ -172,7 +174,7 @@ def solve_two_stage(problem: Any, *, stage1_count: int, free_transfers: int, pol
         "stage2_hits": hits2,
         "lineup_value": float(np.dot(weights, gameweek_values)),
         "gameweek_values": gameweek_values,
-        "solver_status": "optimal",
+        "solver_status": "optimal" if result.success else "time_limit_feasible",
         "end_roll_value": end_roll,
     }
 
@@ -192,7 +194,7 @@ def plan_two_weeks(problem: Any, *, free_transfers: int, max_transfers: int, pol
         plan = solve_two_stage(problem, stage1_count=count, free_transfers=free_transfers, policy=policy,
                                stage1_squad=None if stage1_squads is None else stage1_squads[count])
         statuses[count] = plan["solver_status"] if plan else "solver_error"
-        if plan is None or statuses[count] != "optimal":
+        if plan is None or statuses[count] not in {"optimal", "time_limit_feasible"}:
             continue
         paid_now = max(0, count - free_transfers)
         plan["stage1_hits"] = paid_now

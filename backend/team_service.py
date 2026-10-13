@@ -183,6 +183,7 @@ def normalize_team_response(
             history.get("value"),
         ),
         "picks": _normalize_picks(picks_source),
+        "active_chip": (picks_payload or payload).get("active_chip"),
     }
 
 
@@ -209,8 +210,13 @@ def _get_current_event(entry: dict) -> int:
     raise TeamServiceError("Could not determine current gameweek")
 
 
-def fetch_public_team(team_id: int) -> dict:
-    """Fetch and normalize a public FPL team."""
+def fetch_public_team(team_id: int, *, planning: bool = False) -> dict:
+    """Fetch and normalize a public FPL team.
+
+    With `planning`, a Free Hit squad is replaced by the squad it reverts to:
+    a Free Hit lasts one Gameweek, so the next deadline is planned from the
+    squad (and bank) before it, not from the temporary one.
+    """
 
     if not isinstance(team_id, int) or team_id <= 0:
         raise TeamServiceError("Team ID must be a positive integer")
@@ -237,12 +243,19 @@ def fetch_public_team(team_id: int) -> dict:
                 event=event,
             )
         )
+        free_hit_reverted = False
+        if planning and isinstance(picks_payload, dict) and picks_payload.get("active_chip") == "freehit" and event > 1:
+            picks_payload = _get_json(FPL_PICKS_URL.format(team_id=team_id, event=event - 1))
+            free_hit_reverted = True
         try:
-            return normalize_team_response(
+            team = normalize_team_response(
                 team_id,
                 entry_payload,
                 picks_payload=picks_payload,
             )
+            if free_hit_reverted:
+                team["free_hit_reverted"] = True
+            return team
         except TeamServiceError:
             raise
         except Exception as exc:
