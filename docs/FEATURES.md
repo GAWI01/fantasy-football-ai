@@ -6,7 +6,7 @@ A tour of everything Fantasy Football AI does. Back to the [README](../README.md
 
 | Menu | What is there |
 | --- | --- |
-| **Overview** | This Gameweek at a glance: the plan, or your live score. |
+| **Home** | This Gameweek at a glance: your to-do list, or your live score. |
 | **Team** | Your squad on the pitch: try lineups, bench order and armbands. |
 | **Plan** | Tabs for **Transfers**, **Captain**, **Chips**, **Squad** (five-week outlook, minutes risk) and **Why**. |
 | **Explore** | Tabs for **Players**, **Prices** and **Fixtures**. |
@@ -18,7 +18,7 @@ On a phone the first four sit in the tab bar; **More** holds the rest, each with
 
 ## Gameweek plan
 
-The Overview shows one recommendation for the next deadline:
+Home shows one recommendation for the next deadline:
 
 - **The move:** one transfer, several transfers, a hit, or **hold and roll the
   free transfer**. Holding is a real option with a value, so the app does not
@@ -39,12 +39,12 @@ Gameweek's forecast is published as a *provisional forecast*, built on history
 up to the Gameweek before. You can therefore plan GW7 while GW6 is still being
 played. The plan is labelled **Provisional forecast** until the live Gameweek
 has final scores and the forecast is replaced. During a live Gameweek the
-Overview has a **GW6 live / GW7 plan** switch.
+Home has a **GW6 live / GW7 plan** switch.
 
-**Decision first.** The Overview opens with the call itself: the move, the
-numbers behind it, and one line each for the captain, the main risk and the
-chip. Everything else sits in sections below it that open and close from their
-header: **Lineup & captain** (the model XI, bench order, captain and vice),
+**Decision first.** Home opens with **Your to-do**: one row each for the
+transfer (or roll), the captain, the chip call and the player to check. Each
+row links to the page with the detail. Everything else sits in sections below
+it that open and close from their header: **Lineup & captain** (the model XI, bench order, captain and vice),
 **What changed**, **Chip**, **Season** and **Your fixture runs**. A closed
 section shows a one-line summary. On a phone the sections start closed, on a
 desktop most start open, and the app remembers what you open or close. Something
@@ -55,6 +55,8 @@ live, a line at the top links the live cockpit and the next Gameweek's plan.
 ## Live Gameweek
 
 ![Live cockpit: live points, progress, captain, bench, ranks and the live pitch](screenshots/live.png)
+
+*The two Live screenshots were taken during GW6, before the October redesign. They will be retaken during the next live Gameweek.*
 
 - **Live points** for your active picks against the model's expectation saved
   before the deadline. Official multipliers apply: captain, Triple Captain,
@@ -76,7 +78,7 @@ model's expectation. The rows add up to the player's official total.
 
 ## Plan & Transfers
 
-![Plan and Transfers: the recommended transfer with next-Gameweek and five-Gameweek gains](screenshots/plan.png)
+![Plan and Transfers: the recommended transfer with next-Gameweek and five-Gameweek gains](screenshots/plan.webp)
 
 The Plan page explains the recommendation in full, in five tabs (Transfers,
 Captain, Chips, Squad, Why). Old links such as `/plan#chips` open the matching tab.
@@ -89,7 +91,7 @@ Captain, Chips, Squad, Why). Old links such as `/plan#chips` open the matching t
   - **5-GW net:** the gain minus any hit.
 - **Captaincy** from the squad after the plan, with each option's projected
   points and expected minutes.
-- **Compare options:** hold, the recommendation, the best moves with and
+- **Other options:** hold, the recommendation, the best moves with and
   without a hit, and the multi-transfer options. Every option is on the same
   scale. Tap an option to see its moves next to the recommendation.
 - **Squad outlook:** a five-Gameweek heat map of every player's projected
@@ -99,16 +101,16 @@ Captain, Chips, Squad, Why). Old links such as `/plan#chips` open the matching t
 
 <table>
   <tr>
-    <td width="50%"><img src="screenshots/plan-compare.png" alt="Compare options: hold, the recommendation and alternatives with next-GW, five-GW gain, hit and net"></td>
-    <td width="50%"><img src="screenshots/plan-test-move.png" alt="Test your own move: selling Ajayi for Robertson scored against holding and the recommendation"></td>
+    <td width="50%"><img src="screenshots/plan-compare.webp" alt="Other options: hold, the recommendation and alternatives with next-GW gain, five-GW net, hit and decision score"></td>
+    <td width="50%"><img src="screenshots/plan-test-move.webp" alt="Try your own swap: selling Ajayi for Robertson scored against holding and the recommendation"></td>
   </tr>
   <tr>
-    <td><b>Compare options</b>: every option on one scale.</td>
-    <td><b>Test your own move</b>: is your idea better than the plan?</td>
+    <td><b>Other options</b>: every option on one scale.</td>
+    <td><b>Try your own swap</b>: is your idea better than the plan?</td>
   </tr>
 </table>
 
-**Test your own move.** Pick a player to sell and one to buy, and the engine
+**Try your own swap.** Pick a player to sell and one to buy, and the engine
 scores your move exactly like its own plan: the same horizon, prices, lineup
 and captain. You get a plain verdict, such as "Better than holding by 1.4,
 but 3.6 below the recommended plan", plus the gains and the hit cost. Illegal
@@ -119,9 +121,9 @@ them from your public transfer history: purchase price plus half of any rise,
 rounded down. A price is labelled as an estimate only when it cannot be traced.
 You can also set your free transfers yourself if the derived number is wrong.
 
-### Compare options and the two-week plan
+### Other options and the two-week plan
 
-**Compare options** separates unweighted projected gains after actual hits
+**Other options** separates unweighted projected gains after actual hits
 from weighted decision scores. The score arithmetic identifies safety margins
 and the value assigned to banked transfers as policy adjustments. Rows remain
 sorted by their single-action score; a conservative two-stage recommendation
@@ -151,6 +153,8 @@ become doubles later.
 
 ### Captain against your mini-league
 
+<img src="screenshots/plan-captain.webp" alt="Against your league: the league pick, and each captain option's points range with Split or Differential" width="560">
+
 Plan → Captain shows a realistic range for every candidate ("usually 2–10
 points", 10th–90th percentile, with the chance of 10+). The ranges come from what
 players with the same expected score actually scored in an out-of-sample
@@ -166,7 +170,7 @@ keeps the highest expected points. Any expected points given up are shown.
 
 ## Chips
 
-<img src="screenshots/plan-chips.png" alt="Chips card: Hold your chips, with Free Hit to save and the chips already used" width="420">
+<img src="screenshots/plan-chips.webp" alt="Chips card: Hold your chips, with Free Hit to save and the chips already used" width="560">
 
 For every chip you still have, the app says **Play now** or **Save**, and
 points at the week in the five-Gameweek view that suits it best for your
@@ -193,12 +197,12 @@ and the sheet names the squad's likely risers and fallers either way.
 
 A chip is never recommended just because it is available. When a blank or
 double Gameweek is announced, or injuries pile up in one week, that week
-appears automatically. The Overview's chip tile shows a one-line summary,
+appears automatically. The chip row on Home shows a one-line summary,
 such as "Free Hit: best GW9".
 
 ## Mini-leagues
 
-![Mini-leagues: the race as bars, and a head-to-head against the manager directly above you](screenshots/league.png)
+![Mini-leagues: the race as bars, and a head-to-head against the manager directly above you](screenshots/league.webp)
 
 Every private classic league you are in, from public FPL data:
 
@@ -224,7 +228,7 @@ managers are analysed, plus you.
 
 ## My Team
 
-![My Team: the squad on a pitch with forecasts, armband and squad watch](screenshots/my-team.png)
+![My Team: the squad on a pitch with forecasts, armband and injury watch](screenshots/my-team.webp)
 
 Your squad on a pitch with each player's forecast for the next Gameweek, or
 their live points during one. Drag or tap players to test lineups, bench order
@@ -237,8 +241,8 @@ injury news and the five-Gameweek outlook.
 
 <table>
   <tr>
-    <td width="50%"><img src="screenshots/players.png" alt="Players: market table with forecast, expected minutes and fixtures"></td>
-    <td width="50%"><img src="screenshots/fixtures.png" alt="Fixtures: fixture runs with official difficulty"></td>
+    <td width="50%"><img src="screenshots/players.webp" alt="Players: market table with forecast, expected minutes and fixtures"></td>
+    <td width="50%"><img src="screenshots/fixtures.webp" alt="Fixtures: fixture runs with official difficulty"></td>
   </tr>
   <tr>
     <td><b>Players</b>: every player's official stats, next-GW forecast, expected minutes, xP per £m, xG and xA per 90 minutes and next three fixtures. Search, filter, sort and compare players side by side. Per-90 rates are shown from three full matches on, so a few lucky minutes do not top the list.</td>
@@ -247,6 +251,8 @@ injury news and the five-Gameweek outlook.
 </table>
 
 ## Price changes
+
+![Prices: countdown to the next price change, likely risers and fallers, and a price-smart swap](screenshots/prices.webp)
 
 The **Prices** page shows who is about to rise or drop in price, from FPL's own
 published figures: each player's progress towards the next change (+100% means
@@ -270,7 +276,7 @@ uses the same free transfer.
 
 ## History & Review
 
-![History and Review: season record and a Gameweek set against the model](screenshots/review.png)
+![History and Review: season record and a Gameweek set against the model](screenshots/review.webp)
 
 - **Season record:** total points, overall rank and its trend, average and best
   Gameweek, transfers made, and rank and points charts.
@@ -293,11 +299,11 @@ uses the same free transfer.
 
 <table>
   <tr>
-    <td align="center"><img src="screenshots/mobile-overview.png" alt="The Gameweek plan on a phone" width="300"></td>
-    <td align="center"><img src="screenshots/mobile-league.png" alt="The mini-league race on a phone" width="300"></td>
+    <td align="center"><img src="screenshots/mobile-overview.webp" alt="The Gameweek plan on a phone" width="300"></td>
+    <td align="center"><img src="screenshots/mobile-league.webp" alt="The mini-league race on a phone" width="300"></td>
   </tr>
   <tr>
-    <td align="center"><b>Overview</b> on a phone.</td>
+    <td align="center"><b>Home</b> on a phone.</td>
     <td align="center"><b>Mini-leagues</b> on a phone.</td>
   </tr>
 </table>
