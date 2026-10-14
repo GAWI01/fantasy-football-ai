@@ -4,7 +4,7 @@ import { Compass, Home, Repeat2, X } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
 export const WELCOME_KEY = "fpl-ai-welcome-done";
-const WELCOME_EVENT = "fpl-ai-welcome-change";
+export const WELCOME_EVENT = "fpl-ai-welcome-change";
 
 function read(): boolean {
   try { return window.localStorage.getItem(WELCOME_KEY) === "1"; } catch { return false; }

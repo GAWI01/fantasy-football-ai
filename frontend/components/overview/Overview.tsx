@@ -9,6 +9,7 @@ import { SquadFixtures } from "@/components/fixtures/SquadFixtures";
 import { ConnectHero } from "@/components/overview/ConnectHero";
 import { PlanLineupDetails } from "@/components/overview/GameweekPlanCard";
 import { TodoCard } from "@/components/overview/TodoCard";
+import { InstallBanner } from "@/components/install/InstallApp";
 import { WelcomeTips } from "@/components/overview/WelcomeTips";
 import { LiveCockpit } from "@/components/overview/LiveCockpit";
 import { FormationRows, PitchPlayer, PitchSurface } from "@/components/pitch/Pitch";
@@ -81,6 +82,7 @@ export function Overview() {
       </header>
 
       <WelcomeTips />
+      <InstallBanner />
 
       {error ? <DataState tone="warning" compact title="Latest refresh failed">Showing the last successful data. {error}</DataState> : null}
 

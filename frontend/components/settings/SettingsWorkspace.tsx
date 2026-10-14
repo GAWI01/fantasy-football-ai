@@ -1,9 +1,10 @@
 "use client";
 
-import { Database, LogOut, ShieldCheck, Sparkles, Tags } from "lucide-react";
+import { Database, LogOut, ShieldCheck, Smartphone, Sparkles, Tags } from "lucide-react";
 import Link from "next/link";
 
 import { useTeam } from "@/app/providers/TeamProvider";
+import { InstallSettings } from "@/components/install/InstallApp";
 import { Card, SourceBadge } from "@/components/ui/primitives";
 import { API_BASE_URL } from "@/lib/api";
 import { dateTime } from "@/lib/format";
@@ -48,6 +49,9 @@ export function SettingsWorkspace() {
           </div>
         </Card>
 
+        <Card title="Home Screen app" icon={<Smartphone size={16} />}>
+          <InstallSettings />
+        </Card>
         <Card title="Motion" icon={<Sparkles size={16} />}>
           <fieldset className="radio-list">
             <legend className="sr-only">How much the app moves</legend>
