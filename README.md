@@ -13,7 +13,7 @@ Transfers, captaincy, chips, live points and mini-leagues. One clear plan per de
 
 </div>
 
-![The Gameweek plan: recommended transfer, captain, chip and bench order](docs/screenshots/overview.png)
+![Home: this Gameweek's to-do with the transfer, captain, chips and the main injury risk](docs/screenshots/overview.webp)
 
 ## What you get
 
@@ -22,31 +22,36 @@ your team.
 
 | Feature | What it does |
 |---|---|
-| 🎯 **Gameweek plan** | Transfer or roll, captain and vice, bench order and the main risk, with a confidence level. The plan is ready as soon as the previous deadline passes. |
+| ✅ **Gameweek to-do** | Home opens with this week's list: the transfer (or roll), the captain, the chip call and the player to check, with a confidence level. The plan is ready as soon as the previous deadline passes. |
 | 📡 **Live** | Live points against the model's expectation. Tap any player for their points breakdown. |
-| 🔁 **Transfers** | Every option compared on one scale, plus **Test your own move**: is your idea better than the plan? |
-| 🃏 **Chips** | Play now or save, and the best week for each chip you still have. |
+| 🔁 **Transfers** | Every option compared on one scale, a two-week plan (move now or wait?) and **Try your own swap**: is your idea better than the plan? |
+| 👑 **Captain** | A realistic points range for each candidate, and a pick that weighs safe against differential for your mini-league position. |
+| 🃏 **Chips** | Play now or save, a season chip plan around blank and double Gameweeks, and the best Free Hit and Wildcard squads right now. |
 | 🏆 **Mini-leagues** | The race, a head-to-head against any rival, and the players your league relies on. |
-| 📊 **Research** | Your team on a pitch, every player's forecast, fixture runs and a season review against the model. |
+| 💷 **Prices** | Who is likely to rise or drop tonight, and price-smart swaps that do so without losing points. |
+| 📊 **Explore & History** | Every player's forecast, xG and xA per 90, fixture runs with clean-sheet odds, and a season review against the model. |
+| 📱 **Install** | Add it to your Home Screen and it opens like an app. |
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/live-stats-card.png" alt="Live pitch with a player's points breakdown"></td>
-    <td width="50%"><img src="docs/screenshots/league.png" alt="Mini-league race and head-to-head"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Live</b>: points per player, per stat</td>
-    <td align="center"><b>Mini-leagues</b>: the race and your rival</td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/plan.png" alt="Plan and Transfers"></td>
-    <td><img src="docs/screenshots/plan-chips.png" alt="Chips: play now or save"></td>
+    <td width="50%"><img src="docs/screenshots/plan.webp" alt="Plan, Transfers tab: Ajayi out, Gvardiol in, with the expected gain"></td>
+    <td width="50%"><img src="docs/screenshots/plan-captain.webp" alt="Captain against your league: each candidate's points range and whether rivals captain him"></td>
   </tr>
   <tr>
     <td align="center"><b>Transfers</b>: the move and why</td>
-    <td align="center"><b>Chips</b>: when each one pays off</td>
+    <td align="center"><b>Captain</b>: safe or differential, for your league</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/league.webp" alt="Mini-league race and a head-to-head against the manager above you"></td>
+    <td><img src="docs/screenshots/prices.webp" alt="Price changes: countdown to the next change and a price-smart swap"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Mini-leagues</b>: the race and your rival</td>
+    <td align="center"><b>Prices</b>: tonight's risers and fallers</td>
   </tr>
 </table>
+
+<sub>Rival team names and the league name in these screenshots are anonymised.</sub>
 
 **[See every feature with screenshots →](docs/FEATURES.md)**
 
@@ -59,7 +64,7 @@ flowchart LR
     API --> ENG[Decision engine]
     ENG --> API
     API --> WEB[Next.js app]
-    GHA[GitHub Actions<br/>every 3 hours] --> CSV
+    GHA[GitHub Actions<br/>every 30 minutes] --> CSV
 ```
 
 - **Forecast:** a gradient-boosting model of each player's points. In the
@@ -126,6 +131,8 @@ cd frontend && pnpm test && pnpm lint && pnpm exec tsc --noEmit
 | [Features](docs/FEATURES.md) | Every page and what each number means |
 | [Architecture](docs/ARCHITECTURE.md) | Backend, decision engine, forecasts, repository map |
 | [Model](docs/MODEL_PIPELINE.md) | Training, certification and limitations |
+| [Decision engine contract](docs/DECISION_ENGINE_CONTRACT.md) | The interface the decision engine is built to: inputs, outputs and guarantees |
+| [Deadline snapshots](docs/DEADLINE_SNAPSHOTS.md) | The archive of public data captured before each deadline |
 | [API](docs/API.md) | Every endpoint |
 | [Deployment](docs/DEPLOYMENT.md) | Railway and Vercel; merging to `master` deploys |
 | [App icon](docs/APP_ICON.md) | How to swap the icon |
