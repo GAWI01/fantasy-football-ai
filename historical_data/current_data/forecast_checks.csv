@@ -1,3 +1,4 @@
 season,gameweek,artifact,model_file,validation_state,players,mean_predicted,mean_actual,bias,mae,rmse,spearman,top10_actual
 2026-27,3,gw3_predictions_v11.csv,legacy,unverified,623,0.822,1.425,-0.603,1.091,2.16,0.68,5.7
 2026-27,6,gw6_predictions_v13.csv,fpl_model_v4.pkl,validated,667,1.171,1.348,-0.177,1.051,2.051,0.708,5.9
+2026-27,7,gw7_predictions_v13_r2.csv,fpl_model_v4.pkl,validated,667,1.16,1.327,-0.167,1.053,1.989,0.698,3.8
