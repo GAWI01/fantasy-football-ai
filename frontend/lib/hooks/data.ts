@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { useTeam } from "@/app/providers/TeamProvider";
 
-import { fetchChipPlan, fetchChipSquads, fetchLeagueCaptain, fetchPriceSwaps, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
-import type { ChipPlanEnvelope, ChipSquadsEnvelope, LeagueCaptainEnvelope, PriceSwapsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
+import { fetchChipPlan, fetchChipSquads, fetchLeagueCaptain, fetchMatchForecasts, fetchPriceSwaps, fetchFixtureMatrix, fetchPriceChanges, fetchLeague, fetchLeagues, fetchPlayers, fetchReview, fetchRival } from "@/lib/api";
+import type { ChipPlanEnvelope, ChipSquadsEnvelope, LeagueCaptainEnvelope, MatchForecastsEnvelope, PriceSwapsEnvelope, FixtureMatrixEnvelope, PriceChangesEnvelope, LeagueEnvelope, LeaguesEnvelope, PlayerMarketEnvelope, PlayerSummary, ReviewEnvelope, RivalEnvelope } from "@/lib/contracts";
 import { useResource } from "@/lib/hooks/useResource";
 
 function useDataVersion() {
@@ -88,4 +88,9 @@ export function usePriceSwaps(teamId: string | null, enabled: boolean, freeTrans
 /** Official price-change figures; FPL updates them through the day. */
 export function usePriceChanges(enabled = true) {
   return useResource<PriceChangesEnvelope>(enabled ? "price-changes" : null, (signal) => fetchPriceChanges(signal), 300_000);
+}
+
+/** Match forecasts for one Gameweek; they move only when FPL's data does. */
+export function useMatchForecasts(event: number | null) {
+  return useResource<MatchForecastsEnvelope>(`match-forecasts:${event ?? "next"}`, (signal) => fetchMatchForecasts(event, signal), 900_000);
 }

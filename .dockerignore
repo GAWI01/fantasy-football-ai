@@ -4,6 +4,7 @@
 !backend/*.py
 !backend/runtime-requirements.txt
 !backend/data/point_ranges.json
+!backend/data/match_forecast_backtest.json
 !optimizer/*.py
 !engine/*.py
 !historical_data/current_data/players_current.csv

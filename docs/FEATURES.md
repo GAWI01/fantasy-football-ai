@@ -9,7 +9,7 @@ A tour of everything Fantasy Football AI does. Back to the [README](../README.md
 | **Home** | This Gameweek at a glance: your to-do list, or your live score. |
 | **Team** | Your squad on the pitch: try lineups, bench order and armbands. |
 | **Plan** | Tabs for **Transfers**, **Captain**, **Chips**, **Squad** (five-week outlook, minutes risk) and **Why**. |
-| **Explore** | Tabs for **Players**, **Prices** and **Fixtures**. |
+| **Explore** | Tabs for **Players**, **Prices**, **Fixtures** and **Matches**. |
 | **Leagues** | Your mini-league race and how your squad differs from rivals. |
 | **History** | Your season and each Gameweek against the model. |
 | **Settings** | Team ID, motion and data labels. |
@@ -249,6 +249,22 @@ injury news and the five-Gameweek outlook.
     <td><b>Fixtures</b>: every club's next 3, 5 or 8 Gameweeks with official difficulty, blanks and doubles, ranked from easiest to hardest. Switch to <b>Clean sheet %</b> for each club's chance of a clean sheet per match and its expected clean sheets over the run, worked out from official xG for and against (pulled towards the league average early in the season) with home and away taken into account.</td>
   </tr>
 </table>
+
+## Match forecasts
+
+**Explore → Matches** gives the model's chances for every match in a Gameweek: home win, draw and away win, each side's expected goals, the most likely score, clean sheets, both teams to score and over 2.5 goals. Each side's goals are modelled as a Poisson count from the clubs' official xG for and against, the same strengths as the clean sheet chances. Only the next Gameweek and later ones are shown: a forecast for a past Gameweek would use data from after it.
+
+They are forecasts to read, not betting advice: the page shows no odds and no bookmakers, and links to none.
+
+How good they are was measured on 1,140 matches from 2023-24 to 2025-26, forecasting each Gameweek from earlier matches only (`python -m scripts.backtest_match_forecasts`, results in `backend/data/match_forecast_backtest.json`):
+
+| Market | Model | Season averages | Verdict |
+| --- | --- | --- | --- |
+| Result (log loss, lower is better) | 0.995 | 1.072 | Informative; the favourite won 52% of the time and a side given 60% won about 60% |
+| Both teams score (Brier) | 0.245 | 0.243 | No better than the average: marked *rough* |
+| Over 2.5 goals (Brier) | 0.244 | 0.242 | No better than the average: marked *rough* |
+
+Recalibrating both-teams-score and totals on two seasons did not beat the average on the third, so they stay labelled rather than tuned.
 
 ## Price changes
 

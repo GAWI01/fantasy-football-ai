@@ -916,3 +916,37 @@ export type TwoWeekPlan = {
   baseline?: "hold_now_then_optimize";
   solver_status?: string;
 };
+
+
+export type MatchForecastSide = { id: number; name: string | null; short: string | null; matches: number };
+
+export type MatchForecast = {
+  fixture_id: number | null;
+  kickoff_time: string | null;
+  started: boolean;
+  finished: boolean;
+  score: { home: number; away: number } | null;
+  home: MatchForecastSide;
+  away: MatchForecastSide;
+  expected_goals: { home: number; away: number };
+  result: { home: number; draw: number; away: number };
+  both_teams_score: number;
+  total_goals_over: Record<"1.5" | "2.5" | "3.5", number>;
+  team_goals_over: Record<"home" | "away", Record<"0.5" | "1.5", number>>;
+  clean_sheet: { home: number; away: number };
+  likely_scores: Array<{ home: number; away: number; probability: number }>;
+};
+
+export type MatchForecastBacktest = {
+  matches: number;
+  seasons: string[];
+  result: { log_loss_model: number; log_loss_base_rates: number; hit_rate_model: number; draws_actual: number; draws_predicted: number };
+  both_teams_score: { brier_model: number; brier_base_rate: number };
+  over_2_5: { brier_model: number; brier_base_rate: number };
+};
+
+export type MatchForecastsEnvelope = {
+  data: { event: number; current_event: number | null; next_event: number | null; fixtures: MatchForecast[]; backtest: MatchForecastBacktest | null };
+  meta: SourceMeta;
+  errors: AreaError[];
+};

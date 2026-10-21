@@ -1059,3 +1059,29 @@ button.race-row:hover { background: var(--surface-hover); }
 .season-week { display: grid; gap: 1px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); font-size: var(--fs-xs); }
 .season-wait { margin: 6px 0 12px; font-size: var(--fs-sm); line-height: 1.5; }
 .pdetail-setpieces { margin: 6px 0 0; font-size: var(--fs-sm); color: var(--text-2); }
+
+/* Match forecasts */
+.fc-stepper { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.fc-list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.fc-card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); padding: 12px 14px; display: grid; gap: 10px; min-width: 0; }
+.fc-head { font-size: var(--fs-xs); }
+.fc-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.fc-team { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fc-team b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); }
+.fc-team-away { justify-content: flex-end; text-align: right; }
+.fc-score { font-weight: 700; color: var(--text-2); }
+.fc-bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--surface-3); }
+.fc-bar i { display: block; height: 100%; }
+.fc-home { background: var(--violet); }
+.fc-draw { background: var(--line-3); }
+.fc-away { background: var(--cyan); }
+.fc-bar-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: var(--fs-xs); color: var(--text-2); }
+.fc-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 0; }
+.fc-facts div { min-width: 0; }
+.fc-facts dt { font-size: var(--fs-xs); color: var(--text-3); white-space: nowrap; }
+.fc-wide { grid-column: 1 / -1; }
+.fc-facts dd { margin: 2px 0 0; font-size: var(--fs-sm); color: var(--text); }
+.fc-rough { margin-left: 3px; padding: 0 4px; vertical-align: 1px; border-radius: 6px; border: 1px solid var(--amber-line); color: var(--amber-text); font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; }
+.fc-howgood { margin-top: 12px; }
+.fc-howgood ul { margin: 6px 0; padding-left: 18px; display: grid; gap: 6px; font-size: var(--fs-sm); color: var(--text-2); }
+.fc-howgood p { font-size: var(--fs-sm); color: var(--text-2); }

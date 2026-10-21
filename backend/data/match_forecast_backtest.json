@@ -1,0 +1,65 @@
+{
+  "matches": 1140,
+  "seasons": [
+    "2023-24",
+    "2024-25",
+    "2025-26"
+  ],
+  "result": {
+    "log_loss_model": 0.9953,
+    "log_loss_base_rates": 1.0723,
+    "hit_rate_model": 0.518,
+    "draws_actual": 0.245,
+    "draws_predicted": 0.233
+  },
+  "both_teams_score": {
+    "brier_model": 0.2449,
+    "brier_base_rate": 0.2431
+  },
+  "over_2_5": {
+    "brier_model": 0.2435,
+    "brier_base_rate": 0.2423
+  },
+  "calibration": [
+    {
+      "predicted": 0.076,
+      "actual": 0.062,
+      "count": 32
+    },
+    {
+      "predicted": 0.16,
+      "actual": 0.107,
+      "count": 234
+    },
+    {
+      "predicted": 0.253,
+      "actual": 0.228,
+      "count": 452
+    },
+    {
+      "predicted": 0.347,
+      "actual": 0.336,
+      "count": 551
+    },
+    {
+      "predicted": 0.447,
+      "actual": 0.459,
+      "count": 503
+    },
+    {
+      "predicted": 0.546,
+      "actual": 0.569,
+      "count": 299
+    },
+    {
+      "predicted": 0.645,
+      "actual": 0.647,
+      "count": 156
+    },
+    {
+      "predicted": 0.742,
+      "actual": 0.814,
+      "count": 43
+    }
+  ]
+}

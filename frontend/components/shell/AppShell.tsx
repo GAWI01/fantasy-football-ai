@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, Compass, History, House, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy } from "lucide-react";
+import { CalendarRange, ChartColumnBig, Compass, History, House, type LucideIcon, Menu, RefreshCw, Repeat2, Settings, Shirt, TrendingUp, Trophy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
@@ -27,6 +27,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
   players: Compass,
   prices: TrendingUp,
   fixtures: CalendarRange,
+  forecasts: ChartColumnBig,
   review: History,
   settings: Settings,
 };
