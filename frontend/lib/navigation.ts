@@ -17,7 +17,7 @@ export function legacyModuleTarget(module: string): string | null {
 }
 
 
-export type NavKey = "overview" | "team" | "plan" | "league" | "players" | "prices" | "fixtures" | "review" | "settings";
+export type NavKey = "overview" | "team" | "plan" | "league" | "players" | "prices" | "fixtures" | "forecasts" | "review" | "settings";
 
 export type NavItem = {
   key: NavKey;
@@ -39,6 +39,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: "players", href: "/players", label: "Explore", short: "Explore", group: "research", hint: "Every player, price changes and fixture runs" },
   { key: "prices", href: "/prices", label: "Price changes", short: "Prices", group: "research", hint: "Who is about to rise or drop in price", parent: "players" },
   { key: "fixtures", href: "/fixtures", label: "Fixtures", short: "Fixtures", group: "research", hint: "Each club's next fixtures and clean-sheet chances", parent: "players" },
+  { key: "forecasts", href: "/forecasts", label: "Match forecasts", short: "Matches", group: "research", hint: "Model chances for every match: result, goals and likely scores", parent: "players" },
   { key: "review", href: "/review", label: "History & Review", short: "History", group: "research", hint: "Your season so far and each Gameweek against the model" },
   { key: "settings", href: "/settings", label: "Settings", short: "Settings", group: "account", hint: "Your Team ID, motion and data labels" },
 ];

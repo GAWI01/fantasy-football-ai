@@ -20,9 +20,14 @@ test("a failed refresh is visible while the last plan stays available", async ()
   }
   render(<TeamProvider><Refresh /><PlanWorkspace /></TeamProvider>);
   await screen.findByRole("heading", { name: /Ekström → Castellano/ });
-  fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ detail: "Official service unavailable" }), { status: 502 }));
+  // Fail the dashboard itself: a one-off failure could be taken by whichever
+  // other request the refresh happens to send first.
+  const route = fetchSpy.getMockImplementation()!;
+  fetchSpy.mockImplementation(async (input, init) => String(input).includes("/dashboard/")
+    ? new Response(JSON.stringify({ detail: "Official service unavailable" }), { status: 502 })
+    : route(input, init));
   await userEvent.click(screen.getByRole("button", { name: "Refresh test data" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent("Official service unavailable");
+  expect(await screen.findByRole("alert", {}, { timeout: 5000 })).toHaveTextContent("Official service unavailable");
   expect(screen.getByRole("heading", { name: /Ekström → Castellano/ })).toBeInTheDocument();
 });
 

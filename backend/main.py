@@ -22,6 +22,7 @@ from .api_contract import api_envelope, source_meta
 from .availability import official_multiplier
 from .selling_prices import attach_selling_prices
 from .league_captain import league_captain
+from .match_forecast import get_match_forecasts
 from .league_service import (
     LeagueNotFoundError,
     LeagueServiceError,
@@ -1547,6 +1548,21 @@ def get_fixture_matrix_v1(start_event: int | None = None, horizon: int = 5):
         data,
         _gateway_source_meta("official", official_trace),
     )
+
+
+@app.get("/api/v1/match-forecasts")
+def get_match_forecasts_v1(event: int | None = None):
+    """Model probabilities per fixture: result, goals, scorelines. Not odds."""
+    if event is not None and not 1 <= event <= 38:
+        raise HTTPException(status_code=400, detail="event must be between 1 and 38")
+    trace_token = begin_gateway_trace()
+    try:
+        data = get_match_forecasts(event)
+    except FixtureServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    finally:
+        end_gateway_trace(trace_token)
+    return api_envelope(data, source_meta("model", datetime.now(timezone.utc)))
 
 
 @app.get("/api/v1/review/{team_id}", response_model=ReviewEnvelopeModel)

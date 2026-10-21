@@ -1,6 +1,7 @@
 import type {
   ChipPlanEnvelope,
   LeagueCaptainEnvelope,
+  MatchForecastsEnvelope,
   PriceSwapsEnvelope,
   ChipSquadsEnvelope,
   DashboardEnvelope,
@@ -177,6 +178,13 @@ export async function fetchEvaluation(
   return readJson<EvaluationEnvelope>(response);
 }
 
+
+/** Model probabilities for every match in a Gameweek (the next one by default). */
+export async function fetchMatchForecasts(event?: number | null, signal?: AbortSignal): Promise<MatchForecastsEnvelope> {
+  const query = event ? `?event=${event}` : "";
+  const response = await fetch(`${API_BASE_URL}/api/v1/match-forecasts${query}`, { cache: "no-store", signal });
+  return readJson<MatchForecastsEnvelope>(response);
+}
 
 /** Official FPL price-change progress and projections for every player. */
 export async function fetchPriceChanges(signal?: AbortSignal): Promise<PriceChangesEnvelope> {
