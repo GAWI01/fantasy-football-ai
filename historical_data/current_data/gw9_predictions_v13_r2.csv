@@ -1,0 +1,670 @@
+player_id,name,position,team,price,opponent,home,difficulty,fixture_count,xmins,xmins_available,start_probability,start_probability_available,availability_multiplier,availability,status,chance_of_playing_next_round,ml_prediction,ml_per_fixture,predicted_points,value,history_gw_count,history_cutoff_gw,feature_contract_version,xp_source,history_complete,prediction_event,prediction_season
+411,Haaland,FWD,Man City,15.7,Brighton,True,3.0,1,89.3,89.3,0.992,0.992,1.0,AVAILABLE,a,100.0,6.827,6.413,6.827,0.435,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+79,Evanilson,FWD,Bournemouth,6.2,Leeds,True,3.0,1,89.0,89.0,0.989,0.989,1.0,AVAILABLE,a,,4.304,4.051,4.304,0.694,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+166,N.Jackson,FWD,Aston Villa,6.7,Fulham,True,2.0,1,74.0,74.0,0.822,0.822,1.0,AVAILABLE,a,,4.253,3.898,4.253,0.635,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+67,Rayan,MID,Bournemouth,6.3,Leeds,True,3.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,,4.191,4.031,4.191,0.665,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+106,Thiago,FWD,Brentford,7.8,Nott'm Forest,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,4.183,3.993,4.183,0.536,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+45,McGinn,MID,Aston Villa,5.4,Fulham,True,2.0,1,72.8,72.8,0.809,0.809,1.0,AVAILABLE,a,,4.104,3.68,4.104,0.76,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+154,Palmer,MID,Chelsea,9.8,Man Utd,True,4.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,100.0,4.092,4.258,4.092,0.418,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+453,Barnes,MID,Newcastle,6.1,Everton,True,3.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,,4.088,3.922,4.088,0.67,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+68,Tavernier,MID,Bournemouth,6.3,Leeds,True,3.0,1,86.5,86.5,0.961,0.961,1.0,AVAILABLE,a,,3.979,3.872,3.979,0.632,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+236,Dewsbury-Hall,MID,Everton,6.6,Newcastle,False,3.0,1,89.7,89.7,0.997,0.997,1.0,AVAILABLE,a,,3.919,4.023,3.919,0.594,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+400,Doku,MID,Man City,7.5,Brighton,True,3.0,1,38.1,38.1,0.423,0.423,1.0,AVAILABLE,a,100.0,3.879,3.787,3.879,0.517,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+261,Iwobi,MID,Fulham,5.4,Aston Villa,False,3.0,1,86.7,86.7,0.963,0.963,1.0,AVAILABLE,a,,3.866,3.912,3.866,0.716,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+533,Mukiele,DEF,Sunderland,5.4,Coventry City,False,2.0,1,75.1,75.1,0.834,0.834,1.0,AVAILABLE,a,100.0,3.833,3.14,3.833,0.71,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+496,Kinsky,GKP,Spurs,4.4,Crystal Palace,True,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.829,3.322,3.829,0.87,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+597,Suzuki,GKP,Aston Villa,5.0,Fulham,True,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.769,3.33,3.769,0.754,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+268,King,MID,Fulham,5.6,Aston Villa,False,3.0,1,86.2,86.2,0.958,0.958,1.0,AVAILABLE,a,,3.733,3.846,3.733,0.667,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+399,Cherki,MID,Man City,8.0,Brighton,True,3.0,1,41.0,41.0,0.456,0.456,1.0,AVAILABLE,a,,3.723,3.602,3.723,0.465,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+155,Enzo,MID,Man City,6.9,Brighton,True,3.0,1,73.2,73.2,0.813,0.813,1.0,AVAILABLE,a,,3.714,3.677,3.714,0.538,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+53,Manzambi,MID,Aston Villa,6.0,Fulham,True,2.0,1,69.5,69.5,0.772,0.772,1.0,AVAILABLE,a,100.0,3.703,3.515,3.703,0.617,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+249,Barry,FWD,Everton,5.6,Newcastle,False,3.0,1,89.7,89.7,0.997,0.997,1.0,AVAILABLE,a,,3.674,3.841,3.674,0.656,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+40,Rogers,MID,Chelsea,8.0,Man Utd,True,4.0,1,89.6,89.6,0.996,0.996,1.0,AVAILABLE,a,,3.67,4.239,3.67,0.459,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+542,E.Le Fée,MID,Sunderland,5.7,Coventry City,False,2.0,1,88.7,88.7,0.986,0.986,1.0,AVAILABLE,a,,3.638,3.428,3.638,0.638,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+480,Gibbs-White,MID,Nott'm Forest,7.9,Brentford,False,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,100.0,3.635,3.512,3.635,0.46,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+156,Neto,MID,Chelsea,6.6,Man Utd,True,4.0,1,88.8,88.8,0.987,0.987,1.0,AVAILABLE,a,,3.621,4.228,3.621,0.549,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+13,Rice,MID,Arsenal,7.4,Liverpool,False,4.0,1,88.7,88.7,0.986,0.986,1.0,AVAILABLE,a,100.0,3.535,4.484,3.535,0.478,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+384,Donnarumma,GKP,Man City,5.5,Brighton,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.532,3.516,3.532,0.642,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+112,Van Hecke,DEF,Spurs,4.9,Crystal Palace,True,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,100.0,3.516,3.026,3.516,0.717,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+529,Roefs,GKP,Sunderland,4.9,Coventry City,False,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.514,3.249,3.514,0.717,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+472,Murillo,DEF,Nott'm Forest,5.5,Brentford,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,100.0,3.511,3.585,3.511,0.638,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+60,Hill,DEF,Bournemouth,5.5,Leeds,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.501,3.51,3.501,0.637,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+512,Kudus,MID,Spurs,6.5,Crystal Palace,True,2.0,1,56.5,56.5,0.628,0.628,1.0,AVAILABLE,a,100.0,3.486,3.148,3.486,0.536,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+544,Xhaka,MID,Sunderland,5.4,Coventry City,False,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.469,3.137,3.469,0.642,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+379,Isak,FWD,Liverpool,9.0,Arsenal,True,4.0,1,69.8,69.8,0.776,0.776,1.0,AVAILABLE,a,100.0,3.461,4.034,3.461,0.385,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+385,Trafford,GKP,Leeds,5.0,Bournemouth,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.451,3.426,3.451,0.69,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+455,Tonali,MID,Spurs,5.3,Crystal Palace,True,2.0,1,89.6,89.6,0.996,0.996,1.0,AVAILABLE,a,100.0,3.449,3.226,3.449,0.651,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+183,Rudoni,MID,Coventry City,4.9,Sunderland,True,3.0,1,87.2,87.2,0.969,0.969,1.0,AVAILABLE,a,100.0,3.431,3.326,3.431,0.7,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+502,Robertson,DEF,Spurs,4.3,Crystal Palace,True,2.0,1,69.1,69.1,0.768,0.768,1.0,AVAILABLE,a,100.0,3.431,2.659,3.431,0.798,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+226,Pickford,GKP,Everton,5.5,Newcastle,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.43,3.432,3.43,0.624,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+427,Mbeumo,MID,Man Utd,7.9,Chelsea,False,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.402,4.34,3.402,0.431,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+572,Tzolakis,GKP,Hull City,4.7,Ipswich Town,True,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.4,2.867,3.4,0.723,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+37,Lindelöf,DEF,Aston Villa,4.5,Fulham,True,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.39,2.811,3.39,0.753,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+401,Marmoush,FWD,Spurs,7.0,Crystal Palace,True,2.0,1,70.8,70.8,0.787,0.787,1.0,AVAILABLE,a,100.0,3.385,3.03,3.385,0.484,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+426,B.Fernandes,MID,Man Utd,11.7,Chelsea,False,4.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,,3.382,3.771,3.382,0.289,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+334,Muharemović,DEF,Leeds,5.1,Bournemouth,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.359,3.359,3.359,0.659,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+591,Enciso,MID,Ipswich Town,5.5,Hull City,False,2.0,1,86.7,86.7,0.963,0.963,1.0,AVAILABLE,a,100.0,3.356,3.222,3.356,0.61,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+295,McBurnie,FWD,Hull City,5.5,Ipswich Town,True,2.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,,3.342,2.991,3.342,0.608,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+229,Tarkowski,DEF,Everton,6.2,Newcastle,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.336,3.312,3.336,0.538,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+61,Truffert,DEF,Bournemouth,5.4,Leeds,True,3.0,1,89.6,89.6,0.996,0.996,1.0,AVAILABLE,a,,3.333,3.311,3.333,0.617,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+286,Belloumi,MID,Hull City,5.2,Ipswich Town,True,2.0,1,58.3,58.3,0.648,0.648,1.0,AVAILABLE,a,,3.314,3.212,3.314,0.637,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+567,Horníček,GKP,Newcastle,5.0,Everton,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.309,3.294,3.309,0.662,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+346,Calvert-Lewin,FWD,Leeds,6.1,Bournemouth,False,3.0,1,88.9,88.9,0.988,0.988,1.0,AVAILABLE,a,100.0,3.307,3.397,3.307,0.542,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+239,Garner,MID,Everton,6.0,Newcastle,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,100.0,3.285,3.332,3.285,0.547,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+250,Leno,GKP,Fulham,4.5,Aston Villa,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.268,3.35,3.268,0.726,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+1,Raya,GKP,Arsenal,6.2,Liverpool,False,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.259,3.824,3.259,0.526,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+467,Sels,GKP,Nott'm Forest,5.0,Brentford,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.241,3.237,3.241,0.648,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+47,Kamara,MID,Aston Villa,5.0,Fulham,True,2.0,1,89.6,89.6,0.996,0.996,1.0,AVAILABLE,a,100.0,3.212,3.007,3.212,0.642,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+486,McAtee,MID,Nott'm Forest,5.5,Brentford,False,3.0,1,88.6,88.6,0.984,0.984,1.0,AVAILABLE,a,,3.2,3.245,3.2,0.582,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+237,Ndiaye,MID,Man City,5.8,Brighton,True,3.0,1,57.7,57.7,0.641,0.641,1.0,AVAILABLE,a,,3.195,3.163,3.195,0.551,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+124,Groß,MID,Brighton,6.2,Man City,False,5.0,1,88.8,88.8,0.987,0.987,1.0,AVAILABLE,a,,3.192,4.602,3.192,0.515,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+202,Richards,DEF,Crystal Palace,4.9,Spurs,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.192,3.198,3.192,0.652,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+449,Hall,DEF,Newcastle,5.3,Everton,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.184,3.205,3.184,0.601,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+82,Kelleher,GKP,Brentford,5.0,Nott'm Forest,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.165,3.153,3.165,0.633,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+264,Bobb,MID,Fulham,5.5,Aston Villa,False,3.0,1,84.8,84.8,0.942,0.942,1.0,AVAILABLE,a,,3.148,3.265,3.148,0.572,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+41,Buendía,MID,Aston Villa,5.9,Fulham,True,2.0,1,69.0,69.0,0.767,0.767,1.0,AVAILABLE,a,,3.144,2.901,3.144,0.533,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+566,Silva,DEF,Bournemouth,5.0,Leeds,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.144,3.127,3.144,0.629,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+201,Muñoz,DEF,Nott'm Forest,5.3,Brentford,False,3.0,1,89.5,89.5,0.994,0.994,1.0,AVAILABLE,a,,3.141,3.188,3.141,0.593,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+483,Ndoye,MID,Nott'm Forest,5.5,Brentford,False,3.0,1,71.0,71.0,0.789,0.789,1.0,AVAILABLE,a,,3.138,3.224,3.138,0.571,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+4,Gabriel,DEF,Arsenal,7.9,Liverpool,False,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.116,4.428,3.116,0.394,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+650,Affengruber,DEF,Fulham,4.5,Aston Villa,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.101,3.222,3.101,0.689,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+257,Bassey,DEF,Fulham,4.5,Aston Villa,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.083,3.195,3.083,0.685,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+526,Solanke,FWD,Spurs,5.8,Crystal Palace,True,2.0,1,70.3,70.3,0.781,0.781,1.0,AVAILABLE,a,,3.067,2.883,3.067,0.529,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+105,Anthony,MID,Brentford,5.9,Nott'm Forest,True,3.0,1,57.4,57.4,0.638,0.638,1.0,AVAILABLE,a,,3.043,2.965,3.043,0.516,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+330,Bogle,DEF,Leeds,4.7,Bournemouth,False,3.0,1,87.8,87.8,0.976,0.976,1.0,AVAILABLE,a,,3.033,3.175,3.033,0.645,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+86,Lewis-Potter,MID,Brentford,5.5,Nott'm Forest,True,3.0,1,71.9,71.9,0.799,0.799,1.0,AVAILABLE,a,,3.024,2.925,3.024,0.55,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+57,Petrović,GKP,Bournemouth,4.5,Leeds,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.02,2.938,3.02,0.671,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+350,A.Becker,GKP,Liverpool,5.5,Arsenal,True,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,3.005,3.386,3.005,0.546,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+87,Ajer,DEF,Brentford,4.5,Nott'm Forest,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.999,2.858,2.999,0.666,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+390,Rúben,DEF,Man City,5.5,Brighton,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.998,3.005,2.998,0.545,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+167,Delap,FWD,Nott'm Forest,5.5,Brentford,False,3.0,1,88.9,88.9,0.988,0.988,1.0,AVAILABLE,a,,2.993,3.107,2.993,0.544,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+110,Rushworth,GKP,Coventry City,4.5,Sunderland,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.98,2.883,2.98,0.662,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+15,Ødegaard,MID,Arsenal,6.8,Liverpool,False,4.0,1,88.5,88.5,0.983,0.983,1.0,AVAILABLE,a,,2.916,3.488,2.916,0.429,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+138,Kostoulas,FWD,Brighton,5.8,Man City,False,5.0,1,73.0,73.0,0.811,0.811,1.0,AVAILABLE,a,,2.895,4.087,2.895,0.499,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+277,Egan,DEF,Hull City,4.1,Ipswich Town,True,2.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,,2.876,2.376,2.876,0.702,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+481,Anderson,MID,Man City,6.3,Brighton,True,3.0,1,72.8,72.8,0.809,0.809,1.0,AVAILABLE,a,100.0,2.84,2.795,2.84,0.451,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+412,Lammens,GKP,Man Utd,4.9,Chelsea,False,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.835,3.102,2.835,0.579,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+210,Wharton,MID,Crystal Palace,5.4,Spurs,False,3.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,100.0,2.819,2.878,2.819,0.522,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+32,Cash,DEF,Aston Villa,4.3,Fulham,True,2.0,1,56.7,56.7,0.63,0.63,1.0,AVAILABLE,a,100.0,2.809,2.242,2.809,0.653,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+356,Virgil,DEF,Liverpool,6.4,Arsenal,True,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.788,3.411,2.788,0.436,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+91,Pinnock,DEF,Coventry City,4.5,Sunderland,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.783,2.69,2.783,0.618,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+211,Yeremy,MID,Crystal Palace,5.5,Spurs,False,3.0,1,71.3,71.3,0.792,0.792,1.0,AVAILABLE,a,,2.777,2.882,2.777,0.505,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+258,Castagne,DEF,Fulham,4.5,Aston Villa,False,3.0,1,70.9,70.9,0.788,0.788,1.0,AVAILABLE,a,,2.767,2.824,2.767,0.615,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+214,Kamada,MID,Crystal Palace,5.0,Spurs,False,3.0,1,88.9,88.9,0.988,0.988,1.0,AVAILABLE,a,,2.753,2.792,2.753,0.551,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+95,O.Dango,MID,Brentford,6.2,Nott'm Forest,True,3.0,1,23.6,23.6,0.262,0.262,1.0,AVAILABLE,a,,2.751,2.703,2.751,0.444,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+279,Ajayi,DEF,Hull City,4.2,Ipswich Town,True,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,100.0,2.734,2.169,2.734,0.651,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+627,Barcola,MID,Liverpool,8.1,Arsenal,True,4.0,1,86.7,86.7,0.963,0.963,1.0,AVAILABLE,a,,2.726,3.352,2.726,0.336,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+199,Benitez,GKP,Crystal Palace,4.5,Spurs,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.72,2.783,2.72,0.604,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+642,Thomas,MID,Hull City,5.5,Ipswich Town,True,2.0,1,52.4,52.4,0.582,0.582,1.0,AVAILABLE,a,,2.706,2.605,2.706,0.492,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+405,N.Gonzalez,MID,Newcastle,5.5,Everton,True,3.0,1,55.1,55.1,0.612,0.612,1.0,AVAILABLE,a,100.0,2.704,2.643,2.704,0.492,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+230,Branthwaite,DEF,Everton,5.5,Newcastle,False,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,100.0,2.699,2.735,2.699,0.491,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+316,Emersonn,FWD,Ipswich Town,5.5,Hull City,False,2.0,1,71.3,71.3,0.792,0.792,1.0,AVAILABLE,a,100.0,2.693,2.542,2.693,0.49,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+398,Foden,MID,Man City,6.8,Brighton,True,3.0,1,21.2,21.2,0.236,0.236,1.0,AVAILABLE,a,100.0,2.685,2.695,2.685,0.395,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+335,Stach,MID,Leeds,6.0,Bournemouth,False,3.0,1,73.3,73.3,0.814,0.814,1.0,AVAILABLE,a,100.0,2.677,2.733,2.677,0.446,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+522,Gray,MID,Spurs,4.9,Crystal Palace,True,2.0,1,88.5,88.5,0.983,0.983,1.0,AVAILABLE,a,,2.676,2.491,2.676,0.546,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+331,Gudmundsson,DEF,Leeds,4.5,Bournemouth,False,3.0,1,88.9,88.9,0.988,0.988,1.0,AVAILABLE,a,100.0,2.668,2.797,2.668,0.593,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+254,Robinson,DEF,Fulham,4.4,Aston Villa,False,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,100.0,2.667,2.778,2.667,0.606,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+558,Schlager,MID,Nott'm Forest,5.0,Brentford,False,3.0,1,88.5,88.5,0.983,0.983,1.0,AVAILABLE,a,,2.649,2.68,2.649,0.53,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+391,Gvardiol,DEF,Man City,5.8,Brighton,True,3.0,1,57.2,57.2,0.636,0.636,1.0,AVAILABLE,a,,2.643,2.672,2.643,0.456,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+569,Gonzalo,FWD,Fulham,6.0,Aston Villa,False,3.0,1,86.9,86.9,0.966,0.966,1.0,AVAILABLE,a,,2.641,2.674,2.641,0.44,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+366,Wirtz,MID,Liverpool,7.2,Arsenal,True,4.0,1,64.3,85.7,0.714,0.952,0.75,MINOR_RISK,d,75.0,3.521,4.211,2.64,0.367,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+619,Palacios,MID,Ipswich Town,5.0,Hull City,False,2.0,1,73.0,73.0,0.811,0.811,1.0,AVAILABLE,a,,2.635,2.542,2.635,0.527,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+101,Henderson,MID,Chelsea,4.9,Man Utd,True,4.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,100.0,2.627,3.068,2.627,0.536,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+388,Guéhi,DEF,Man City,6.0,Brighton,True,3.0,1,74.7,74.7,0.83,0.83,1.0,AVAILABLE,a,,2.627,2.623,2.627,0.438,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+428,Cunha,MID,Man Utd,7.9,Chelsea,False,4.0,1,57.1,57.1,0.634,0.634,1.0,AVAILABLE,a,,2.621,3.442,2.621,0.332,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+447,Botman,DEF,Newcastle,5.0,Everton,True,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,,2.62,2.645,2.62,0.524,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+194,Thomas-Asante,FWD,Coventry City,5.0,Sunderland,True,3.0,1,70.8,70.8,0.787,0.787,1.0,AVAILABLE,a,,2.607,2.57,2.607,0.521,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+362,Jacquet,DEF,Liverpool,5.1,Arsenal,True,4.0,1,89.8,89.8,0.998,0.998,1.0,AVAILABLE,a,100.0,2.587,3.254,2.587,0.507,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+33,Mings,DEF,Aston Villa,4.5,Fulham,True,2.0,1,70.5,70.5,0.783,0.783,1.0,AVAILABLE,a,,2.581,2.034,2.581,0.574,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+332,Justin,DEF,Leeds,4.5,Bournemouth,False,3.0,1,89.3,89.3,0.992,0.992,1.0,AVAILABLE,a,,2.565,2.706,2.565,0.57,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+54,Gomes,MID,Aston Villa,5.5,Fulham,True,2.0,1,70.0,70.0,0.778,0.778,1.0,AVAILABLE,a,100.0,2.55,2.585,2.55,0.464,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+545,Sadiki,MID,Sunderland,4.8,Coventry City,False,2.0,1,88.6,88.6,0.984,0.984,1.0,AVAILABLE,a,,2.55,2.482,2.55,0.531,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+452,Bruno G.,MID,Arsenal,6.7,Liverpool,False,4.0,1,25.7,25.7,0.286,0.286,1.0,AVAILABLE,a,100.0,2.545,3.456,2.545,0.38,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+457,J.Murphy,MID,Newcastle,5.9,Everton,True,3.0,1,42.8,42.8,0.476,0.476,1.0,AVAILABLE,a,,2.528,2.482,2.528,0.428,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+464,Wissa,FWD,Newcastle,6.1,Everton,True,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,,2.527,2.498,2.527,0.414,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+536,Reinildo,DEF,Sunderland,4.4,Coventry City,False,2.0,1,70.9,70.9,0.788,0.788,1.0,AVAILABLE,a,100.0,2.525,2.005,2.525,0.574,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+338,Ampadu,MID,Leeds,5.3,Bournemouth,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.523,2.563,2.523,0.476,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+580,Charles,MID,Fulham,5.0,Aston Villa,False,3.0,1,88.8,88.8,0.987,0.987,1.0,AVAILABLE,a,,2.495,2.516,2.495,0.499,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+304,O'Shea,DEF,Ipswich Town,4.0,Hull City,False,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.493,2.529,2.493,0.623,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+525,Fernandes,MID,Spurs,5.6,Crystal Palace,True,2.0,1,38.2,38.2,0.424,0.424,1.0,AVAILABLE,a,,2.486,2.476,2.486,0.444,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+534,Hume,DEF,Sunderland,4.2,Coventry City,False,2.0,1,54.7,54.7,0.608,0.608,1.0,AVAILABLE,a,,2.477,2.175,2.477,0.59,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+73,Adams,MID,Bournemouth,5.0,Leeds,True,3.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,100.0,2.443,2.407,2.443,0.489,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+176,Dasilva,DEF,Coventry City,4.0,Sunderland,True,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.443,2.285,2.443,0.611,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+149,Colwill,DEF,Chelsea,4.8,Man Utd,True,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.437,2.9,2.437,0.508,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+305,Davis,DEF,Ipswich Town,4.0,Hull City,False,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.437,2.105,2.437,0.609,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+565,M.Sangaré,MID,Brentford,5.5,Nott'm Forest,True,3.0,1,42.2,42.2,0.469,0.469,1.0,AVAILABLE,a,,2.419,2.339,2.419,0.44,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+200,Lacroix,DEF,Chelsea,5.9,Man Utd,True,4.0,1,72.2,72.2,0.802,0.802,1.0,AVAILABLE,a,,2.412,2.781,2.412,0.409,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+599,Cherif,FWD,Coventry City,5.0,Sunderland,True,3.0,1,39.1,39.1,0.434,0.434,1.0,AVAILABLE,a,,2.412,2.384,2.412,0.482,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+503,Van de Ven,DEF,Spurs,5.0,Crystal Palace,True,2.0,1,73.0,73.0,0.811,0.811,1.0,AVAILABLE,a,100.0,2.398,2.208,2.398,0.48,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+640,Flemming,FWD,Ipswich Town,5.5,Hull City,False,2.0,1,14.5,14.5,0.161,0.161,1.0,AVAILABLE,a,,2.394,2.117,2.394,0.435,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+64,Smith,DEF,Bournemouth,4.5,Leeds,True,3.0,1,87.7,87.7,0.974,0.974,1.0,AVAILABLE,a,,2.39,2.316,2.39,0.531,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+115,De Cuyper,DEF,Brighton,5.3,Man City,False,5.0,1,88.6,88.6,0.984,0.984,1.0,AVAILABLE,a,,2.363,3.57,2.363,0.446,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+244,Armstrong,MID,Everton,5.0,Newcastle,False,3.0,1,88.9,88.9,0.988,0.988,1.0,AVAILABLE,a,100.0,2.358,2.405,2.358,0.472,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+16,Madueke,MID,Arsenal,6.2,Liverpool,False,4.0,1,38.7,38.7,0.43,0.43,1.0,AVAILABLE,a,,2.346,2.793,2.346,0.378,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+588,Khalaili,DEF,Crystal Palace,5.0,Spurs,False,3.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,100.0,2.34,2.386,2.34,0.468,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+43,Tielemans,MID,Man Utd,5.7,Chelsea,False,4.0,1,58.3,58.3,0.648,0.648,1.0,AVAILABLE,a,100.0,2.33,2.961,2.33,0.409,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+300,Walton,GKP,Ipswich Town,4.4,Hull City,False,2.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,,2.33,2.122,2.33,0.53,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+336,Okafor,MID,Leeds,5.8,Bournemouth,False,3.0,1,69.2,69.2,0.769,0.769,1.0,AVAILABLE,a,100.0,2.319,2.353,2.319,0.4,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+265,Berge,MID,Fulham,4.9,Aston Villa,False,3.0,1,72.8,72.8,0.809,0.809,1.0,AVAILABLE,a,,2.302,2.336,2.302,0.47,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+290,Slater,MID,Hull City,4.5,Ipswich Town,True,2.0,1,87.3,87.3,0.97,0.97,1.0,AVAILABLE,a,,2.302,2.071,2.302,0.512,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+469,N.Williams,DEF,Nott'm Forest,5.0,Brentford,False,3.0,1,67.2,89.6,0.747,0.996,0.75,MINOR_RISK,d,75.0,3.053,3.159,2.29,0.458,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+175,van Ewijk,DEF,Coventry City,3.9,Sunderland,True,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,100.0,2.278,2.206,2.278,0.584,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+94,Schade,MID,Brentford,6.2,Nott'm Forest,True,3.0,1,58.0,58.0,0.644,0.644,1.0,AVAILABLE,a,100.0,2.276,2.269,2.276,0.367,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+579,Araujo,DEF,Liverpool,5.4,Arsenal,True,4.0,1,72.6,72.6,0.807,0.807,1.0,AVAILABLE,a,,2.269,2.764,2.269,0.42,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+75,Christie,MID,Bournemouth,5.0,Leeds,True,3.0,1,54.3,54.3,0.603,0.603,1.0,AVAILABLE,a,100.0,2.256,2.218,2.256,0.451,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+514,Tel,MID,Spurs,5.6,Crystal Palace,True,2.0,1,19.7,19.7,0.219,0.219,1.0,AVAILABLE,a,,2.249,2.182,2.249,0.402,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+387,O'Reilly,DEF,Man City,6.3,Brighton,True,3.0,1,33.5,33.5,0.372,0.372,1.0,AVAILABLE,a,100.0,2.246,2.249,2.246,0.356,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+127,Gomez,MID,Brighton,5.0,Man City,False,5.0,1,89.1,89.1,0.99,0.99,1.0,AVAILABLE,a,,2.244,2.969,2.244,0.449,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+519,Gallagher,MID,Spurs,5.3,Crystal Palace,True,2.0,1,20.9,20.9,0.232,0.232,1.0,AVAILABLE,a,,2.237,1.897,2.237,0.422,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+367,Gakpo,MID,Liverpool,7.1,Arsenal,True,4.0,1,37.8,37.8,0.42,0.42,1.0,AVAILABLE,a,100.0,2.235,2.461,2.235,0.315,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+204,Mitchell,DEF,Crystal Palace,4.5,Spurs,False,3.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,,2.227,2.285,2.227,0.495,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+109,Verbruggen,GKP,Brighton,4.6,Man City,False,5.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.222,3.422,2.222,0.483,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+184,Grimes,MID,Coventry City,4.8,Sunderland,True,3.0,1,89.1,89.1,0.99,0.99,1.0,AVAILABLE,a,,2.21,2.167,2.21,0.46,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+10,White,DEF,Arsenal,5.4,Liverpool,False,4.0,1,53.5,53.5,0.594,0.594,1.0,AVAILABLE,a,100.0,2.197,2.824,2.197,0.407,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+340,Gelhardt,MID,Hull City,5.0,Ipswich Town,True,2.0,1,18.4,18.4,0.204,0.204,1.0,AVAILABLE,a,100.0,2.195,1.986,2.195,0.439,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+631,Mbaye,MID,Aston Villa,6.0,Fulham,True,2.0,1,16.2,16.2,0.18,0.18,1.0,AVAILABLE,a,,2.186,1.962,2.186,0.364,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+129,Ayari,MID,Brighton,5.4,Man City,False,5.0,1,88.3,88.3,0.981,0.981,1.0,AVAILABLE,a,100.0,2.183,3.274,2.183,0.404,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+209,Johnson,MID,Everton,5.8,Newcastle,False,3.0,1,67.2,67.2,0.747,0.747,1.0,AVAILABLE,a,,2.175,2.2,2.175,0.375,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+372,Mac Allister,MID,Liverpool,5.4,Arsenal,True,4.0,1,73.8,73.8,0.82,0.82,1.0,AVAILABLE,a,,2.172,2.528,2.172,0.402,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+562,Maeda,MID,Ipswich Town,5.3,Hull City,False,2.0,1,37.8,37.8,0.42,0.42,1.0,AVAILABLE,a,,2.17,2.192,2.17,0.409,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+31,Konsa,DEF,Arsenal,4.7,Liverpool,False,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,100.0,2.164,2.973,2.164,0.46,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+358,Kerkez,DEF,Liverpool,5.3,Arsenal,True,4.0,1,74.5,74.5,0.828,0.828,1.0,AVAILABLE,a,,2.147,2.447,2.147,0.405,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+418,Maguire,DEF,Man Utd,4.7,Chelsea,False,4.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.131,2.592,2.131,0.453,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+165,João Pedro,FWD,Chelsea,7.9,Man Utd,True,4.0,1,39.7,52.9,0.441,0.588,0.75,MINOR_RISK,d,75.0,2.828,3.46,2.121,0.268,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+88,Kayode,DEF,Brentford,4.6,Nott'm Forest,True,3.0,1,71.8,71.8,0.798,0.798,1.0,AVAILABLE,a,,2.113,2.054,2.113,0.459,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+242,George,MID,Everton,5.5,Newcastle,False,3.0,1,38.6,38.6,0.429,0.429,1.0,AVAILABLE,a,,2.112,2.131,2.112,0.384,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+313,Clarke,MID,Ipswich Town,5.3,Hull City,False,2.0,1,36.2,36.2,0.402,0.402,1.0,AVAILABLE,a,,2.099,2.007,2.099,0.396,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+240,Iroegbunam,MID,Hull City,5.0,Ipswich Town,True,2.0,1,25.0,25.0,0.278,0.278,1.0,AVAILABLE,a,100.0,2.096,2.097,2.096,0.419,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+592,Ouattara,DEF,Ipswich Town,4.0,Hull City,False,2.0,1,72.1,72.1,0.801,0.801,1.0,AVAILABLE,a,,2.091,2.232,2.091,0.523,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+593,Dedić,DEF,Newcastle,4.5,Everton,True,3.0,1,23.3,23.3,0.259,0.259,1.0,AVAILABLE,a,100.0,2.08,2.04,2.08,0.462,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+571,Florentino,MID,Ipswich Town,4.8,Hull City,False,2.0,1,52.6,52.6,0.584,0.584,1.0,AVAILABLE,a,100.0,2.077,2.028,2.077,0.433,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+504,Vuskovic,DEF,Brighton,5.1,Man City,False,5.0,1,89.2,89.2,0.991,0.991,1.0,AVAILABLE,a,,2.075,3.345,2.075,0.407,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+26,Havertz,FWD,Arsenal,7.5,Liverpool,False,4.0,1,70.1,70.1,0.779,0.779,1.0,AVAILABLE,a,100.0,2.051,2.562,2.051,0.273,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+459,L.Miley,MID,Newcastle,5.5,Everton,True,3.0,1,56.8,56.8,0.631,0.631,1.0,AVAILABLE,a,100.0,2.042,2.015,2.042,0.371,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+465,Osula,FWD,Newcastle,5.8,Everton,True,3.0,1,19.9,19.9,0.221,0.221,1.0,AVAILABLE,a,100.0,2.039,2.051,2.039,0.352,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+460,Willock,MID,Newcastle,5.0,Everton,True,3.0,1,43.6,43.6,0.484,0.484,1.0,AVAILABLE,a,,2.032,1.989,2.032,0.406,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+389,Matheus N.,DEF,Man City,5.9,Brighton,True,3.0,1,53.3,71.1,0.592,0.79,0.75,MINOR_RISK,d,75.0,2.697,2.694,2.022,0.343,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+213,Lerma,MID,Crystal Palace,4.8,Spurs,False,3.0,1,22.1,22.1,0.246,0.246,1.0,AVAILABLE,a,,2.015,2.01,2.015,0.42,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+259,Diop,DEF,Ipswich Town,3.9,Hull City,False,2.0,1,90.0,90.0,1.0,1.0,1.0,AVAILABLE,a,,2.007,2.169,2.007,0.515,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+315,Fatawu,MID,Ipswich Town,5.4,Hull City,False,2.0,1,50.9,50.9,0.566,0.566,1.0,AVAILABLE,a,100.0,1.978,1.925,1.978,0.366,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+186,Mason-Clark,MID,Coventry City,5.3,Sunderland,True,3.0,1,24.5,24.5,0.272,0.272,1.0,AVAILABLE,a,100.0,1.967,1.953,1.967,0.371,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+71,Cook,MID,Bournemouth,5.0,Leeds,True,3.0,1,35.7,35.7,0.397,0.397,1.0,AVAILABLE,a,,1.965,1.945,1.965,0.393,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+581,Diomande,DEF,Nott'm Forest,5.4,Brentford,False,3.0,1,70.9,70.9,0.788,0.788,1.0,AVAILABLE,a,,1.957,1.974,1.957,0.362,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+70,Kluivert,MID,Bournemouth,5.9,Leeds,True,3.0,1,34.5,34.5,0.383,0.383,1.0,AVAILABLE,a,100.0,1.952,1.968,1.952,0.331,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+345,Tanaka,MID,Leeds,4.9,Bournemouth,False,3.0,1,85.6,85.6,0.951,0.951,1.0,AVAILABLE,a,,1.952,1.994,1.952,0.398,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+498,Senesi,DEF,Spurs,5.7,Crystal Palace,True,2.0,1,17.9,17.9,0.199,0.199,1.0,AVAILABLE,a,,1.94,1.565,1.94,0.34,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+458,Joelinton,MID,Newcastle,5.4,Everton,True,3.0,1,37.4,37.4,0.416,0.416,1.0,AVAILABLE,a,100.0,1.923,1.904,1.923,0.356,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+260,Wilson,MID,Leeds,6.2,Bournemouth,False,3.0,1,18.7,18.7,0.208,0.208,1.0,AVAILABLE,a,100.0,1.916,1.93,1.916,0.309,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+575,Yirenkyi,MID,Coventry City,4.8,Sunderland,True,3.0,1,56.3,56.3,0.626,0.626,1.0,AVAILABLE,a,,1.916,1.889,1.916,0.399,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+282,Giles,DEF,Hull City,4.0,Ipswich Town,True,2.0,1,70.1,70.1,0.779,0.779,1.0,AVAILABLE,a,,1.913,1.72,1.913,0.478,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+417,Dalot,DEF,Man Utd,4.8,Chelsea,False,4.0,1,73.9,73.9,0.821,0.821,1.0,AVAILABLE,a,,1.908,2.143,1.908,0.398,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+223,Mateta,FWD,Crystal Palace,6.3,Spurs,False,3.0,1,18.0,18.0,0.2,0.2,1.0,AVAILABLE,a,100.0,1.907,1.901,1.907,0.303,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+552,Brobbey,FWD,Sunderland,5.7,Coventry City,False,2.0,1,52.4,52.4,0.582,0.582,1.0,AVAILABLE,a,100.0,1.905,1.882,1.905,0.334,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+649,Maitland-Niles,DEF,Everton,4.5,Newcastle,False,3.0,1,55.5,55.5,0.617,0.617,1.0,AVAILABLE,a,,1.903,1.941,1.903,0.423,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+238,Grealish,MID,Everton,6.5,Newcastle,False,3.0,1,40.6,54.1,0.451,0.601,0.75,MINOR_RISK,d,75.0,2.535,2.554,1.901,0.292,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+148,Hato,DEF,Chelsea,4.5,Man Utd,True,4.0,1,37.1,37.1,0.412,0.412,1.0,AVAILABLE,a,,1.889,2.29,1.889,0.42,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+222,Strand Larsen,FWD,Crystal Palace,6.0,Spurs,False,3.0,1,51.6,68.8,0.573,0.764,0.75,MINOR_RISK,d,75.0,2.507,2.553,1.88,0.313,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+327,Bijol,DEF,Leeds,5.0,Bournemouth,False,3.0,1,18.2,18.2,0.202,0.202,1.0,AVAILABLE,a,,1.856,1.841,1.856,0.371,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+318,Philogene,MID,Ipswich Town,5.4,Hull City,False,2.0,1,35.6,35.6,0.396,0.396,1.0,AVAILABLE,a,100.0,1.851,1.765,1.851,0.343,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+576,Stroud,MID,Hull City,4.9,Ipswich Town,True,2.0,1,23.1,23.1,0.257,0.257,1.0,AVAILABLE,a,,1.846,1.739,1.846,0.377,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+393,Khusanov,DEF,Man City,5.3,Brighton,True,3.0,1,18.8,18.8,0.209,0.209,1.0,AVAILABLE,a,,1.817,1.813,1.817,0.343,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+173,Thomas,DEF,Coventry City,4.0,Sunderland,True,3.0,1,56.6,75.5,0.629,0.839,0.75,MINOR_RISK,d,75.0,2.402,2.32,1.802,0.45,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+5,J.Timber,DEF,Arsenal,6.5,Liverpool,False,4.0,1,23.2,23.2,0.258,0.258,1.0,AVAILABLE,a,100.0,1.8,2.057,1.8,0.277,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+8,Calafiori,DEF,Arsenal,6.0,Liverpool,False,4.0,1,54.6,72.8,0.607,0.809,0.75,MINOR_RISK,d,75.0,2.398,3.151,1.798,0.3,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+97,Jensen,MID,Brentford,5.4,Nott'm Forest,True,3.0,1,22.1,22.1,0.246,0.246,1.0,AVAILABLE,a,100.0,1.788,1.769,1.788,0.331,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+280,Coyle,DEF,Hull City,4.0,Ipswich Town,True,2.0,1,87.9,87.9,0.977,0.977,1.0,AVAILABLE,a,100.0,1.772,1.627,1.772,0.443,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+419,Martinez,DEF,Man Utd,4.8,Chelsea,False,4.0,1,58.2,58.2,0.647,0.647,1.0,AVAILABLE,a,100.0,1.772,2.18,1.772,0.369,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+515,Maddison,MID,Spurs,6.2,Crystal Palace,True,2.0,1,17.2,22.9,0.191,0.254,0.75,MINOR_RISK,d,75.0,2.359,2.357,1.769,0.285,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+551,N.Angulo,MID,Sunderland,5.0,Coventry City,False,2.0,1,54.5,54.5,0.606,0.606,1.0,AVAILABLE,a,,1.763,1.795,1.763,0.353,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+25,Gyökeres,FWD,Arsenal,7.0,Liverpool,False,4.0,1,20.7,20.7,0.23,0.23,1.0,AVAILABLE,a,,1.74,2.186,1.74,0.249,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+539,O'Nien,DEF,Sunderland,3.9,Coventry City,False,2.0,1,19.9,19.9,0.221,0.221,1.0,AVAILABLE,a,,1.712,1.723,1.712,0.439,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+151,Acheampong,DEF,Chelsea,4.5,Man Utd,True,4.0,1,55.1,55.1,0.612,0.612,1.0,AVAILABLE,a,,1.711,2.161,1.711,0.38,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+431,Amad,MID,Man Utd,5.7,Chelsea,False,4.0,1,38.7,38.7,0.43,0.43,1.0,AVAILABLE,a,100.0,1.704,2.147,1.704,0.299,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+159,Caicedo,MID,Chelsea,5.3,Man Utd,True,4.0,1,52.9,52.9,0.588,0.588,1.0,AVAILABLE,a,100.0,1.7,1.96,1.7,0.321,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+420,Yoro,DEF,Man Utd,4.8,Chelsea,False,4.0,1,39.5,39.5,0.439,0.439,1.0,AVAILABLE,a,,1.685,2.113,1.685,0.351,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+246,Röhl,MID,Everton,4.9,Newcastle,False,3.0,1,36.0,36.0,0.4,0.4,1.0,AVAILABLE,a,100.0,1.678,1.69,1.678,0.342,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+446,Schär,DEF,Newcastle,4.9,Everton,True,3.0,1,19.4,19.4,0.216,0.216,1.0,AVAILABLE,a,100.0,1.676,1.685,1.676,0.342,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+153,Disasi,DEF,Crystal Palace,4.4,Spurs,False,3.0,1,20.0,20.0,0.222,0.222,1.0,AVAILABLE,a,100.0,1.67,1.66,1.67,0.38,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+14,Eze,MID,Arsenal,6.2,Liverpool,False,4.0,1,21.6,21.6,0.24,0.24,1.0,AVAILABLE,a,,1.669,2.046,1.669,0.269,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+644,Timber,MID,Crystal Palace,5.0,Spurs,False,3.0,1,42.5,56.7,0.473,0.63,0.75,MINOR_RISK,d,75.0,2.213,2.244,1.66,0.332,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+34,Pau,DEF,Aston Villa,4.4,Fulham,True,2.0,1,20.2,20.2,0.224,0.224,1.0,AVAILABLE,a,100.0,1.659,1.361,1.659,0.377,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+474,Jair Cunha,DEF,Nott'm Forest,4.4,Brentford,False,3.0,1,53.6,53.6,0.596,0.596,1.0,AVAILABLE,a,100.0,1.652,1.68,1.652,0.376,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+445,Thiaw,DEF,Newcastle,5.0,Everton,True,3.0,1,72.1,72.1,0.801,0.801,1.0,AVAILABLE,a,,1.649,1.634,1.649,0.33,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+85,Van den Berg,DEF,Brentford,4.9,Nott'm Forest,True,3.0,1,34.8,34.8,0.387,0.387,1.0,AVAILABLE,a,100.0,1.647,1.644,1.647,0.336,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+501,Danso,DEF,Sunderland,5.0,Coventry City,False,2.0,1,55.0,55.0,0.611,0.611,1.0,AVAILABLE,a,100.0,1.636,1.343,1.636,0.327,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+448,Burn,DEF,Newcastle,4.8,Everton,True,3.0,1,18.1,18.1,0.201,0.201,1.0,AVAILABLE,a,100.0,1.615,1.621,1.615,0.336,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+616,Bouaddi,MID,Man City,5.5,Brighton,True,3.0,1,18.6,18.6,0.207,0.207,1.0,AVAILABLE,a,,1.608,1.605,1.608,0.292,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+36,Maatsen,DEF,Aston Villa,4.4,Fulham,True,2.0,1,36.0,36.0,0.4,0.4,1.0,AVAILABLE,a,100.0,1.592,1.323,1.592,0.362,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+482,Hudson-Odoi,MID,Nott'm Forest,5.7,Brentford,False,3.0,1,6.6,6.6,0.073,0.073,1.0,AVAILABLE,a,100.0,1.591,1.587,1.591,0.279,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+548,Rigg,MID,Sunderland,4.8,Coventry City,False,2.0,1,34.4,34.4,0.382,0.382,1.0,AVAILABLE,a,,1.587,1.564,1.587,0.331,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+490,Wood,FWD,Nott'm Forest,5.7,Brentford,False,3.0,1,6.3,6.3,0.07,0.07,1.0,AVAILABLE,a,,1.576,1.576,1.576,0.277,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+656,Mfuni,DEF,Coventry City,4.0,Sunderland,True,3.0,1,20.2,20.2,0.224,0.224,1.0,AVAILABLE,a,,1.562,1.518,1.562,0.39,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+232,O'Brien,DEF,Everton,4.8,Newcastle,False,3.0,1,19.7,19.7,0.219,0.219,1.0,AVAILABLE,a,,1.557,1.551,1.557,0.324,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+585,Herrington,DEF,Hull City,4.0,Ipswich Town,True,2.0,1,40.6,40.6,0.451,0.451,1.0,AVAILABLE,a,,1.536,1.471,1.536,0.384,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+46,Barkley,MID,Aston Villa,5.0,Fulham,True,2.0,1,19.4,19.4,0.216,0.216,1.0,AVAILABLE,a,100.0,1.533,1.478,1.533,0.307,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+203,Canvot,DEF,Crystal Palace,4.8,Spurs,False,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,,1.532,1.557,1.532,0.319,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+406,Kovačić,MID,Man City,5.3,Brighton,True,3.0,1,7.4,7.4,0.082,0.082,1.0,AVAILABLE,a,100.0,1.522,1.527,1.522,0.287,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+114,Boscagli,DEF,Brighton,4.5,Man City,False,5.0,1,71.9,71.9,0.799,0.799,1.0,AVAILABLE,a,,1.519,2.704,1.519,0.338,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+337,Aaronson,MID,Leeds,5.2,Bournemouth,False,3.0,1,20.0,20.0,0.222,0.222,1.0,AVAILABLE,a,,1.512,1.511,1.512,0.291,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+90,Hickey,DEF,Brentford,4.5,Nott'm Forest,True,3.0,1,38.2,38.2,0.424,0.424,1.0,AVAILABLE,a,,1.511,1.501,1.511,0.336,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+104,Onyeka,MID,Coventry City,4.8,Sunderland,True,3.0,1,38.8,38.8,0.431,0.431,1.0,AVAILABLE,a,100.0,1.509,1.5,1.509,0.314,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+185,Sakamoto,MID,Coventry City,4.8,Sunderland,True,3.0,1,36.7,36.7,0.408,0.408,1.0,AVAILABLE,a,,1.508,1.498,1.508,0.314,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+289,Crooks,MID,Hull City,4.4,Ipswich Town,True,2.0,1,52.4,52.4,0.582,0.582,1.0,AVAILABLE,a,100.0,1.5,1.365,1.5,0.341,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+17,Merino,MID,Arsenal,5.7,Liverpool,False,4.0,1,20.2,20.2,0.224,0.224,1.0,AVAILABLE,a,,1.497,1.827,1.497,0.263,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+241,McNeil,MID,Crystal Palace,5.3,Spurs,False,3.0,1,19.1,19.1,0.212,0.212,1.0,AVAILABLE,a,,1.497,1.515,1.497,0.282,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+634,Fernandez-Pardo,FWD,Newcastle,6.0,Everton,True,3.0,1,31.3,41.7,0.348,0.463,0.75,MINOR_RISK,d,75.0,1.974,1.965,1.481,0.247,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+430,Mount,MID,Man Utd,5.4,Chelsea,False,4.0,1,19.6,19.6,0.218,0.218,1.0,AVAILABLE,a,100.0,1.468,1.641,1.468,0.272,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+162,Andrey Santos,MID,Man Utd,4.7,Chelsea,False,4.0,1,36.0,36.0,0.4,0.4,1.0,AVAILABLE,a,,1.46,1.711,1.46,0.311,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+620,Diouf,DEF,Brentford,4.5,Nott'm Forest,True,3.0,1,21.8,21.8,0.242,0.242,1.0,AVAILABLE,a,,1.455,1.446,1.455,0.323,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+320,Akpom,FWD,Ipswich Town,5.0,Hull City,False,2.0,1,6.6,6.6,0.073,0.073,1.0,AVAILABLE,a,,1.454,1.298,1.454,0.291,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+371,Gravenberch,MID,Liverpool,5.8,Arsenal,True,4.0,1,38.3,38.3,0.426,0.426,1.0,AVAILABLE,a,100.0,1.454,1.627,1.454,0.251,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+7,Lewis-Skelly,MID,Arsenal,5.4,Liverpool,False,4.0,1,35.6,35.6,0.396,0.396,1.0,AVAILABLE,a,,1.448,1.642,1.448,0.268,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+461,Touré,MID,Newcastle,5.7,Everton,True,3.0,1,17.1,17.1,0.19,0.19,1.0,AVAILABLE,a,100.0,1.438,1.437,1.438,0.252,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+637,Vaz,FWD,Hull City,5.0,Ipswich Town,True,2.0,1,7.5,7.5,0.083,0.083,1.0,AVAILABLE,a,100.0,1.426,1.283,1.426,0.285,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+471,Milenković,DEF,Nott'm Forest,5.4,Brentford,False,3.0,1,18.0,18.0,0.2,0.2,1.0,AVAILABLE,a,100.0,1.419,1.422,1.419,0.263,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+93,Schuster,DEF,Brentford,4.5,Nott'm Forest,True,3.0,1,38.7,38.7,0.43,0.43,1.0,AVAILABLE,a,100.0,1.412,1.414,1.412,0.314,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+492,Awoniyi,FWD,Coventry City,5.4,Sunderland,True,3.0,1,15.8,15.8,0.176,0.176,1.0,AVAILABLE,a,100.0,1.404,1.401,1.404,0.26,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+635,Larsson,MID,Fulham,5.0,Aston Villa,False,3.0,1,18.1,18.1,0.201,0.201,1.0,AVAILABLE,a,100.0,1.401,1.408,1.401,0.28,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+136,Welbeck,FWD,Chelsea,5.8,Man Utd,True,4.0,1,18.1,18.1,0.201,0.201,1.0,AVAILABLE,a,100.0,1.375,1.691,1.375,0.237,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+123,Hinshelwood,MID,Brighton,5.9,Man City,False,5.0,1,9.6,9.6,0.107,0.107,1.0,AVAILABLE,a,100.0,1.367,1.811,1.367,0.232,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+98,Janelt,MID,Brentford,5.0,Nott'm Forest,True,3.0,1,72.0,72.0,0.8,0.8,1.0,AVAILABLE,a,100.0,1.362,1.344,1.362,0.272,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+369,Ngumoha,MID,Liverpool,5.7,Arsenal,True,4.0,1,12.6,12.6,0.14,0.14,1.0,AVAILABLE,a,,1.359,1.628,1.359,0.238,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+612,Methalie,DEF,Sunderland,4.5,Coventry City,False,2.0,1,19.0,19.0,0.211,0.211,1.0,AVAILABLE,a,100.0,1.355,1.161,1.355,0.301,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+646,Fofana,MID,Sunderland,5.5,Coventry City,False,2.0,1,15.0,15.0,0.167,0.167,1.0,AVAILABLE,a,,1.349,1.187,1.349,0.245,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+96,Damsgaard,MID,Brentford,5.3,Nott'm Forest,True,3.0,1,22.0,22.0,0.244,0.244,1.0,AVAILABLE,a,100.0,1.348,1.346,1.348,0.254,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+381,Koumas,MID,Liverpool,5.0,Arsenal,True,4.0,1,19.0,19.0,0.211,0.211,1.0,AVAILABLE,a,,1.345,1.503,1.345,0.269,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+131,Baleba,MID,Man Utd,4.9,Chelsea,False,4.0,1,35.7,35.7,0.397,0.397,1.0,AVAILABLE,a,100.0,1.338,1.539,1.338,0.273,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+224,Nketiah,FWD,Crystal Palace,5.4,Spurs,False,3.0,1,10.8,10.8,0.12,0.12,1.0,AVAILABLE,a,100.0,1.329,1.32,1.329,0.246,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+347,Nmecha,FWD,Leeds,5.3,Bournemouth,False,3.0,1,8.7,8.7,0.097,0.097,1.0,AVAILABLE,a,,1.328,1.318,1.328,0.251,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+639,Andrés,MID,Brighton,5.5,Man City,False,5.0,1,43.7,58.3,0.486,0.648,0.75,MINOR_RISK,d,75.0,1.754,2.536,1.315,0.239,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+164,Quenda,MID,Chelsea,5.2,Man Utd,True,4.0,1,18.1,18.1,0.201,0.201,1.0,AVAILABLE,a,100.0,1.288,1.424,1.288,0.248,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+598,Elvedi,DEF,Leeds,4.5,Bournemouth,False,3.0,1,53.8,71.7,0.598,0.797,0.75,MINOR_RISK,d,75.0,1.718,1.75,1.288,0.286,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+256,Tete,DEF,Fulham,4.4,Aston Villa,False,3.0,1,20.2,20.2,0.224,0.224,1.0,AVAILABLE,a,100.0,1.279,1.285,1.279,0.291,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+72,Gannon-Doak,MID,Bournemouth,4.8,Leeds,True,3.0,1,12.5,12.5,0.139,0.139,1.0,AVAILABLE,a,,1.278,1.274,1.278,0.266,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+563,Morita,MID,Hull City,4.9,Ipswich Town,True,2.0,1,7.2,7.2,0.08,0.08,1.0,AVAILABLE,a,100.0,1.278,1.23,1.278,0.261,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+499,Pedro Porro,DEF,Spurs,5.3,Crystal Palace,True,2.0,1,6.4,6.4,0.071,0.071,1.0,AVAILABLE,a,100.0,1.265,1.031,1.265,0.239,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+195,Simms,FWD,Coventry City,4.9,Sunderland,True,3.0,1,4.2,4.2,0.047,0.047,1.0,AVAILABLE,a,,1.24,1.266,1.24,0.253,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+375,Nyoni,MID,Liverpool,4.8,Arsenal,True,4.0,1,18.9,18.9,0.21,0.21,1.0,AVAILABLE,a,,1.226,1.393,1.226,0.255,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+125,Georginio,FWD,Brighton,5.3,Man City,False,5.0,1,7.5,7.5,0.083,0.083,1.0,AVAILABLE,a,100.0,1.216,1.501,1.216,0.229,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+618,Goretzka,MID,Aston Villa,5.9,Fulham,True,2.0,1,3.9,3.9,0.043,0.043,1.0,AVAILABLE,a,100.0,1.209,1.112,1.209,0.205,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+116,Dunk,DEF,Brighton,4.5,Man City,False,5.0,1,55.7,55.7,0.619,0.619,1.0,AVAILABLE,a,100.0,1.206,2.115,1.206,0.268,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+147,Tosin,DEF,Spurs,4.3,Crystal Palace,True,2.0,1,17.1,17.1,0.19,0.19,1.0,AVAILABLE,a,100.0,1.195,1.005,1.195,0.278,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+617,Cho,MID,Hull City,5.0,Ipswich Town,True,2.0,1,12.3,12.3,0.137,0.137,1.0,AVAILABLE,a,100.0,1.195,1.131,1.195,0.239,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+429,Rashford,MID,Man Utd,6.9,Chelsea,False,4.0,1,26.0,34.7,0.289,0.386,0.75,MINOR_RISK,d,75.0,1.589,1.64,1.192,0.173,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+113,F.Kadıoğlu,DEF,Brighton,4.4,Man City,False,5.0,1,53.6,71.4,0.595,0.793,0.75,MINOR_RISK,d,75.0,1.584,2.75,1.188,0.27,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+668,Tutierov,MID,Sunderland,5.0,Coventry City,False,2.0,1,31.1,31.1,0.346,0.346,1.0,AVAILABLE,a,,1.176,1.132,1.176,0.235,2,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+245,Dibling,MID,Everton,5.3,Newcastle,False,3.0,1,6.9,6.9,0.077,0.077,1.0,AVAILABLE,a,,1.162,1.164,1.162,0.219,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+52,Alysson,MID,Aston Villa,4.9,Fulham,True,2.0,1,22.8,22.8,0.253,0.253,1.0,AVAILABLE,a,100.0,1.161,1.166,1.161,0.237,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+157,Estêvão,MID,Chelsea,6.3,Man Utd,True,4.0,1,4.7,4.7,0.052,0.052,1.0,AVAILABLE,a,,1.159,1.274,1.159,0.184,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+638,Norton-Cuffy,DEF,Hull City,3.9,Ipswich Town,True,2.0,1,18.6,18.6,0.207,0.207,1.0,AVAILABLE,a,100.0,1.142,1.135,1.142,0.293,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+233,Mykolenko,DEF,Everton,4.6,Newcastle,False,3.0,1,53.2,71.0,0.592,0.789,0.75,MINOR_RISK,d,75.0,1.49,1.519,1.118,0.243,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+81,Rodríguez,FWD,Bournemouth,6.0,Leeds,True,3.0,1,4.5,4.5,0.05,0.05,1.0,AVAILABLE,a,100.0,1.093,1.091,1.093,0.182,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+440,Zirkzee,FWD,Man Utd,5.3,Chelsea,False,4.0,1,10.4,10.4,0.116,0.116,1.0,AVAILABLE,a,,1.083,1.136,1.083,0.204,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+247,Hackney,MID,Everton,5.3,Newcastle,False,3.0,1,6.6,6.6,0.073,0.073,1.0,AVAILABLE,a,100.0,1.082,1.083,1.082,0.204,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+231,Keane,DEF,Everton,4.7,Newcastle,False,3.0,1,18.0,18.0,0.2,0.2,1.0,AVAILABLE,a,,1.069,1.072,1.069,0.228,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+462,Steur,MID,Newcastle,4.8,Everton,True,3.0,1,33.7,33.7,0.374,0.374,1.0,AVAILABLE,a,,1.048,1.046,1.048,0.218,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+647,Osorio,MID,Crystal Palace,5.4,Spurs,False,3.0,1,4.1,4.1,0.046,0.046,1.0,AVAILABLE,a,,1.044,1.046,1.044,0.193,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+570,Palacios,MID,Fulham,5.3,Aston Villa,False,3.0,1,6.0,6.0,0.067,0.067,1.0,AVAILABLE,a,,1.041,1.043,1.041,0.196,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+605,Yalcouyé,MID,Brighton,4.5,Man City,False,5.0,1,20.8,20.8,0.231,0.231,1.0,AVAILABLE,a,,1.038,1.346,1.038,0.231,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+422,Mazraoui,DEF,Man Utd,4.3,Chelsea,False,4.0,1,6.8,6.8,0.076,0.076,1.0,AVAILABLE,a,100.0,1.031,1.204,1.031,0.24,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+161,Lavia,MID,Chelsea,5.0,Man Utd,True,4.0,1,17.8,17.8,0.198,0.198,1.0,AVAILABLE,a,,1.027,1.104,1.027,0.205,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+152,Palestra,DEF,Chelsea,5.3,Man Utd,True,4.0,1,6.6,6.6,0.073,0.073,1.0,AVAILABLE,a,100.0,1.015,1.091,1.015,0.192,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+521,Kulusevski,MID,Spurs,6.5,Crystal Palace,True,2.0,1,0.6,0.6,0.007,0.007,1.0,AVAILABLE,a,100.0,1.008,0.891,1.008,0.155,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+543,Diarra,MID,Sunderland,5.3,Coventry City,False,2.0,1,6.3,6.3,0.07,0.07,1.0,AVAILABLE,a,100.0,1.008,0.946,1.008,0.19,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+454,Elanga,MID,Newcastle,6.0,Everton,True,3.0,1,2.0,2.0,0.022,0.022,1.0,AVAILABLE,a,100.0,0.977,0.976,0.977,0.163,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+144,Gusto,DEF,Chelsea,4.8,Man Utd,True,4.0,1,17.3,17.3,0.192,0.192,1.0,AVAILABLE,a,100.0,0.964,1.067,0.964,0.201,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+271,Muniz,FWD,Fulham,5.3,Aston Villa,False,3.0,1,7.9,7.9,0.088,0.088,1.0,AVAILABLE,a,,0.96,0.961,0.96,0.181,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+263,Kevin,MID,Fulham,5.2,Aston Villa,False,3.0,1,7.6,7.6,0.084,0.084,1.0,AVAILABLE,a,,0.957,0.959,0.957,0.184,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+488,I.Sangaré,MID,Nott'm Forest,4.7,Brentford,False,3.0,1,8.2,8.2,0.091,0.091,1.0,AVAILABLE,a,100.0,0.951,0.954,0.951,0.202,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+493,Kalimuendo,FWD,Nott'm Forest,5.4,Brentford,False,3.0,1,3.6,3.6,0.04,0.04,1.0,AVAILABLE,a,,0.951,0.953,0.951,0.176,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+208,Sarr,MID,Crystal Palace,6.2,Spurs,False,3.0,1,2.2,2.2,0.024,0.024,1.0,AVAILABLE,a,100.0,0.938,0.94,0.938,0.151,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+74,Brooks,MID,Bournemouth,5.0,Leeds,True,3.0,1,10.1,10.1,0.112,0.112,1.0,AVAILABLE,a,100.0,0.936,0.934,0.936,0.187,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+541,Meunier,DEF,Sunderland,4.5,Coventry City,False,2.0,1,27.3,36.4,0.303,0.404,0.75,MINOR_RISK,d,75.0,1.19,1.032,0.892,0.198,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+108,Wilson,FWD,Brentford,5.4,Nott'm Forest,True,3.0,1,2.5,2.5,0.028,0.028,1.0,AVAILABLE,a,,0.89,0.888,0.89,0.165,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+487,Dominguez,MID,Nott'm Forest,4.8,Brentford,False,3.0,1,12.8,17.0,0.142,0.189,0.75,MINOR_RISK,d,75.0,1.157,1.147,0.868,0.181,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+535,Alderete,DEF,Sunderland,4.8,Coventry City,False,2.0,1,14.4,14.4,0.16,0.16,1.0,AVAILABLE,a,100.0,0.867,0.651,0.867,0.181,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+560,Penders,GKP,Chelsea,4.4,Man Utd,True,4.0,1,18.9,18.9,0.21,0.21,1.0,AVAILABLE,a,,0.856,0.905,0.856,0.195,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+266,Cairney,MID,Fulham,4.9,Aston Villa,False,3.0,1,3.2,3.2,0.036,0.036,1.0,AVAILABLE,a,100.0,0.852,0.853,0.852,0.174,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+78,Kroupi.Jr,MID,Bournemouth,7.3,Leeds,True,3.0,1,0.4,0.4,0.004,0.004,1.0,AVAILABLE,a,100.0,0.85,0.846,0.85,0.116,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+364,Tsimikas,DEF,Liverpool,4.9,Arsenal,True,4.0,1,7.1,7.1,0.079,0.079,1.0,AVAILABLE,a,,0.85,0.915,0.85,0.173,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+584,Hamer,MID,Coventry City,5.3,Sunderland,True,3.0,1,2.4,2.4,0.027,0.027,1.0,AVAILABLE,a,,0.834,0.832,0.834,0.157,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+359,Gomez,DEF,Liverpool,4.9,Arsenal,True,4.0,1,2.0,2.0,0.022,0.022,1.0,AVAILABLE,a,100.0,0.832,0.871,0.832,0.17,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+19,Zubimendi,MID,Arsenal,5.2,Liverpool,False,4.0,1,7.4,7.4,0.082,0.082,1.0,AVAILABLE,a,100.0,0.829,0.855,0.829,0.159,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+310,Matusiwa,MID,Ipswich Town,4.9,Hull City,False,2.0,1,3.6,3.6,0.04,0.04,1.0,AVAILABLE,a,100.0,0.827,0.809,0.827,0.169,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+614,Hadjam,DEF,Brighton,4.5,Man City,False,5.0,1,1.7,1.7,0.019,0.019,1.0,AVAILABLE,a,,0.821,1.047,0.821,0.183,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+306,Greaves,DEF,Ipswich Town,3.9,Hull City,False,2.0,1,35.8,35.8,0.398,0.398,1.0,AVAILABLE,a,,0.82,0.846,0.82,0.21,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+395,Lewis,DEF,Man City,4.3,Brighton,True,3.0,1,6.8,6.8,0.076,0.076,1.0,AVAILABLE,a,,0.818,0.815,0.818,0.19,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+421,Heaven,DEF,Man Utd,4.3,Chelsea,False,4.0,1,16.5,16.5,0.183,0.183,1.0,AVAILABLE,a,100.0,0.81,0.894,0.81,0.188,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+119,Costinha,DEF,Brighton,4.5,Man City,False,5.0,1,20.2,20.2,0.224,0.224,1.0,AVAILABLE,a,,0.796,1.078,0.796,0.177,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+20,Dowman,MID,Arsenal,5.3,Liverpool,False,4.0,1,2.8,2.8,0.031,0.031,1.0,AVAILABLE,a,100.0,0.789,0.806,0.789,0.149,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+188,Torp,MID,Coventry City,5.3,Sunderland,True,3.0,1,2.0,2.0,0.022,0.022,1.0,AVAILABLE,a,,0.753,0.752,0.753,0.142,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+339,Longstaff,MID,Leeds,4.8,Bournemouth,False,3.0,1,1.8,1.8,0.02,0.02,1.0,AVAILABLE,a,,0.75,0.751,0.75,0.156,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+573,Sanchez,DEF,Bournemouth,4.4,Leeds,True,3.0,1,2.7,2.7,0.03,0.03,1.0,AVAILABLE,a,,0.74,0.739,0.74,0.168,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+62,Diakité,DEF,Bournemouth,4.9,Leeds,True,3.0,1,0.6,0.6,0.007,0.007,1.0,AVAILABLE,a,,0.73,0.729,0.73,0.149,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+549,Talbi,MID,Sunderland,5.2,Coventry City,False,2.0,1,1.7,1.7,0.019,0.019,1.0,AVAILABLE,a,,0.73,0.708,0.73,0.14,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+628,Allan,MID,Man City,6.0,Brighton,True,3.0,1,1.5,1.5,0.017,0.017,1.0,AVAILABLE,a,,0.719,0.717,0.719,0.12,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+508,Davies,DEF,Spurs,3.9,Crystal Palace,True,2.0,1,3.3,3.3,0.037,0.037,1.0,AVAILABLE,a,,0.714,0.762,0.714,0.183,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+77,Adli,MID,Bournemouth,4.8,Leeds,True,3.0,1,2.1,2.1,0.023,0.023,1.0,AVAILABLE,a,100.0,0.701,0.7,0.701,0.146,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+478,Netz,DEF,Nott'm Forest,4.4,Brentford,False,3.0,1,2.0,2.0,0.022,0.022,1.0,AVAILABLE,a,,0.697,0.699,0.697,0.158,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+9,Hincapie,DEF,Arsenal,5.2,Liverpool,False,4.0,1,1.2,1.2,0.013,0.013,1.0,AVAILABLE,a,100.0,0.695,0.733,0.695,0.134,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+550,Jocelin.T,MID,Sunderland,4.9,Coventry City,False,2.0,1,2.5,2.5,0.028,0.028,1.0,AVAILABLE,a,,0.687,0.686,0.687,0.14,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+435,Lacey,MID,Man Utd,4.9,Chelsea,False,4.0,1,1.8,1.8,0.02,0.02,1.0,AVAILABLE,a,,0.684,0.686,0.684,0.14,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+633,Ahanor,DEF,Crystal Palace,4.5,Spurs,False,3.0,1,22.2,22.2,0.247,0.247,1.0,AVAILABLE,a,,0.645,0.651,0.645,0.143,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+553,Isidor,FWD,Sunderland,5.4,Coventry City,False,2.0,1,10.2,20.5,0.114,0.228,0.5,RISK,d,50.0,1.289,1.208,0.644,0.119,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+456,J.Ramsey,MID,Newcastle,4.8,Everton,True,3.0,1,2.0,2.0,0.022,0.022,1.0,AVAILABLE,a,100.0,0.64,0.638,0.64,0.133,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+613,Ahoka,MID,Sunderland,4.4,Coventry City,False,2.0,1,3.8,3.8,0.042,0.042,1.0,AVAILABLE,a,,0.631,0.63,0.631,0.143,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+212,Hughes,MID,Crystal Palace,4.3,Spurs,False,3.0,1,3.3,3.3,0.037,0.037,1.0,AVAILABLE,a,,0.628,0.629,0.628,0.146,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+145,Fofana,DEF,Chelsea,5.0,Man Utd,True,4.0,1,34.5,34.5,0.383,0.383,1.0,AVAILABLE,a,100.0,0.613,0.652,0.613,0.123,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+377,Munoz,MID,Liverpool,6.5,Arsenal,True,4.0,1,10.0,39.9,0.111,0.443,0.25,MAJOR_RISK,d,25.0,2.373,2.833,0.593,0.091,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+243,Alcaraz,MID,Everton,4.8,Newcastle,False,3.0,1,1.2,1.2,0.013,0.013,1.0,AVAILABLE,a,,0.578,0.58,0.578,0.12,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+120,Svoboda,DEF,Brighton,5.0,Man City,False,5.0,1,0.8,0.8,0.009,0.009,1.0,AVAILABLE,a,,0.551,0.678,0.551,0.11,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+56,Abraham,FWD,Aston Villa,5.5,Fulham,True,2.0,1,7.1,7.1,0.079,0.079,1.0,AVAILABLE,a,100.0,0.529,0.499,0.529,0.096,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+370,Chiesa,MID,Liverpool,5.3,Arsenal,True,4.0,1,0.3,0.3,0.003,0.003,1.0,AVAILABLE,a,100.0,0.528,0.541,0.528,0.1,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+321,Walle Egeli,FWD,Ipswich Town,4.5,Hull City,False,2.0,1,1.4,1.4,0.016,0.016,1.0,AVAILABLE,a,,0.51,0.474,0.51,0.113,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+568,Barco,MID,Chelsea,5.4,Man Utd,True,4.0,1,19.0,19.0,0.211,0.211,1.0,AVAILABLE,a,,0.473,0.473,0.473,0.088,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+648,Bahoya,MID,Leeds,4.9,Bournemouth,False,3.0,1,0.8,0.8,0.009,0.009,1.0,AVAILABLE,a,100.0,0.456,0.458,0.456,0.093,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+473,Aina,DEF,Nott'm Forest,4.3,Brentford,False,3.0,1,35.5,35.5,0.394,0.394,1.0,AVAILABLE,a,,0.446,0.457,0.446,0.104,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+651,J.Angulo,FWD,Sunderland,4.5,Coventry City,False,2.0,1,1.4,1.4,0.016,0.016,1.0,AVAILABLE,a,,0.432,0.414,0.432,0.096,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+190,Tchaouna,MID,Coventry City,5.3,Sunderland,True,3.0,1,6.8,6.8,0.076,0.076,1.0,AVAILABLE,a,,0.43,0.429,0.43,0.081,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+328,Struijk,DEF,Brighton,4.9,Man City,False,5.0,1,16.4,21.8,0.182,0.242,0.75,MINOR_RISK,d,75.0,0.556,0.699,0.417,0.085,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+253,Andersen,DEF,Fulham,5.0,Aston Villa,False,3.0,1,1.5,1.5,0.017,0.017,1.0,AVAILABLE,a,100.0,0.381,0.382,0.381,0.076,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+641,Bard,DEF,Leeds,4.5,Bournemouth,False,3.0,1,2.7,2.7,0.03,0.03,1.0,AVAILABLE,a,,0.38,0.381,0.38,0.084,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+564,Scherpen,GKP,Ipswich Town,4.4,Hull City,False,2.0,1,18.0,18.0,0.2,0.2,1.0,AVAILABLE,a,,0.377,0.346,0.377,0.086,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+177,Kesler-Hayden,DEF,Coventry City,3.9,Sunderland,True,3.0,1,0.4,0.4,0.004,0.004,1.0,AVAILABLE,a,100.0,0.375,0.373,0.375,0.096,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+51,George Hemmings,MID,Aston Villa,4.5,Fulham,True,2.0,1,9.4,9.4,0.104,0.104,1.0,AVAILABLE,a,100.0,0.373,0.341,0.373,0.083,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+126,O'Riley,MID,Brighton,5.4,Man City,False,5.0,1,1.5,1.5,0.017,0.017,1.0,AVAILABLE,a,,0.364,0.389,0.364,0.067,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+608,Jebbison,FWD,Bournemouth,5.0,Leeds,True,3.0,1,2.2,2.2,0.024,0.024,1.0,AVAILABLE,a,,0.36,0.358,0.36,0.072,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+621,McAidoo,MID,Man City,4.4,Brighton,True,3.0,1,3.2,3.2,0.036,0.036,1.0,AVAILABLE,a,,0.356,0.355,0.356,0.081,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+100,Carvalho,MID,Brentford,5.0,Nott'm Forest,True,3.0,1,0.4,0.4,0.004,0.004,1.0,AVAILABLE,a,100.0,0.353,0.359,0.353,0.071,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+643,Chilwell,DEF,Crystal Palace,4.4,Spurs,False,3.0,1,2.0,2.0,0.022,0.022,1.0,AVAILABLE,a,100.0,0.351,0.352,0.351,0.08,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+559,Bamba,MID,Newcastle,4.8,Everton,True,3.0,1,2.0,2.0,0.022,0.022,1.0,AVAILABLE,a,,0.347,0.345,0.347,0.072,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+66,Soler,DEF,Bournemouth,4.0,Leeds,True,3.0,1,0.9,0.9,0.01,0.01,1.0,AVAILABLE,a,100.0,0.336,0.334,0.336,0.084,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+600,Osman,MID,Brighton,4.9,Man City,False,5.0,1,1.8,1.8,0.02,0.02,1.0,AVAILABLE,a,,0.331,0.353,0.331,0.068,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+343,James,MID,Leeds,4.9,Bournemouth,False,3.0,1,4.5,4.5,0.05,0.05,1.0,AVAILABLE,a,100.0,0.328,0.329,0.328,0.067,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+636,Ángel,MID,Fulham,5.0,Aston Villa,False,3.0,1,2.8,2.8,0.031,0.031,1.0,AVAILABLE,a,,0.317,0.318,0.317,0.063,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+262,Smith Rowe,MID,Fulham,5.3,Aston Villa,False,3.0,1,1.8,2.4,0.02,0.027,0.75,MINOR_RISK,d,75.0,0.376,0.377,0.282,0.053,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+582,Madjo,FWD,Aston Villa,5.4,Fulham,True,2.0,1,1.2,1.2,0.013,0.013,1.0,AVAILABLE,a,100.0,0.279,0.267,0.279,0.052,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+589,Gourna-Douath,MID,Hull City,4.9,Ipswich Town,True,2.0,1,1.4,1.8,0.015,0.02,0.75,MINOR_RISK,d,75.0,0.371,0.353,0.279,0.057,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+84,Collins,DEF,Brentford,5.4,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.239,0.238,0.239,0.044,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+392,Aït-Nouri,DEF,Man City,5.2,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.237,0.236,0.237,0.046,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+11,Mosquera,DEF,Arsenal,5.2,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.226,0.236,0.226,0.043,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+21,Nørgaard,MID,Everton,4.8,Newcastle,False,3.0,1,0.8,0.8,0.009,0.009,1.0,AVAILABLE,a,100.0,0.193,0.194,0.193,0.04,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+595,Gozo,MID,Crystal Palace,4.9,Spurs,False,3.0,1,0.9,0.9,0.01,0.01,1.0,AVAILABLE,a,,0.193,0.194,0.193,0.039,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+662,Nicoll-Jazuli,MID,Chelsea,4.5,Man Utd,True,4.0,1,0.6,0.6,0.007,0.007,1.0,AVAILABLE,a,,0.185,0.184,0.185,0.041,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+227,Travers,GKP,Everton,5.0,Newcastle,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.177,0.178,0.177,0.035,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+160,Garnacho,MID,Aston Villa,5.7,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.171,0.158,0.171,0.03,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+655,Gboho,MID,Coventry City,5.5,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.16,0.158,0.16,0.029,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+594,David,FWD,Brighton,5.9,Man City,False,5.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.14,0.166,0.14,0.024,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+351,Mamardashvili,GKP,Liverpool,4.8,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.138,0.137,0.138,0.029,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+442,Pope,GKP,Newcastle,4.9,Everton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.138,0.137,0.138,0.028,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+587,Rulli,GKP,Man City,4.9,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.138,0.137,0.138,0.028,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+630,Harwood-Bellis,DEF,Aston Villa,4.5,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.138,0.086,0.138,0.031,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+2,Arrizabalaga,GKP,Arsenal,4.9,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.135,0.137,0.135,0.028,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+3,Meslier,GKP,Arsenal,4.9,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.135,0.137,0.135,0.028,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+416,De Ligt,DEF,Man Utd,4.9,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.135,0.152,0.135,0.028,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+42,Guessand,MID,Crystal Palace,5.4,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.125,0.127,0.125,0.023,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+179,Latibeaudiere,DEF,Coventry City,3.9,Sunderland,True,3.0,1,0.2,0.2,0.002,0.002,1.0,AVAILABLE,a,,0.125,0.124,0.125,0.032,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+645,Mouzakitis,MID,Hull City,5.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.109,0.1,0.109,0.022,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+344,Gruev,MID,Leeds,5.0,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.099,0.1,0.099,0.02,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+35,Bogarde,MID,Aston Villa,4.9,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.09,0.081,0.09,0.018,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+292,Ömür,MID,Hull City,4.9,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.09,0.081,0.09,0.018,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+574,Hjertø-Dahl,MID,Hull City,4.8,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.09,0.081,0.09,0.019,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+89,Henry,DEF,Brentford,4.4,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.088,0.086,0.088,0.02,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+92,Ji-soo,DEF,Brentford,4.4,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.088,0.086,0.088,0.02,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+396,Vitor Reis,DEF,Man City,4.4,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.088,0.086,0.088,0.02,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+309,Núñez,MID,Ipswich Town,4.8,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.087,0.081,0.087,0.018,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+324,Mehmeti,MID,Ipswich Town,4.8,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.087,0.081,0.087,0.018,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+207,Mingueza,DEF,Crystal Palace,4.3,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.085,0.086,0.085,0.02,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+255,J.Cuenca,DEF,Fulham,4.4,Aston Villa,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.085,0.086,0.085,0.019,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+374,Endo,MID,Liverpool,4.8,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.083,0.081,0.083,0.017,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+218,Doucouré,MID,Crystal Palace,4.8,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.08,0.081,0.08,0.017,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+434,J.Fletcher,MID,Man Utd,4.9,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.08,0.081,0.08,0.016,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+29,M.Bizot,GKP,Aston Villa,4.5,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.074,0.063,0.074,0.017,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+531,Ellborg,GKP,Sunderland,4.4,Coventry City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.072,0.063,0.072,0.016,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+561,Anselmino,DEF,Chelsea,4.5,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.072,0.086,0.072,0.016,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+198,Henderson,GKP,Crystal Palace,4.9,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.5,RISK,d,50.0,0.135,0.137,0.068,0.014,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+83,Valdimarsson,GKP,Brentford,4.4,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.064,0.063,0.064,0.015,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+122,Minteh,MID,Brighton,5.8,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.5,RISK,d,50.0,0.128,0.158,0.064,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+172,Wilson,GKP,Coventry City,4.4,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.064,0.063,0.064,0.015,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+386,Bettinelli,GKP,Man City,4.4,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.064,0.063,0.064,0.015,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+443,Gillespie,GKP,Newcastle,4.5,Everton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.064,0.063,0.064,0.014,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+615,Di Gregorio,GKP,Bournemouth,4.5,Leeds,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.064,0.063,0.064,0.014,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+228,King,GKP,Everton,4.5,Newcastle,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.061,0.063,0.061,0.014,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+325,Darlow,GKP,Man Utd,4.5,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.061,0.063,0.061,0.014,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+468,John,GKP,Nott'm Forest,4.4,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.061,0.063,0.061,0.014,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+590,Benda,GKP,Nott'm Forest,4.5,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.061,0.063,0.061,0.014,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+669,Sharman-Lowe,GKP,Chelsea,4.0,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.056,0.055,0.056,0.014,1,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+50,Burrowes,MID,Aston Villa,4.4,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.05,0.046,0.05,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+288,Dowell,MID,Hull City,4.4,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.05,0.046,0.05,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+294,Zambrano,MID,Hull City,4.5,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.05,0.046,0.05,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+524,Olusesi,MID,Spurs,4.4,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.05,0.046,0.05,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+601,Williams-Barnett,MID,Spurs,4.5,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.05,0.046,0.05,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+117,Coppola,DEF,Brighton,4.5,Man City,False,5.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.086,0.048,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+189,Shepherd,MID,Coventry City,4.4,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.046,0.048,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+273,Phillips,GKP,Hull City,4.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.043,0.048,0.012,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+378,McConnell,MID,Liverpool,4.4,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.046,0.048,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+495,Austin,GKP,Spurs,4.0,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.043,0.048,0.012,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+497,Dubravka,GKP,Spurs,4.0,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.043,0.048,0.012,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+653,Samba,MID,Man City,4.4,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.046,0.048,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+657,Nunes,MID,Brentford,4.5,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.046,0.048,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+659,Miley,MID,Newcastle,4.5,Everton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.046,0.048,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+665,Mills,MID,Newcastle,4.5,Everton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.046,0.048,0.011,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+666,Thompson,MID,Newcastle,4.5,Everton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.046,0.048,0.011,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+667,Wright,GKP,Aston Villa,4.0,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.048,0.043,0.048,0.012,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+169,Mheuka,FWD,Chelsea,4.5,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.047,0.046,0.047,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+312,Taylor,MID,Ipswich Town,4.4,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.047,0.046,0.047,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+323,McAteer,MID,Ipswich Town,4.4,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.047,0.046,0.047,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+382,Danns,FWD,Liverpool,4.5,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.047,0.046,0.047,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+664,Salia,FWD,Newcastle,4.5,Everton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.047,0.046,0.047,0.01,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+221,Drakes-Thomas,MID,Crystal Palace,4.4,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+270,Reed,MID,Fulham,4.3,Aston Villa,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+301,Palmer,GKP,Ipswich Town,4.0,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.043,0.045,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+302,Button,GKP,Ipswich Town,4.0,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.043,0.045,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+437,Bendito Mantato,MID,Man Utd,4.4,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+438,Fletcher,MID,Man Utd,4.4,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+489,Yates,MID,Nott'm Forest,4.4,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+604,Cresswell,MID,Leeds,4.5,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+626,Zepa,MID,Fulham,4.4,Aston Villa,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+654,Graham,MID,Everton,4.5,Newcastle,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.045,0.046,0.045,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+58,Forster,GKP,Bournemouth,4.0,Leeds,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.044,0.043,0.044,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+272,Kusi-Asare,FWD,Fulham,4.4,Aston Villa,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.044,0.046,0.044,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+352,Woodman,GKP,Liverpool,4.0,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.044,0.043,0.044,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+355,Davies,GKP,Liverpool,4.0,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.044,0.043,0.044,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+623,Bentley,GKP,Coventry City,4.0,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.044,0.043,0.044,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+661,Balcombe,GKP,Brentford,4.0,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.044,0.043,0.044,0.011,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+178,Bidwell,DEF,Coventry City,4.0,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.042,0.04,0.042,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+361,Lucky,DEF,Liverpool,4.0,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.042,0.04,0.042,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+622,Braithwaite,DEF,Man City,3.9,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.042,0.04,0.042,0.011,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+660,Fredrick,DEF,Brentford,4.0,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.042,0.04,0.042,0.01,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+663,Pivas,DEF,Newcastle,4.0,Everton,True,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.042,0.04,0.042,0.01,4,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+251,Lecomte,GKP,Fulham,4.0,Aston Villa,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.041,0.043,0.041,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+414,Heaton,GKP,Man Utd,4.0,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.041,0.043,0.041,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+555,Matthews,GKP,Crystal Palace,4.0,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.041,0.043,0.041,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+625,Cairns,GKP,Leeds,4.0,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.041,0.043,0.041,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+629,Zetterer,GKP,Leeds,4.0,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.041,0.043,0.041,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+424,Amass,DEF,Man Utd,4.0,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.039,0.04,0.039,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+476,O.Richards,DEF,Nott'm Forest,3.9,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.039,0.04,0.039,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+603,Lienou,DEF,Leeds,4.0,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.039,0.04,0.039,0.01,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+284,McCarthy,DEF,Hull City,4.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.034,0.04,0.034,0.009,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+285,McNair,DEF,Hull City,4.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,100.0,0.034,0.04,0.034,0.009,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+509,Byfield,DEF,Spurs,4.0,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.034,0.04,0.034,0.009,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+510,Rowswell,DEF,Spurs,4.0,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.034,0.04,0.034,0.009,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+606,Rowe,DEF,Aston Villa,4.0,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.034,0.04,0.034,0.009,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+303,Kipré,DEF,Ipswich Town,3.9,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.031,0.04,0.031,0.008,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+308,Furlong,DEF,Ipswich Town,3.9,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.031,0.04,0.031,0.008,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+130,Wieffer,DEF,Brighton,4.8,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.25,MAJOR_RISK,d,25.0,0.113,0.152,0.028,0.006,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+134,Oriola,MID,Brighton,4.4,Man City,False,5.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.026,0.046,0.026,0.006,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+658,Ibrahim,MID,Brighton,4.5,Man City,False,5.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.026,0.046,0.026,0.006,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+111,Steele,GKP,Brighton,4.0,Man City,False,5.0,1,0.0,0.0,0.0,0.0,1.0,AVAILABLE,a,,0.022,0.043,0.022,0.006,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+6,Saliba,DEF,Arsenal,5.9,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.361,0.354,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+12,Saka,MID,Arsenal,9.5,Liverpool,False,4.0,1,0.0,71.4,0.0,0.793,0.0,UNAVAILABLE,i,0.0,3.266,3.914,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+18,Martinelli,MID,Arsenal,6.3,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.175,0.181,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+22,Nwaneri,MID,Arsenal,5.4,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.125,0.127,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+23,Fábio Vieira,MID,Arsenal,5.5,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.152,0.158,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+24,Nelson,MID,Arsenal,5.5,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.152,0.158,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+27,G.Jesus,FWD,Arsenal,5.9,Liverpool,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.159,0.166,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+28,Martinez,GKP,Chelsea,5.0,Man Utd,True,4.0,1,0.0,71.0,0.0,0.789,0.0,UNAVAILABLE,i,0.0,2.685,2.948,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+30,Digne,DEF,Aston Villa,4.5,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.138,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+38,A.García,DEF,Aston Villa,4.0,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.034,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+39,Nedeljkovic,DEF,Aston Villa,4.0,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.034,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+44,Bailey,MID,Aston Villa,5.4,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.139,0.127,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+48,Onana,MID,Aston Villa,4.9,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.09,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+49,Iling Jr,MID,Aston Villa,5.0,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.109,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+55,Watkins,FWD,Aston Villa,7.8,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.302,0.258,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+59,Dennis,GKP,Bournemouth,4.0,Leeds,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.044,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+63,Milosavljević,DEF,Bournemouth,4.9,Leeds,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.154,0.152,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+65,J.Araujo,DEF,Bournemouth,4.4,Leeds,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.088,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+69,Scott,MID,Bournemouth,6.0,Leeds,True,3.0,1,0.0,36.0,0.0,0.4,0.0,UNAVAILABLE,i,0.0,0.859,0.857,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+76,Tóth.A,MID,Bournemouth,4.9,Leeds,True,3.0,1,0.0,0.3,0.0,0.003,0.0,UNAVAILABLE,i,0.0,0.154,0.153,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+80,Enes Ünal,FWD,Bournemouth,5.5,Leeds,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.153,0.151,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+99,Milambo,MID,Brentford,5.0,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.102,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+102,Yarmoliuk,MID,Brentford,4.8,Nott'm Forest,True,3.0,1,0.0,39.9,0.0,0.443,0.0,UNAVAILABLE,s,0.0,1.983,1.97,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+103,Dasilva,MID,Brentford,4.8,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.083,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+107,Furo,FWD,Brentford,4.5,Nott'm Forest,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.047,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+118,Igor,DEF,Brighton,4.5,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.048,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+121,Mitoma,MID,Brighton,5.9,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.143,0.173,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+128,Buonanotte,MID,Brighton,5.0,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.079,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+132,Howell,MID,Brighton,4.5,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.026,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+133,Watson,MID,Brighton,5.0,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.079,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+135,Yohanna,MID,Brighton,4.8,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.06,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+137,Tzimas,FWD,Brighton,5.4,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.099,0.12,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+139,Ferguson,FWD,Brighton,5.0,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.076,0.099,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+140,Sánchez,GKP,Chelsea,4.9,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.138,0.137,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+141,Jörgensen,GKP,Chelsea,5.0,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.18,0.178,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+142,James,DEF,Chelsea,5.2,Man Utd,True,4.0,1,0.0,18.0,0.0,0.2,0.0,UNAVAILABLE,i,0.0,0.68,0.703,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+143,Chalobah,DEF,Chelsea,5.5,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.35,0.339,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+146,B.Badiashile,DEF,Chelsea,4.5,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.072,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+150,M.Sarr,DEF,Chelsea,4.5,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.072,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+158,Gittens,MID,Chelsea,5.8,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.155,0.158,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+163,D.Essugo,MID,Chelsea,4.5,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.048,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+168,Marc Guiu,FWD,Chelsea,5.0,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.101,0.099,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+170,Emegha,FWD,Chelsea,4.9,Man Utd,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.082,0.08,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+171,Dovin,GKP,Coventry City,4.0,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.044,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+174,Kitching,DEF,Coventry City,4.0,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.042,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+180,Woolfenden,DEF,Coventry City,3.9,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.042,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+181,Brau,DEF,Coventry City,4.0,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.042,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+182,Amenda,DEF,Coventry City,3.9,Sunderland,True,3.0,1,0.0,18.0,0.0,0.2,0.0,UNAVAILABLE,i,0.0,0.574,0.579,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+187,Eccles,MID,Coventry City,4.8,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.083,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+191,Borges Rodrigues,MID,Coventry City,4.5,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.048,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+192,Andrews,MID,Coventry City,4.5,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.048,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+193,Wright,FWD,Coventry City,5.3,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.12,0.118,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+196,Markelo,FWD,Coventry City,5.0,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.101,0.099,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+197,Bassette,FWD,Coventry City,4.5,Sunderland,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.047,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+205,Sosa,DEF,Crystal Palace,4.5,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.085,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+206,Chadi Riad,DEF,Crystal Palace,4.3,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.085,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+215,Devenny,MID,Crystal Palace,5.0,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.099,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+216,Esse,MID,Crystal Palace,5.0,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.099,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+217,M.França,MID,Crystal Palace,4.9,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.08,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+219,J.Rak-Sakyi,MID,Crystal Palace,4.9,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.08,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+220,Cardines,DEF,Crystal Palace,4.5,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.085,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+225,Uche,FWD,Crystal Palace,5.0,Spurs,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.098,0.099,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+234,Patterson,DEF,Everton,4.5,Newcastle,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.085,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+235,Aznou,DEF,Everton,4.0,Newcastle,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.039,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+248,Beto,FWD,Everton,5.4,Newcastle,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.119,0.12,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+252,McNally,GKP,Fulham,4.0,Aston Villa,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.041,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+267,Lukić,MID,Ipswich Town,4.9,Hull City,False,2.0,1,0.0,52.1,0.0,0.579,0.0,UNAVAILABLE,i,0.0,1.844,1.856,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+269,Sessegnon,DEF,Fulham,4.3,Aston Villa,False,3.0,1,0.0,18.7,0.0,0.208,0.0,UNAVAILABLE,s,0.0,1.37,1.389,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+274,Butland,GKP,Hull City,4.4,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.074,0.063,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+275,Cartwright,GKP,Hull City,4.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.048,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+276,Lo-Tutala,GKP,Hull City,4.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.048,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+278,Hughes,DEF,Hull City,3.9,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.034,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+281,Drameh,DEF,Hull City,4.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.034,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+283,Jacob,DEF,Hull City,4.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.034,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+287,Millar,MID,Hull City,5.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.109,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+291,Matazo,MID,Hull City,4.5,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.05,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+293,Kamara,MID,Hull City,5.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.109,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+296,Akintola,MID,Hull City,5.0,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.109,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+297,Gyabi,MID,Hull City,4.4,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.05,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+298,Destan,FWD,Hull City,4.5,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.05,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+299,Burstow,FWD,Hull City,4.5,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.05,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+307,Johnson,DEF,Ipswich Town,4.0,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.031,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+311,Burns,MID,Ipswich Town,5.0,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.106,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+314,Ogbene,MID,Ipswich Town,4.9,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.087,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+317,Hirst,FWD,Ipswich Town,5.0,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.105,0.099,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+319,Szmodics,MID,Ipswich Town,5.0,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.106,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+322,Al-Hamadi,FWD,Ipswich Town,5.0,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.105,0.099,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+326,Perri,GKP,Leeds,4.5,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.061,0.063,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+329,Rodon,DEF,Leeds,4.3,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.085,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+333,Bornauw,DEF,Leeds,4.5,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.085,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+341,Gnonto,MID,Leeds,5.0,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.099,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+342,Harrison,MID,Leeds,5.0,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.099,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+348,Piroe,FWD,Leeds,5.0,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.098,0.099,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+349,Mateo Joseph,FWD,Leeds,4.5,Bournemouth,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.044,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+353,Pecsi,GKP,Liverpool,4.0,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.044,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+354,Jaros,GKP,Liverpool,4.0,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.044,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+357,Frimpong,DEF,Liverpool,5.2,Arsenal,True,4.0,1,0.0,5.8,0.0,0.064,0.0,UNAVAILABLE,i,0.0,1.163,1.239,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+360,Bradley,DEF,Liverpool,4.9,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.138,0.152,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+363,Leoni,DEF,Liverpool,3.9,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.042,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+365,Ramsay,DEF,Liverpool,4.0,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.042,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+368,Szoboszlai,MID,Liverpool,6.7,Arsenal,True,4.0,1,0.0,37.3,0.0,0.414,0.0,UNAVAILABLE,i,0.0,1.723,1.821,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+373,C.Jones,MID,Liverpool,5.5,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.155,0.158,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+376,Bajcetic,MID,Liverpool,5.0,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.102,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+380,Ekitiké,FWD,Liverpool,7.4,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.272,0.258,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+383,Elliott,MID,Liverpool,5.4,Arsenal,True,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.128,0.127,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+394,Alleyne,DEF,Man City,5.0,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.199,0.197,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+397,Semenyo,MID,Man City,8.2,Brighton,True,3.0,1,0.0,54.8,0.0,0.609,0.0,UNAVAILABLE,i,0.0,2.57,2.397,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+402,Rodrigo,MID,Man City,6.5,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.183,0.181,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+403,Sávio,MID,Spurs,6.5,Crystal Palace,True,2.0,1,0.0,54.0,0.0,0.6,0.0,UNAVAILABLE,i,0.0,2.897,2.331,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+404,Reijnders,MID,Man City,6.0,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.174,0.173,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+407,Echeverri,MID,Man City,4.9,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.083,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+408,Phillips,MID,Man City,5.0,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.102,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+409,Mukasa,MID,Man City,4.5,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.048,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+410,Monga,MID,Man City,4.9,Brighton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.083,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+413,Bayindir,GKP,Man Utd,4.5,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.061,0.063,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+415,Dorgu,MID,Man Utd,5.7,Chelsea,False,4.0,1,0.0,18.4,0.0,0.204,0.0,UNAVAILABLE,i,0.0,0.683,0.705,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+423,Shaw,DEF,Man Utd,4.2,Chelsea,False,4.0,1,0.0,35.6,0.0,0.396,0.0,UNAVAILABLE,i,0.0,1.133,1.37,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+425,Fredricson,DEF,Man Utd,4.0,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.039,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+432,Mainoo,MID,Man Utd,5.5,Chelsea,False,4.0,1,0.0,53.3,0.0,0.592,0.0,UNAVAILABLE,i,0.0,1.709,2.177,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+433,Ugarte,MID,Man Utd,5.0,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.099,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+436,Collyer,MID,Man Utd,5.0,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.099,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+439,Šeško,FWD,Man Utd,6.9,Chelsea,False,4.0,1,0.0,3.4,0.0,0.038,0.0,UNAVAILABLE,i,0.0,0.618,0.624,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+441,Obi,FWD,Man Utd,4.5,Chelsea,False,4.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.044,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+444,Jaouen,GKP,Newcastle,4.4,Everton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.064,0.063,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+450,Livramento,DEF,Newcastle,4.8,Everton,True,3.0,1,0.0,4.8,0.0,0.053,0.0,UNAVAILABLE,i,0.0,0.416,0.414,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+451,A.Murphy,DEF,Newcastle,4.0,Everton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.042,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+463,Woltemade,FWD,Newcastle,5.9,Everton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.167,0.166,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+466,Neave,FWD,Newcastle,4.5,Everton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.047,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+470,Morato,DEF,Nott'm Forest,5.0,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.196,0.197,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+475,Savona,DEF,Nott'm Forest,4.5,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.085,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+477,Abbott,DEF,Nott'm Forest,4.0,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.039,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+479,Bindon,DEF,Nott'm Forest,4.0,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.039,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+484,Hutchinson,MID,Nott'm Forest,5.4,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.125,0.127,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+485,Bakwa,MID,Nott'm Forest,5.5,Brentford,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.157,0.158,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+491,Igor Jesus,FWD,Nott'm Forest,5.7,Brentford,False,3.0,1,0.0,6.9,0.0,0.077,0.0,UNAVAILABLE,i,0.0,0.688,0.689,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+494,Vicario,GKP,Spurs,4.5,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.074,0.063,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+500,Romero,DEF,Spurs,5.0,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.313,0.197,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+505,Spence,DEF,Spurs,4.5,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.138,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+506,Udogie,DEF,Spurs,4.4,Crystal Palace,True,2.0,1,0.0,17.0,0.0,0.189,0.0,UNAVAILABLE,i,0.0,1.157,0.985,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+507,Phillips,DEF,Spurs,4.5,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.138,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+511,Souza,DEF,Spurs,4.0,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.034,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+513,Xavi,MID,Spurs,5.9,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.185,0.173,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+516,Bentancur,MID,Spurs,5.4,Crystal Palace,True,2.0,1,0.0,34.6,0.0,0.384,0.0,UNAVAILABLE,s,0.0,0.758,0.711,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+517,Odobert,MID,Spurs,5.5,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.171,0.158,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+518,P.M.Sarr,MID,Spurs,4.9,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.09,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+520,Bergvall,MID,Spurs,5.3,Crystal Palace,True,2.0,1,0.0,18.5,0.0,0.206,0.0,UNAVAILABLE,i,0.0,1.455,1.426,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+523,Moore,MID,Spurs,5.0,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.109,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+527,Richarlison,FWD,Spurs,5.9,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.178,0.166,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+528,Scarlett,FWD,Spurs,4.5,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.05,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+530,Patterson,GKP,Sunderland,4.0,Coventry City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.045,0.043,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+532,Ballard,DEF,Sunderland,4.8,Coventry City,False,2.0,1,0.0,36.0,0.0,0.4,0.0,UNAVAILABLE,i,0.0,1.145,0.899,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+537,Seelt,DEF,Sunderland,4.5,Coventry City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.131,0.086,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+538,Hjelde,DEF,Sunderland,4.0,Coventry City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.031,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+540,Masuaku,DEF,Sunderland,4.0,Coventry City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.031,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+546,Adingra,MID,Sunderland,4.9,Coventry City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.087,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+547,Mundle,MID,Sunderland,4.8,Coventry City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.087,0.081,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+554,Van Oevelen,GKP,Ipswich Town,4.5,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.072,0.063,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+556,Targett,DEF,Hull City,3.9,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.034,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+557,Tzolis,MID,Arsenal,6.2,Liverpool,False,4.0,1,0.0,34.3,0.0,0.381,0.0,UNAVAILABLE,i,0.0,0.551,0.57,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+577,Tomiyasu,DEF,Crystal Palace,4.4,Spurs,False,3.0,1,0.0,14.7,0.0,0.163,0.0,UNAVAILABLE,i,0.0,0.447,0.453,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+578,Mudryk,MID,Spurs,5.3,Crystal Palace,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.133,0.125,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+583,Chavarria,DEF,Chelsea,4.9,Man Utd,True,4.0,1,0.0,38.7,0.0,0.43,0.0,UNAVAILABLE,i,0.0,1.541,1.827,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+586,Mendy,DEF,Hull City,4.1,Ipswich Town,True,2.0,1,0.0,21.5,0.0,0.239,0.0,UNAVAILABLE,i,0.0,1.691,1.356,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+596,Ruggeri,DEF,Aston Villa,4.4,Fulham,True,2.0,1,0.0,20.7,0.0,0.23,0.0,UNAVAILABLE,i,0.0,1.229,1.058,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+602,Humphreys,MID,Ipswich Town,4.5,Hull City,False,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.047,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+607,Lynch,MID,Aston Villa,4.5,Fulham,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.05,0.046,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+609,Shahar,DEF,Newcastle,4.0,Everton,True,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.042,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+610,De Fougerolles,DEF,Fulham,4.0,Aston Villa,False,3.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.039,0.04,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+611,Wan-Bissaka,DEF,Aston Villa,4.5,Fulham,True,2.0,1,0.0,40.6,0.0,0.451,0.0,UNAVAILABLE,i,0.0,2.156,1.711,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+624,Cozier-Duberry,MID,Brighton,5.0,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,u,0.0,0.079,0.1,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+632,Ansah,FWD,Hull City,4.9,Ipswich Town,True,2.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.089,0.08,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
+652,Azeez,MID,Brighton,5.5,Man City,False,5.0,1,0.0,0.0,0.0,0.0,0.0,UNAVAILABLE,i,0.0,0.128,0.158,0.0,0.0,5,8,4,previous_completed_gw_points_mean_v1,True,9,2026-27
