@@ -1,11 +1,11 @@
 {
   "season": "2026-27",
-  "prediction_event": 9,
-  "prediction_file": "gw9_predictions_v13_r2.csv",
-  "generated_at": "2026-10-26T17:40:58.713119+00:00",
+  "prediction_event": 10,
+  "prediction_file": "gw10_predictions_v13.csv",
+  "generated_at": "2026-10-31T13:44:57.295143+00:00",
   "player_count": 669,
   "schema_version": 1,
-  "artifact_sha256": "228c65683c665b097165b99d9e96f95c25adcccbea8abfa113420319ce5a929a",
+  "artifact_sha256": "368f5803a30dfa001aaa5605f96122c210f63ac1a397cdca927f20ef5c1a8cca",
   "model_provenance": {
     "feature_contract_version": 4,
     "xp_source": "previous_completed_gw_points_mean_v1",
@@ -23,16 +23,16 @@
       "report_sha256": "aa382ead55e209964669003f0bc4468d10e7f82fe071ef9c77a5c3fcc07f724b"
     },
     "prediction_season": "2026-27",
-    "target_schedule_sha256": "60654d1062add231a0ef1a12a7e11bb9b9bf4d82109dc627227e77166a4ef87c",
-    "forecast_stage": "final",
+    "target_schedule_sha256": "895aff1deeae95ae75ffb0445601dec78bf0db03a8900db1c0b020dacc6fa339",
+    "forecast_stage": "provisional",
     "history_cutoff_gw": 8,
-    "input_sha256": "95edabeaf2728c7fda6a8a23ee3b68354377141f9a045a2d0609d91b4f98bc1a",
+    "input_sha256": "e2cf4c2e17ba15d25b4fb2f500716ae2e11f10dc62206647e673e709c19d730d",
     "input_files": {
-      "players_raw.csv": "62d7747c96a91ecac4612218bd5ab0faad665c1728219691d4a565d9fe28dcd0",
+      "players_raw.csv": "0012527c4ac40b1caddbb2080acb6295ef1d419684a5163fd9cfef31c6d51390",
       "teams_current.csv": "c5d3ddedd8729ee2f6be137562cd9ef705faaebf35f039eec51deb17324889ac",
-      "gameweeks_current.csv": "1a7af3eff38dee0da7181b2e2778542e4e3b553c2675003b1b6ea8c482d77ea6",
+      "gameweeks_current.csv": "a93203fde12927ac0899cd02d53e4c0a422aa3ca54422113b004c8280423618b",
       "2026-27/merged_gw.csv": "0ba4e5ef3ac5dee3449d5371d4d045b18c1aa631caee3ac9c2e9c052b91e91ee",
-      "2026-27/fixtures.csv": "aeffaab4130d2445ee52109e323c179216d26a95a2cb7991361beb81a2a6f55a"
+      "2026-27/fixtures.csv": "9632b26f9d7cf4b355e014c19d3b2de9ee637e2a48c83ac27a210a99a5028c88"
     },
     "code_revision": "sha256:9790e4bf80da98fb4a0940adfd95dd00abae4521bc37fd7dcb8b07b586281ae4"
   }
