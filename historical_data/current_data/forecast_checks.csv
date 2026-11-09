@@ -4,3 +4,4 @@ season,gameweek,artifact,model_file,validation_state,players,mean_predicted,mean
 2026-27,7,gw7_predictions_v13_r2.csv,fpl_model_v4.pkl,validated,667,1.16,1.327,-0.167,1.053,1.989,0.698,3.8
 2026-27,8,gw8_predictions_v13_r2.csv,fpl_model_v4.pkl,validated,668,1.171,1.389,-0.218,1.118,2.097,0.699,3.9
 2026-27,9,gw9_predictions_v13_r2.csv,fpl_model_v4.pkl,validated,669,1.169,1.312,-0.143,0.998,1.883,0.729,4.9
+2026-27,10,gw10_predictions_v13_r2.csv,fpl_model_v4.pkl,validated,670,1.185,1.367,-0.182,1.048,2.036,0.746,6.8

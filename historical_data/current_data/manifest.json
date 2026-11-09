@@ -1,11 +1,11 @@
 {
   "season": "2026-27",
   "prediction_event": 11,
-  "prediction_file": "gw11_predictions_v13.csv",
-  "generated_at": "2026-11-06T21:41:43.601794+00:00",
-  "player_count": 670,
+  "prediction_file": "gw11_predictions_v13_r2.csv",
+  "generated_at": "2026-11-09T17:41:30.549845+00:00",
+  "player_count": 672,
   "schema_version": 1,
-  "artifact_sha256": "a4d421df3964f9736d07857621bdb44de0c60d3ca177b41e9ab923efe1a92afe",
+  "artifact_sha256": "120efdbd7f367563ffdbe1cf05c742200304a6b2925532c907903f04d9dda537",
   "model_provenance": {
     "feature_contract_version": 4,
     "xp_source": "previous_completed_gw_points_mean_v1",
@@ -24,15 +24,15 @@
     },
     "prediction_season": "2026-27",
     "target_schedule_sha256": "147d7f7623ec2372468c6ec61afc96cd0146dde9021495762c3221c60dbd0743",
-    "forecast_stage": "provisional",
-    "history_cutoff_gw": 9,
-    "input_sha256": "c1a592c33f642afb7ad716a88f0fb9cbeb1d4e1779e10700d852ecef22c0c291",
+    "forecast_stage": "final",
+    "history_cutoff_gw": 10,
+    "input_sha256": "9b8400d1f481ffc619ee1600c25c3f559c2d7db49180110c23eb153080964045",
     "input_files": {
-      "players_raw.csv": "1dd5c4db73e891f157c356ccc37fc9318f69f4381f43d2882780c81fbca715f6",
-      "teams_current.csv": "37d733c770bf4f9aef9e275926ca2393f78c5eeff15c9a1e59a1a72687ba41c0",
-      "gameweeks_current.csv": "1c65adb0f18d4c991264a040e389ba9d3bcf1513e6a30c7914ba262ec26082ca",
-      "2026-27/merged_gw.csv": "9dd6a7b31f48a33530f636e72b7a9cc10bbcb875ea0f846db9ab44e9b914fa95",
-      "2026-27/fixtures.csv": "c97c56b071161f3465fac386aafc162f718191dea50c21da0cc3a9063e9b88b9"
+      "players_raw.csv": "d9888ae337788d135329d918e73fad7aaae36859145a5951ef2ed27e67a69090",
+      "teams_current.csv": "894f19188d6c5614218ba7d00a4c80023fc20769180db77840d27f2baccb69c4",
+      "gameweeks_current.csv": "c9b6ef28d555f39174b852a7b780de9fba9cb06fdda24419f4fea83378ef0ce4",
+      "2026-27/merged_gw.csv": "643c89fb79f1b3d86a8f5f4be554fdf16072085d3a9bf04ff45d72c94bcb5754",
+      "2026-27/fixtures.csv": "984f2342b9c04b76fb554119cc4594d04a9342e2b726df37b1ac5abd73719d3d"
     },
     "code_revision": "sha256:9790e4bf80da98fb4a0940adfd95dd00abae4521bc37fd7dcb8b07b586281ae4"
   }
